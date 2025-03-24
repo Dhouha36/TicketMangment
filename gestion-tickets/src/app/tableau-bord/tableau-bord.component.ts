@@ -1,11 +1,11 @@
 import { NgClass, NgFor, NgIf } from '@angular/common';
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import { AfterViewInit, Component, HostListener, OnInit } from '@angular/core';
 import { User } from '../_models/user';
 import { AccountService } from '../_services/account.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { Color, NgxChartsModule, ScaleType } from '@swimlane/ngx-charts';
+import { Color, NgxChartsModule, ScaleType, LegendPosition } from '@swimlane/ngx-charts';
 import { TicketService } from '../_services/ticket.service';
-import { DashboardService } from '../_services/dashboard.service'; // Nouveau service
+import { DashboardService } from '../_services/dashboard.service';
 
 @Component({
   selector: 'app-tableau-bord',
@@ -15,14 +15,12 @@ import { DashboardService } from '../_services/dashboard.service'; // Nouveau se
   styleUrls: ['./tableau-bord.component.scss']
 })
 export class TableauBordComponent implements OnInit, AfterViewInit {
-
-
+  LegendPosition = LegendPosition;
   currentUser: User | null = null;
   userInitials = "";
 
   ticketCounts: any[] = [];
-  view: [number, number] = [1400, 500]; // Taille du graphique
-
+  view: [number, number] = [1400, 500]; // Taille par défaut (sera mise à jour dynamiquement)
 
   colorScheme: Color = {
     name: 'custom-gradient',
@@ -37,6 +35,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
       '#4c1d3d'
     ]
   };
+
   // Propriétés pour les petits containers
   categoriesCount: number = 0;
   paysCount: number = 0;
@@ -59,8 +58,10 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     if (this.currentUser) {
       this.userInitials = this.currentUser.firstName.charAt(0) + this.currentUser.lastName.charAt(0);
       this.loadTicketCounts();
-      this.loadDashboardCounts(); // Chargement des autres counts
+      this.loadDashboardCounts();
     }
+    // Définition initiale de la taille du graphique
+    this.setChartSize();
   }
 
   ngAfterViewInit() {
@@ -78,9 +79,6 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     }
   }
 
-
-
-
   logout() {
     this.accountService.logout();
     this.router.navigateByUrl('/');
@@ -89,7 +87,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
   loadTicketCounts() {
     this.ticketService.getTicketCountByStatus().subscribe({
       next: (data: any[]) => {
-        // Transformation des données reçues pour correspondre au format { id, name, value }
+        // Transformation des données pour correspondre au format { id, name, value }
         this.ticketCounts = data.map(item => ({
           id: item.id,
           name: item.name,
@@ -102,11 +100,10 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // Méthode pour charger les counts supplémentaires
+  // Chargement des autres counts du dashboard
   loadDashboardCounts() {
     this.dashboardService.getDashboardCounts().subscribe({
       next: (data: any) => {
-        // On suppose que data contient les propriétés nécessaires
         this.categoriesCount = data.categoriesCount;
         this.paysCount       = data.paysCount;
         this.projectsCount   = data.projectsCount;
@@ -119,6 +116,30 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
         console.error('Erreur lors de la récupération des dashboard counts', err);
       }
     });
+  }
+
+  // Mise à jour de la taille du graphique en fonction de la largeur de l'écran
+  @HostListener('window:resize', ['$event'])
+  onResize() {
+    this.setChartSize();
+  }
+
+  setChartSize(): void {
+    const width = window.innerWidth;
+    let chartWidth = 1400; // Valeur par défaut pour grand écran
+
+    if (width < 576) {
+      chartWidth = width - 20; // pour mobile, prendre presque toute la largeur
+    }else if (width < 960) {
+      chartWidth = 800; // pour tablettes
+    } else if (width < 1089) {
+      chartWidth = 600; // pour tablettes
+    }else if (width < 1652) {
+      chartWidth = 800; // pour tablettes
+    }else if (width < 1290) {
+      chartWidth = 600; // pour tablettes
+    }
+    this.view = [chartWidth, 500];
   }
 
   isSuperAdmin(): boolean {
@@ -136,5 +157,4 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
   isClient(): boolean {
     return this.currentUser?.role === 'Client';
   }
-  
 }

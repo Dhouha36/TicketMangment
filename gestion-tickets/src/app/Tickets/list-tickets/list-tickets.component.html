@@ -1,90 +1,87 @@
-<div class="container"> 
+<div class="container">
   <div class="header">
     <h2>Liste des tickets</h2>
     <button class="add-ticket-btn" *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'client'" routerLink="/home/Tickets/ajouterTicket">
       <span class="material-icons">add</span> Ajouter
     </button>
   </div>
-  <table>
-    <thead>
-      <!-- Ligne de filtre avec barre de recherche -->
-      <tr class="filter-row">
-        <td class="checkbox-column"></td>
-        <td colspan="5">
-          <div class="search-wrapper">
-            <input type="text" class="search-input" placeholder="Rechercher un ticket..."
-              [(ngModel)]="ticketsSearchTerm" (ngModelChange)="onSearchChange()" />
-            <span class="material-icons search-icon">search</span>
-          </div>
-        </td>
-        <td colspan="4" class="filter-actions">
-          <button class="filter-btn">
-            <span class="material-icons">filter_list</span>
-          </button>
-          <button class="view-btn">
-            <span class="material-icons">grid_view</span>
-          </button>
-          <button class="view-btn active">
-            <span class="material-icons">view_list</span>
-          </button>
-        </td>
-      </tr>
-      <!-- En-tête des colonnes -->
-      <tr>
-        <th class="checkbox-column">
-          <div class="checkbox-wrapper">
-            <input type="checkbox" id="selectAll" class="custom-checkbox" (change)="selectAll($event)">
-            <label for="selectAll" class="checkbox-label"></label>
-          </div>
-        </th>
-        <th>Id</th>
-        <th>Titre</th>
-        <th>Qualification</th>
-        <th>Projet</th>
-        <th *ngIf="(currentUser?.role?.toLowerCase() !== 'client')">Client</th>
-        <th>Catégorie</th>
-        <th>Priorité</th>
-        <th>Statut</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Boucle sur les tickets paginés -->
-      <tr *ngFor="let ticket of paginatedResult?.items; let i = index" [ngClass]="{'new-ticket-highlight': newTicketId === ticket.id}">
-        <td class="checkbox-column">
-          <div class="checkbox-wrapper">
-            <input type="checkbox" [id]="'ticket' + i" class="custom-checkbox" [(ngModel)]="ticket.selected" (change)="toggleSelection(ticket)">
-            <label [for]="'ticket' + i" class="checkbox-label"></label>
-          </div>
-        </td>
-        <td>{{ ticket.id }}</td>
-        <td>{{ ticket.title }}</td>
-        <td>{{ getQualificationLabel(ticket.qualificationId) }}</td>
-        <td>{{ ticket.projet?.nom || 'Non défini' }}</td>
-        <td *ngIf="(currentUser?.role?.toLowerCase() !== 'client')">
-          {{ ticket.owner?.firstName }} {{ ticket.owner?.lastName || '' }}
-        </td>
-        <td>{{ ticket.problemCategory?.nom || 'Non défini' }}</td>
-        <td>
-          <span [ngClass]="getPriorityClass(ticket.priorityId)">
-            {{ getPriorityLabel(ticket.priorityId) }}
-          </span>
-        </td>                        
-        <td>
-          <span >
-            {{ getStatusLabel(ticket.statutId) }}
-          </span>
-        </td>        
-        <td class="actions">
-          <button class="view-btn" [routerLink]="['/home/Tickets/details', ticket.id]">
-            <span class="material-icons">visibility</span>
-          </button>
-        </td>
-      </tr>
-
-      <!-- Message si aucune donnée -->
-      <ng-container *ngIf="paginatedResult?.items?.length === 0">
+  
+  <div class="table-responsive">
+    <table>
+      <thead>
+        <tr class="filter-row">
+          <td class="checkbox-column"></td>
+          <td colspan="5">
+            <div class="search-wrapper">
+              <input type="text" class="search-input" placeholder="Rechercher un ticket..."
+                [(ngModel)]="ticketsSearchTerm" (ngModelChange)="onSearchChange()" />
+              <span class="material-icons search-icon">search</span>
+            </div>
+          </td>
+          <td colspan="4" class="filter-actions">
+            <button class="filter-btn">
+              <span class="material-icons">filter_list</span>
+            </button>
+            <button class="view-btn">
+              <span class="material-icons">grid_view</span>
+            </button>
+            <button class="view-btn active">
+              <span class="material-icons">view_list</span>
+            </button>
+          </td>
+        </tr>
+        
         <tr>
+          <th class="checkbox-column">
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="selectAll" class="custom-checkbox" (change)="selectAll($event)">
+              <label for="selectAll" class="checkbox-label"></label>
+            </div>
+          </th>
+          <th>Id</th>
+          <th>Titre</th>
+          <th class="qualification-col">Qualification</th>
+          <th>Projet</th>
+          <th class="client-col">Client</th>
+          <th class="category-col">Catégorie</th>
+          <th>Priorité</th>
+          <th>Statut</th>
+          <th class="actions"></th>
+        </tr>
+      </thead>
+      
+      <tbody>
+        <tr *ngFor="let ticket of paginatedResult?.items; let i = index" [ngClass]="{'new-ticket-highlight': newTicketId === ticket.id}">
+          <td class="checkbox-column" data-label="Sélection">
+            <div class="checkbox-wrapper">
+              <input type="checkbox" [id]="'ticket' + i" class="custom-checkbox" [(ngModel)]="ticket.selected" (change)="toggleSelection(ticket)">
+              <label [for]="'ticket' + i" class="checkbox-label"></label>
+            </div>
+          </td>
+          <td data-label="ID">{{ ticket.id }}</td>
+          <td data-label="Titre">{{ ticket.title }}</td>
+          <td class="qualification-col" data-label="Qualification">{{ getQualificationLabel(ticket.qualificationId) }}</td>
+          <td data-label="Projet">{{ ticket.projet?.nom || 'Non défini' }}</td>
+          <td class="client-col" data-label="Client" *ngIf="(currentUser?.role?.toLowerCase() !== 'client')">
+            {{ ticket.owner?.firstName }} {{ ticket.owner?.lastName || '' }}
+          </td>
+          <td class="category-col" data-label="Catégorie">{{ ticket.problemCategory?.nom || 'Non défini' }}</td>
+          <td data-label="Priorité">
+            <span [ngClass]="getPriorityClass(ticket.priorityId)">
+              {{ getPriorityLabel(ticket.priorityId) }}
+            </span>
+          </td>                        
+          <td data-label="Statut">
+            <span>{{ getStatusLabel(ticket.statutId) }}</span>
+          </td>        
+          <td class="actions" data-label="Actions">
+            <button class="view-btn" [routerLink]="['/home/Tickets/details', ticket.id]">
+              <span class="material-icons">visibility</span>
+            </button>
+          </td>
+        </tr>
+
+        <tr *ngIf="paginatedResult?.items?.length === 0">
           <td colspan="10">
             <div class="no-content">
               <span class="icon">✕</span>
@@ -92,7 +89,6 @@
             </div>
           </td>
         </tr>
-      </ng-container>
 
       <!-- Pagination -->
       <tr>
@@ -115,17 +111,13 @@
               <label>par page</label>
             </div>
             <div class="pagination-controls">
-              <button (click)="onPageChange(pageNumber - 1)" [disabled]="pageNumber <= 1"
-                title="Cliquez pour la page précédente ou double-cliquez pour saisir une page">
+              <button (click)="onPageChange(pageNumber - 1)" [disabled]="pageNumber <= 1" title="Page précédente">
                 &laquo;
               </button>
               <input type="number" [(ngModel)]="jumpPage" (keyup.enter)="jumpToPage()"
                 [max]="paginatedResult?.pagination?.totalPages ?? 1" min="1" class="page-input" />
-              <span class="total-pages">
-                / {{ paginatedResult?.pagination?.totalPages || 1 }}
-              </span>
-              <button (click)="onPageChange(pageNumber + 1)"
-                [disabled]="pageNumber >= (paginatedResult?.pagination?.totalPages || 1)" title="Page suivante">
+              <span class="total-pages">/ {{ paginatedResult?.pagination?.totalPages || 1 }}</span>
+              <button (click)="onPageChange(pageNumber + 1)" [disabled]="pageNumber >= (paginatedResult?.pagination?.totalPages || 1)" title="Page suivante">
                 &raquo;
               </button>
             </div>
