@@ -182,9 +182,7 @@ input:checked + .toggle-label:before {
   color: #000000;
 }
 
-.toggle-switch input:disabled + .toggle-label {
-  cursor: not-allowed;
-}
+
 
 /* Boutons */
 .button-group {
