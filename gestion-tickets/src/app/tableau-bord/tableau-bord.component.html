@@ -82,7 +82,7 @@
     <!-- Status des Tickets : uniquement pour SuperAdmin 
          Ici, le lien référence l'id du conteneur du graphique -->
          <div class="stat-box with-bg" *ngIf="isSuperAdmin()">
-          <a [routerLink]="['/home', 'TableauDeBord']" [fragment]="'pie-chart-container'" class="stat-content">
+          <a [routerLink]="['/home', 'dashboard']" [fragment]="'pie-chart-container'" class="stat-content">
             <div class="stat-title">Status Des Tickets</div>
             <div class="stat-value">{{ statutsCount || 5 }}</div>
             <div class="stat-icon">

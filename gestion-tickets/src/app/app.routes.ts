@@ -70,7 +70,13 @@ export const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [
+    RouterModule.forRoot(routes, { 
+      anchorScrolling: 'enabled',
+      scrollOffset: [0, 1000],
+      onSameUrlNavigation: 'reload'
+    })
+  ],
   exports: [RouterModule]
 })
-export class AppRoutingModule {}
+export class AppRoutingModule { }
