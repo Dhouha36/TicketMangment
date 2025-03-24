@@ -21,7 +21,7 @@ import { OverlayModalService } from '../../_services/overlay-modal.service';
   selector: 'app-ajouter-utilisateur',
   imports: [CommonModule, ReactiveFormsModule, MatTooltipModule],
   templateUrl: './ajouter-utilisateur.component.html',
-  styleUrls: ['./ajouter-utilisateur.component.scss']
+  styleUrls: ['./ajouter-utilisateur.component.css']
 })
 export class AjouterUtilisateurComponent implements OnInit {
   registerForm: FormGroup;
@@ -31,9 +31,7 @@ export class AjouterUtilisateurComponent implements OnInit {
   paysList: Pays[] = [];
   societesList: Societe[] = [];
   selectedCountry: Pays | undefined;
-
   isLoading: boolean = false;
-
 
   constructor(
     private paysService: PaysService,
@@ -45,7 +43,7 @@ export class AjouterUtilisateurComponent implements OnInit {
     private toastr: ToastrService,
     private router: Router,
     private loaderService: LoaderService,
-    private overlayModalService: OverlayModalService,
+    private overlayModalService: OverlayModalService
   ) {
     this.loaderService.isLoading$.subscribe((loading) => {
       this.isLoading = loading;
@@ -63,8 +61,7 @@ export class AjouterUtilisateurComponent implements OnInit {
         Validators.pattern(/^[0-9\s]+$/),
         Validators.minLength(8),
         Validators.maxLength(10)
-      ]]
-      ,
+      ]],
       confirmPassword: ['', Validators.required],
       actif: [false],
       contrat: [false],
@@ -77,7 +74,7 @@ export class AjouterUtilisateurComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Chargement des listes de pays et de sociétés
+    // Chargement des listes
     this.loadPays();
     this.loadSocietes();
     this.loadRoles();
@@ -86,64 +83,49 @@ export class AjouterUtilisateurComponent implements OnInit {
       this.selectedCountry = this.paysList.find(p => p.idPays === +value);
     });
 
-    // Récupération des contrôles pour plus de lisibilité
-    const contratControl = this.registerForm.get('contrat');
-    const contractGroup = this.registerForm.get('contract');
-
+    // Activer/désactiver le champ société selon le rôle
     this.registerForm.get('role')?.valueChanges.subscribe(role => {
       const societeControl = this.registerForm.get('societe');
       if (role && role.toLowerCase() === 'client') {
-        societeControl?.enable(); // Active le champ pour le rôle "client"
+        societeControl?.enable();
         societeControl?.setValidators(Validators.required);
       } else {
-        societeControl?.disable(); // Désactive le champ pour les autres rôles
+        societeControl?.disable();
         societeControl?.clearValidators();
-        societeControl?.setValue(''); // Optionnel : réinitialise la valeur
+        societeControl?.setValue('');
       }
       societeControl?.updateValueAndValidity();
     });
 
-    // Au démarrage, si la case 'contrat' est false, désactivez le groupe 'contract'
+    // Initialisation du groupe 'contract' selon la case 'contrat'
+    const contratControl = this.registerForm.get('contrat');
+    const contractGroup = this.registerForm.get('contract');
+
     if (!contratControl?.value) {
       contractGroup?.disable();
-      // On retire les validateurs de chaque contrôle du groupe
       contractGroup?.get('dateDebut')?.clearValidators();
       contractGroup?.get('dateFin')?.clearValidators();
       contractGroup?.get('type')?.clearValidators();
       contractGroup?.updateValueAndValidity();
     }
 
-    // Surveillez les changements de la sélection de la société
-    this.registerForm.get('societe')?.valueChanges.subscribe(selectedSociete => {
-      if (selectedSociete && selectedSociete !== '') {
-        // Si une société est sélectionnée, on désactive la case 'contrat' et le groupe 'contract'
-        this.registerForm.get('contrat')?.disable();
-        this.registerForm.get('contrat')?.setValue(false);
-        contractGroup?.disable();
-        contractGroup?.get('dateDebut')?.clearValidators();
-        contractGroup?.get('dateFin')?.clearValidators();
-        contractGroup?.get('type')?.clearValidators();
-        contractGroup?.updateValueAndValidity();
-      } else {
-        // Sinon, on réactive la case 'contrat'
-        this.registerForm.get('contrat')?.enable();
-      }
+    // Désactivation conditionnelle supprimée : la case contrat reste activée, quelle que soit la valeur du champ société.
+    this.registerForm.get('societe')?.valueChanges.subscribe(() => {
+      // On laisse la case 'contrat' active
+      this.registerForm.get('contrat')?.enable();
     });
 
-    // Surveillez les changements de la case 'contrat'
+    // Surveillance de la case 'contrat'
     contratControl?.valueChanges.subscribe(isChecked => {
       if (isChecked) {
-        // Si la case est cochée, activez le groupe 'contract' et appliquez les validateurs requis
         contractGroup?.enable();
         contractGroup?.get('dateDebut')?.setValidators(Validators.required);
         contractGroup?.get('dateFin')?.setValidators(Validators.required);
         contractGroup?.get('type')?.setValidators(Validators.required);
-        // Mise à jour de la validité des contrôles du groupe
         contractGroup?.get('dateDebut')?.updateValueAndValidity();
         contractGroup?.get('dateFin')?.updateValueAndValidity();
         contractGroup?.get('type')?.updateValueAndValidity();
       } else {
-        // Si la case est décochée, désactivez le groupe et retirez ses validateurs
         contractGroup?.disable();
         contractGroup?.get('dateDebut')?.clearValidators();
         contractGroup?.get('dateFin')?.clearValidators();
@@ -185,7 +167,6 @@ export class AjouterUtilisateurComponent implements OnInit {
     });
   }
 
-  // Ouvre le dialogue pour renseigner le contrat
   onContractChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.checked) {
@@ -195,32 +176,27 @@ export class AjouterUtilisateurComponent implements OnInit {
 
   openContractDialog(): void {
     const dialogRef = this.dialog.open(ContractDialogComponent, {
-      data: {
-        contractForm: this.registerForm.get('contract')
-      }
+      data: { contractForm: this.registerForm.get('contract') }
     });
 
     dialogRef.afterClosed().subscribe(result => {
       if (!result) {
-        // Si le dialogue est fermé sans sauvegarder, on désactive la case à cocher contrat
+        // Si annulé, décocher la case
         this.registerForm.get('contrat')?.setValue(false);
       }
     });
   }
 
-  // Bouton "Créer" : crée l'utilisateur et redirige vers la liste
   register(): void {
     if (this.registerForm.valid) {
       const formValue = this.registerForm.value;
       const hasSociete = formValue.societe && formValue.societe !== '';
 
-      const phoneNumber = formValue.numTelephone; 
-      // Concaténer le code pays si disponible
+      const phoneNumber = formValue.numTelephone;
       const fullPhoneNumber = this.selectedCountry
         ? this.selectedCountry.codeTel + ' ' + phoneNumber
         : phoneNumber;
 
-      // Construction de l'objet utilisateur à envoyer à l'API
       const userForRegister: any = {
         email: formValue.email,
         role: formValue.role.charAt(0).toUpperCase() + formValue.role.slice(1),
@@ -234,18 +210,12 @@ export class AjouterUtilisateurComponent implements OnInit {
         contract: null
       };
 
-      // Si la case contrat est cochée ET que l'utilisateur n'est PAS rattaché à une société
       if (formValue.contrat) {
-        if (hasSociete) {
-          this.toastr.error("Un utilisateur lié à une société ne peut pas créer de contrat.");
-          return;
-        } else {
-          userForRegister.contract = {
-            dateDebut: formValue.contract.dateDebut,
-            dateFin: formValue.contract.dateFin,
-            type: formValue.contract.type
-          };
-        }
+        userForRegister.contract = {
+          dateDebut: formValue.contract.dateDebut,
+          dateFin: formValue.contract.dateFin,
+          type: formValue.contract.type
+        };
       }
 
       this.loaderService.showLoader();
@@ -258,7 +228,6 @@ export class AjouterUtilisateurComponent implements OnInit {
         },
         error: err => {
           console.error('Erreur lors de l\'enregistrement', err);
-          // Extraire le message d'erreur exact, en tenant compte d'une potentielle présence de err.error.message
           const errorMessage = err.error?.message || err.message || "Erreur lors de l'enregistrement de l'utilisateur.";
           this.toastr.error(errorMessage);
           this.loaderService.hideLoader();
@@ -269,50 +238,16 @@ export class AjouterUtilisateurComponent implements OnInit {
     }
   }
 
-
-
-  // Méthode pour réinitialiser le formulaire à son état initial
-  private resetForm(): void {
-    this.registerForm.reset({
-      lastName: '',
-      firstName: '',
-      email: '',
-      pays: '',
-      role: '',
-      societe: '',
-      password: '',
-      numTelephone: '',
-      confirmPassword: '',
-      actif: false,
-      contrat: false,
-      contract: {
-        dateDebut: '',
-        dateFin: '',
-        type: 'Standard'
-      }
-    });
-    // Réinitialiser l'état du groupe contract (désactivé et sans validateurs)
-    const contractGroup = this.registerForm.get('contract');
-    if (contractGroup) {
-      contractGroup.disable();
-      contractGroup.get('dateDebut')?.clearValidators();
-      contractGroup.get('dateFin')?.clearValidators();
-      contractGroup.get('type')?.clearValidators();
-      contractGroup.updateValueAndValidity();
-    }
-  }
-
-  // Bouton "Annuler" : si des modifications sont présentes, demander confirmation, sinon retourner à la liste
   cancel(): void {
     if (this.registerForm.dirty) {
       const modalInstance = this.overlayModalService.open(ConfirmModalComponent);
       modalInstance.message = "Vous avez des modifications non sauvegardées. Voulez-vous vraiment annuler ?";
-  
+
       modalInstance.confirmed.subscribe(() => {
         this.router.navigate(['/home/utilisateurs']);
         this.overlayModalService.close();
       });
-  
+
       modalInstance.cancelled.subscribe(() => {
         this.overlayModalService.close();
       });
@@ -320,7 +255,6 @@ export class AjouterUtilisateurComponent implements OnInit {
       this.router.navigate(['/home/utilisateurs']);
     }
   }
-  
 
   togglePasswordVisibility(): void {
     this.passwordVisible = !this.passwordVisible;
@@ -331,7 +265,6 @@ export class AjouterUtilisateurComponent implements OnInit {
   }
 }
 
-// Validator personnalisé pour la confirmation du mot de passe
 export const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
   const password = control.get('password');
   const confirmPassword = control.get('confirmPassword');

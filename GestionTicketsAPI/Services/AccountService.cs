@@ -33,6 +33,7 @@ namespace GestionTicketsAPI.Services
       // Vérifier si l'utilisateur existe déjà
       if (await _accountRepository.UserExistsAsync(registerDto.Firstname, registerDto.Lastname, registerDto.Email))
         throw new Exception("L'utilisateur existe déjà.");
+
       // Récupération du pays
       var pays = await _accountRepository.GetPaysByIdAsync(registerDto.Pays);
       if (pays == null)
@@ -60,7 +61,6 @@ namespace GestionTicketsAPI.Services
         Actif = registerDto.Actif,
         PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password)),
         PasswordSalt = hmac.Key,
-        // Note : la propriété SocieteId n'existe plus dans User
       };
 
       // Si une société est spécifiée, créer l'association via SocieteUser
@@ -69,7 +69,7 @@ namespace GestionTicketsAPI.Services
         user.SocieteUsers.Add(new SocieteUser
         {
           SocieteId = registerDto.SocieteId.Value
-          // La propriété User sera automatiquement liée lors de l'ajout en base
+          // La liaison avec l'utilisateur sera gérée automatiquement lors de l'ajout en base
         });
       }
 
@@ -80,29 +80,19 @@ namespace GestionTicketsAPI.Services
       if (!await _accountRepository.SaveAllAsync())
         throw new Exception("Erreur lors de l'enregistrement de l'utilisateur.");
 
-      // Gestion du contrat (optionnel) pour un client simple
+      // Gestion du contrat (optionnel) pour l'utilisateur, même s'il est lié à une société
       if (registerDto.Contract != null)
       {
-        // Si l'utilisateur est associé à une ou plusieurs sociétés, on interdit la création de contrat client
-        if (user.SocieteUsers != null && user.SocieteUsers.Any())
+        var contrat = new Contrat
         {
-          throw new Exception("Un utilisateur lié à une société ne peut pas créer de contrat.");
-        }
-        else
-        {
-          // Création du contrat pour un client (Client-Societe)
-          var contrat = new Contrat
-          {
-            DateDebut = registerDto.Contract.DateDebut,
-            DateFin = registerDto.Contract.DateFin,
-            TypeContrat = "Client-Societe",
-            // Affectation automatique de l'ID du client créé
-            ClientId = user.Id
-          };
+          DateDebut = registerDto.Contract.DateDebut,
+          DateFin = registerDto.Contract.DateFin,
+          TypeContrat = "Client-Societe",
+          ClientId = user.Id
+        };
 
-          await _accountRepository.AddContractAsync(contrat);
-          await _accountRepository.SaveAllAsync();
-        }
+        await _accountRepository.AddContractAsync(contrat);
+        await _accountRepository.SaveAllAsync();
       }
 
       var userDto = _mapper.Map<UserDto>(user);
@@ -110,6 +100,7 @@ namespace GestionTicketsAPI.Services
 
       return userDto;
     }
+
 
 
     public async Task<UserDto> LoginAsync(LoginDto loginDto)
