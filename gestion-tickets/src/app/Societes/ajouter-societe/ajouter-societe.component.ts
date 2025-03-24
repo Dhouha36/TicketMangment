@@ -12,7 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
     selector: 'app-ajouter-societe',
     imports: [ReactiveFormsModule, CommonModule],
     templateUrl: './ajouter-societe.component.html',
-    styleUrls: ['./ajouter-societe.component.css']
+    styleUrls: ['./ajouter-societe.component.scss']
 })
 export class AjouterSocieteComponent implements OnInit {
   societeForm!: FormGroup;

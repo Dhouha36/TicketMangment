@@ -24,7 +24,7 @@ import { OverlayModalService } from '../../_services/overlay-modal.service';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, NgxEditorModule, FormsModule],
   templateUrl: './ajouter-ticket.component.html',
-  styleUrls: ['./ajouter-ticket.component.css'],
+  styleUrls: ['./ajouter-ticket.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
 export class AjouterTicketComponent implements OnInit, OnDestroy {

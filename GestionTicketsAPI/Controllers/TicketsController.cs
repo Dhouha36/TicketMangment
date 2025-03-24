@@ -5,6 +5,7 @@ using GestionTicketsAPI.DTOs;
 using GestionTicketsAPI.Entities;
 using GestionTicketsAPI.Helpers;
 using GestionTicketsAPI.Interfaces;
+using GestionTicketsAPI.Repositories;
 using GestionTicketsAPI.Services;
 using Hangfire;
 using Microsoft.AspNetCore.Mvc;
@@ -23,8 +24,10 @@ namespace GestionTicketsAPI.Controllers
 
     private readonly IUserService _userService;
     private readonly ICommentService _commentService;
+    private readonly INotificationService _notificationService;
+    private readonly INotificationRepository _notificationRepository;
 
-    public TicketsController(ITicketService ticketService, IMapper mapper, IPhotoService photoService, IUserService userService, EmailService emailService, ICommentService commentService)
+    public TicketsController(INotificationRepository notificationRepository,INotificationService notificationService, ITicketService ticketService, IMapper mapper, IPhotoService photoService, IUserService userService, EmailService emailService, ICommentService commentService)
     {
       _ticketService = ticketService;
       _mapper = mapper;
@@ -32,6 +35,39 @@ namespace GestionTicketsAPI.Controllers
       _userService = userService;
       _emailService = emailService;
       _commentService = commentService;
+      _notificationService = notificationService;
+      _notificationRepository = notificationRepository;
+    }
+
+    [HttpGet("test-notification")]
+    public async Task<IActionResult> TestNotification()
+    {
+      var notification = new Notification
+      {
+        Message = "Notification de test",
+        DateEnvoi = DateTime.UtcNow,
+        UtilisateurId = 1
+      };
+
+      await _notificationService.SendNotificationAsync(notification);
+      return Ok("Notification envoyée");
+    }
+
+    [HttpGet("test-insertion")]
+    public async Task<IActionResult> TestInsertion()
+    {
+      var notification = new Notification
+      {
+        Message = "Insertion directe de test",
+        DateEnvoi = DateTime.UtcNow,
+        UtilisateurId = 1
+      };
+
+      await _notificationRepository.AddNotificationAsync(notification);
+
+      // Récupérer la notification insérée
+      var result = await _notificationRepository.GetNotificationsForUserAsync(1);
+      return Ok(result);
     }
 
     // GET api/tickets?...
@@ -122,7 +158,8 @@ namespace GestionTicketsAPI.Controllers
             chefProjet.Email,
             "Nouveau ticket créé",
             $"Bonjour {chefProjet.FirstName} {chefProjet.LastName},<br><br>" +
-            $"Le client '{ticket.Owner.FirstName} {ticket.Owner.LastName}' a créé un nouveau ticket intitulé '{ticket.Title}' (n° {ticket.Id}) pour le projet '{ticketFromDb.Projet.Nom}'."
+            $"Le client '{ticket.Owner.FirstName} {ticket.Owner.LastName}' a créé un nouveau ticket intitulé '{ticket.Title}' (n° {ticket.Id}) pour le projet '{ticketFromDb.Projet.Nom}'.",
+            chefProjet.Id
         ));
       }
 
@@ -135,7 +172,8 @@ namespace GestionTicketsAPI.Controllers
             client.Email,
             "Confirmation de création de ticket",
             $"Bonjour {client.FirstName} {client.LastName},<br><br>" +
-            $"Votre ticket intitulé '{ticket.Title}' (n° {ticket.Id}) a été créé avec succès. Nous vous remercions pour votre confiance."
+            $"Votre ticket intitulé '{ticket.Title}' (n° {ticket.Id}) a été créé avec succès. Nous vous remercions pour votre confiance.",
+            client.Id
         ));
       }
 
@@ -148,7 +186,8 @@ namespace GestionTicketsAPI.Controllers
             admin.Email,
             "Nouveau ticket créé",
             $"Bonjour {admin.FirstName} {admin.LastName},<br><br>" +
-            $"Le client '{ticket.Owner.FirstName} {ticket.Owner.LastName}' a créé un nouveau ticket intitulé '{ticket.Title}' (n° {ticket.Id}). Veuillez vérifier les détails dans l'application."
+            $"Le client '{ticket.Owner.FirstName} {ticket.Owner.LastName}' a créé un nouveau ticket intitulé '{ticket.Title}' (n° {ticket.Id}). Veuillez vérifier les détails dans l'application.",
+            admin.Id
         ));
       }
 
@@ -202,7 +241,8 @@ namespace GestionTicketsAPI.Controllers
               client.Email,
               "Ticket accepté",
               $"Bonjour {client.FirstName} {client.LastName},<br><br>" +
-              $"Votre ticket '{ticket.Title}' (n°{ticket.Id}) a été accepté."
+              $"Votre ticket '{ticket.Title}' (n°{ticket.Id}) a été accepté.",
+              client.Id
           ));
         }
 
@@ -223,7 +263,8 @@ namespace GestionTicketsAPI.Controllers
                 responsible.Email,
                 "Nouveau ticket assigné",
                 $"Bonjour {responsible.FirstName} {responsible.LastName},<br><br>" +
-                $"Le ticket '{ticket.Title}' (n°{ticket.Id}) vous a été assigné."
+                $"Le ticket '{ticket.Title}' (n°{ticket.Id}) vous a été assigné.",
+                responsible.Id
             ));
           }
         }
@@ -245,7 +286,8 @@ namespace GestionTicketsAPI.Controllers
               client.Email,
               "Ticket refusé",
               $"Bonjour {client.FirstName} {client.LastName},<br><br>" +
-              $"Votre ticket '{ticket.Title}' (n°{ticket.Id}) a été refusé. Raison : {ticket.ValidationReason}"
+              $"Votre ticket '{ticket.Title}' (n°{ticket.Id}) a été refusé. Raison : {ticket.ValidationReason}",
+              client.Id
           ));
         }
       }
@@ -356,7 +398,8 @@ namespace GestionTicketsAPI.Controllers
             ticket.Owner.Email,
             "Ticket terminé",
             $"Bonjour {ticket.Owner.FirstName} {ticket.Owner.LastName},<br><br>" +
-            $"Votre ticket '{ticket.Title}' (n°{ticket.Id}) est {ticket.Statut.Name}.{commentText}"
+            $"Votre ticket '{ticket.Title}' (n°{ticket.Id}) est {ticket.Statut.Name}.{commentText}",
+            ticket.Owner.Id
         ));
       }
 
@@ -368,7 +411,8 @@ namespace GestionTicketsAPI.Controllers
             ticket.Projet.ChefProjet.Email,
             "Ticket terminé",
             $"Bonjour {ticket.Projet.ChefProjet.FirstName} {ticket.Projet.ChefProjet.LastName},<br><br>" +
-            $"Le ticket '{ticket.Title}' (n°{ticket.Id}) du projet '{ticket.Projet.Nom}' est {ticket.Statut.Name}.{commentText}"
+            $"Le ticket '{ticket.Title}' (n°{ticket.Id}) du projet '{ticket.Projet.Nom}' est {ticket.Statut.Name}.{commentText}",
+            ticket.Projet.ChefProjet.Id
         ));
       }
 
@@ -380,7 +424,8 @@ namespace GestionTicketsAPI.Controllers
             ticket.Responsible.Email,
             "Ticket terminé",
             $"Bonjour {ticket.Responsible.FirstName} {ticket.Responsible.LastName},<br><br>" +
-            $"Le ticket '{ticket.Title}' (n°{ticket.Id}) qui vous a été assigné est {ticket.Statut.Name}.{commentText}"
+            $"Le ticket '{ticket.Title}' (n°{ticket.Id}) qui vous a été assigné est {ticket.Statut.Name}.{commentText}",
+            ticket.Responsible.Id
         ));
       }
 
@@ -393,7 +438,8 @@ namespace GestionTicketsAPI.Controllers
             admin.Email,
             "Ticket terminé",
             $"Bonjour {admin.FirstName} {admin.LastName},<br><br>" +
-            $"Le ticket '{ticket.Title}' (n°{ticket.Id}) est {ticket.Statut.Name}.{commentText}"
+            $"Le ticket '{ticket.Title}' (n°{ticket.Id}) est {ticket.Statut.Name}.{commentText}",
+            admin.Id
         ));
       }
 
@@ -468,7 +514,8 @@ namespace GestionTicketsAPI.Controllers
           responsible.Email,
           "Ticket mis à jour - Nouveau responsable assigné",
           $"Bonjour {responsible.FirstName} {responsible.LastName},<br><br>" +
-          $"Le ticket '{ticket.Title}' (n°{ticket.Id}) vous a été assigné en tant que responsable."
+          $"Le ticket '{ticket.Title}' (n°{ticket.Id}) vous a été assigné en tant que responsable.",
+          responsible.Id
         ));
       }
 
@@ -492,6 +539,8 @@ namespace GestionTicketsAPI.Controllers
       var result = _ticketService.GetTicketCountByStatus(userId, role);
       return Ok(result);
     }
+
+
 
 
 

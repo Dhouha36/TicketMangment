@@ -21,7 +21,7 @@ import { OverlayModalService } from '../../_services/overlay-modal.service';
   selector: 'app-ajouter-utilisateur',
   imports: [CommonModule, ReactiveFormsModule, MatTooltipModule],
   templateUrl: './ajouter-utilisateur.component.html',
-  styleUrls: ['./ajouter-utilisateur.component.css']
+  styleUrls: ['./ajouter-utilisateur.component.scss']
 })
 export class AjouterUtilisateurComponent implements OnInit {
   registerForm: FormGroup;

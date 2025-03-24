@@ -13,7 +13,7 @@ import { ViewContainerRef } from '@angular/core';
   standalone: true,
   imports: [ReactiveFormsModule, NgFor, NgIf, FormsModule],
   templateUrl: './attach-project-dialog.component.html',
-  styleUrl: './attach-project-dialog.component.css'
+  styleUrl: './attach-project-dialog.component.scss'
 })
 export class AttachProjectDialogComponent implements OnInit {
   projets: Projet[] = [];

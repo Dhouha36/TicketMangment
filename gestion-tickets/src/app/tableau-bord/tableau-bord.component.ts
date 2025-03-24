@@ -12,7 +12,7 @@ import { DashboardService } from '../_services/dashboard.service'; // Nouveau se
   standalone: true,
   imports: [NgFor, NgxChartsModule, RouterLink],
   templateUrl: './tableau-bord.component.html',
-  styleUrls: ['./tableau-bord.component.css']
+  styleUrls: ['./tableau-bord.component.scss']
 })
 export class TableauBordComponent implements OnInit, AfterViewInit {
 

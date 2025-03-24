@@ -1,6 +1,7 @@
 using System.Text.Json;
 using GestionTicketsAPI.Extensions;
 using GestionTicketsAPI.Middleware;
+using GestionTicketsAPI.Services;
 using Hangfire;
 using Hangfire.MySql;
 
@@ -20,16 +21,33 @@ builder.Services.AddHangfire(configuration =>
 builder.Services.AddHangfireServer();
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddIdentityServices(builder.Configuration);
+
+builder.Services.AddSignalR();
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("CorsPolicy", policyBuilder =>
+    {
+        policyBuilder
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .WithOrigins("http://localhost:4200", "https://localhost:4200", "http://localhost:8085")
+            .AllowCredentials()
+            .WithExposedHeaders("Pagination");
+    });
+});
+
 var app = builder.Build();
 
 
-app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod().WithOrigins("http://localhost:4200", "https://localhost:4200").WithExposedHeaders("Pagination"));
+
+
 
 app.MapGet("/", () => "Bienvenue dans l'API GestionTicketsAPI !");
 
@@ -47,9 +65,15 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
+app.UseCors("CorsPolicy");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Mappage du hub SignalR pour les notifications en temps réel
+app.MapHub<NotificationHub>("/notificationHub");
+
 
 app.Run();

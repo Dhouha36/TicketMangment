@@ -4,12 +4,13 @@ import { map, Observable } from 'rxjs';
 import { Projet } from '../_models/Projet';
 import { ProjetMember } from '../_models/projet-member';
 import { PaginatedResult } from '../_models/pagination';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProjetService {
-  private baseUrl = 'https://localhost:5001/api/projets';  // URL de votre API
+  private baseUrl = environment.apiUrl + '/projets';  // URL de votre API
 
   paginatedResult: PaginatedResult<Projet[]> | null = null;
   constructor(private http: HttpClient) { }

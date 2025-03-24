@@ -56,7 +56,7 @@ public class CommentService : ICommentService
       return null;
 
     // Liste pour stocker les destinataires avec leur nom complet et email
-    var recipients = new List<(string Name, string Email)>();
+    var recipients = new List<(int Id,string Name, string Email)>();
 
     // Détermination des destinataires à notifier en fonction du rôle de l'auteur
     var senderRole = user.Role?.ToLower();
@@ -65,44 +65,44 @@ public class CommentService : ICommentService
     {
       // Le client notifie le chef de projet, le responsable et les super admins
       if (ticket.Projet?.ChefProjet != null && !string.IsNullOrEmpty(ticket.Projet.ChefProjet.Email))
-        recipients.Add((ticket.Projet.ChefProjet.FirstName + " " + ticket.Projet.ChefProjet.LastName, ticket.Projet.ChefProjet.Email));
+        recipients.Add((ticket.Projet.ChefProjet.Id, ticket.Projet.ChefProjet.FirstName + " " + ticket.Projet.ChefProjet.LastName, ticket.Projet.ChefProjet.Email));
       if (ticket.Responsible != null && !string.IsNullOrEmpty(ticket.Responsible.Email))
-        recipients.Add((ticket.Responsible.FirstName + " " + ticket.Responsible.LastName, ticket.Responsible.Email));
+        recipients.Add((ticket.Responsible.Id, ticket.Responsible.FirstName + " " + ticket.Responsible.LastName, ticket.Responsible.Email));
 
       var superAdmins = await _userService.GetUsersByRoleAsync("super admin");
-      recipients.AddRange(superAdmins.Select(sa => (sa.FirstName + " " + sa.LastName, sa.Email)));
+      recipients.AddRange(superAdmins.Select(sa => (sa.Id, sa.FirstName + " " + sa.LastName, sa.Email)));
     }
     else if (senderRole == "chef de projet")
     {
       // Le chef de projet notifie le client, le responsable et les super admins
       if (ticket.Owner != null && !string.IsNullOrEmpty(ticket.Owner.Email))
-        recipients.Add((ticket.Owner.FirstName + " " + ticket.Owner.LastName, ticket.Owner.Email));
+        recipients.Add((ticket.Owner.Id, ticket.Owner.FirstName + " " + ticket.Owner.LastName, ticket.Owner.Email));
       if (ticket.Responsible != null && !string.IsNullOrEmpty(ticket.Responsible.Email))
-        recipients.Add((ticket.Responsible.FirstName + " " + ticket.Responsible.LastName, ticket.Responsible.Email));
+        recipients.Add((ticket.Responsible.Id, ticket.Responsible.FirstName + " " + ticket.Responsible.LastName, ticket.Responsible.Email));
 
       var superAdmins = await _userService.GetUsersByRoleAsync("super admin");
-      recipients.AddRange(superAdmins.Select(sa => (sa.FirstName + " " + sa.LastName, sa.Email)));
+      recipients.AddRange(superAdmins.Select(sa => (sa.Id, sa.FirstName + " " + sa.LastName, sa.Email)));
     }
     else if (senderRole == "responsable")
     {
       // Le responsable notifie le client, le chef de projet et les super admins
       if (ticket.Owner != null && !string.IsNullOrEmpty(ticket.Owner.Email))
-        recipients.Add((ticket.Owner.FirstName + " " + ticket.Owner.LastName, ticket.Owner.Email));
+        recipients.Add((ticket.Owner.Id, ticket.Owner.FirstName + " " + ticket.Owner.LastName, ticket.Owner.Email));
       if (ticket.Projet?.ChefProjet != null && !string.IsNullOrEmpty(ticket.Projet.ChefProjet.Email))
-        recipients.Add((ticket.Projet.ChefProjet.FirstName + " " + ticket.Projet.ChefProjet.LastName, ticket.Projet.ChefProjet.Email));
+        recipients.Add((ticket.Projet.ChefProjet.Id, ticket.Projet.ChefProjet.FirstName + " " + ticket.Projet.ChefProjet.LastName, ticket.Projet.ChefProjet.Email));
 
       var superAdmins = await _userService.GetUsersByRoleAsync("super admin");
-      recipients.AddRange(superAdmins.Select(sa => (sa.FirstName + " " + sa.LastName, sa.Email)));
+      recipients.AddRange(superAdmins.Select(sa => (sa.Id, sa.FirstName + " " + sa.LastName, sa.Email)));
     }
     else if (senderRole == "super admin")
     {
       // Le super admin notifie le client, le chef de projet et le responsable
       if (ticket.Owner != null && !string.IsNullOrEmpty(ticket.Owner.Email))
-        recipients.Add((ticket.Owner.FirstName + " " + ticket.Owner.LastName, ticket.Owner.Email));
+        recipients.Add((ticket.Owner.Id, ticket.Owner.FirstName + " " + ticket.Owner.LastName, ticket.Owner.Email));
       if (ticket.Projet?.ChefProjet != null && !string.IsNullOrEmpty(ticket.Projet.ChefProjet.Email))
-        recipients.Add((ticket.Projet.ChefProjet.FirstName + " " + ticket.Projet.ChefProjet.LastName, ticket.Projet.ChefProjet.Email));
+        recipients.Add((ticket.Projet.ChefProjet.Id, ticket.Projet.ChefProjet.FirstName + " " + ticket.Projet.ChefProjet.LastName, ticket.Projet.ChefProjet.Email));
       if (ticket.Responsible != null && !string.IsNullOrEmpty(ticket.Responsible.Email))
-        recipients.Add((ticket.Responsible.FirstName + " " + ticket.Responsible.LastName, ticket.Responsible.Email));
+        recipients.Add((ticket.Responsible.Id, ticket.Responsible.FirstName + " " + ticket.Responsible.LastName, ticket.Responsible.Email));
     }
     // D'autres cas peuvent être ajoutés selon vos besoins
 
@@ -115,7 +115,7 @@ public class CommentService : ICommentService
     {
       // Ajout de la salutation personnalisée pour chaque destinataire
       var personalizedMessage = $"Bonjour {recipient.Name},<br><br>" + baseMessage;
-      await _emailService.SendEmailAsync(recipient.Name, recipient.Email, subject, personalizedMessage);
+      await _emailService.SendEmailAsync(recipient.Name, recipient.Email, subject, personalizedMessage, recipient.Id);
     }
 
     // Retourner le DTO du commentaire créé

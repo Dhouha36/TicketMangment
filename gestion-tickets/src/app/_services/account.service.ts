@@ -6,13 +6,14 @@ import { User } from '../_models/user';
 import { Pays } from '../_models/pays';
 import { Projet } from '../_models/Projet';
 import { Ticket } from '../_models/ticket';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AccountService {
   private http = inject(HttpClient);
-  baseUrl = 'https://localhost:5001/api/';
+  baseUrl = environment.apiUrl + '/';
   currentUser = signal<User | null>(this.getUserFromLocalStorage());
   paginatedResult = signal<PaginatedResult<User[]> | null>(null);
 

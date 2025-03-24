@@ -47,7 +47,8 @@ public class AccountController : BaseApiController
           $"{userDto.FirstName} {userDto.LastName}",
           userDto.Email,
           "Bienvenue dans notre application",
-          body // Utilisation du corps en HTML
+          body,
+          userDto.Id
       ));
 
       return Ok(userDto);

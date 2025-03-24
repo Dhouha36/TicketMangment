@@ -20,7 +20,7 @@ import { MatSidenavModule } from '@angular/material/sidenav';
   selector: 'app-ajouter-projet',
   imports: [CommonModule, FormsModule, NgIf, RouterLink, ReactiveFormsModule, MatSidenavModule],
   templateUrl: './ajouter-projet.component.html',
-  styleUrls: ['./ajouter-projet.component.css']
+  styleUrls: ['./ajouter-projet.component.scss']
 })
 export class AjouterProjetComponent implements OnInit {
   projetForm!: FormGroup;

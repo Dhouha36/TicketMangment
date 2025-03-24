@@ -15,7 +15,7 @@ import { LoaderService } from '../../_services/loader.service';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './ticket-validation-modal.component.html',
-  styleUrls: ['./ticket-validation-modal.component.css']
+  styleUrls: ['./ticket-validation-modal.component.scss']
 })
 export class TicketValidationModalComponent implements OnInit {
   @Input() ticket: Ticket | null = null;

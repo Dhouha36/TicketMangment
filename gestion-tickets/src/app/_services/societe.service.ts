@@ -4,6 +4,7 @@ import { map, Observable } from 'rxjs';
 import { Societe } from '../_models/societe';
 import { PaginatedResult } from '../_models/pagination';
 import { User } from '../_models/user';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,7 @@ export class SocieteService {
   getSocieteById(societeId: number) {
     throw new Error('Method not implemented.');
   }
-  private apiUrl = 'https://localhost:5001/api/societe'; 
+  private apiUrl = environment.apiUrl + '/societe'; 
   paginatedResult: PaginatedResult<Societe[]> | null = null;
 
   constructor(private http: HttpClient) {}

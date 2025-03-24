@@ -25,7 +25,7 @@ export const newPasswordMatchValidator: ValidatorFn = (control: AbstractControl)
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './user-profile.component.html',
-  styleUrls: ['./user-profile.component.css']
+  styleUrls: ['./user-profile.component.scss']
 })
 export class UserProfileComponent implements OnInit {
   userDetails: User | null = null;

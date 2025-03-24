@@ -24,7 +24,7 @@ import { MatListModule } from '@angular/material/list';
         FormsModule
     ],
     templateUrl: './user-selector-dialog.component.html',
-    styleUrls: ['./user-selector-dialog.component.css']
+    styleUrls: ['./user-selector-dialog.component.scss']
 })
 export class UserSelectorDialogComponent implements OnInit {
   users: User[] = [];

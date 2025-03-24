@@ -9,7 +9,7 @@ import { LoaderService } from '../../_services/loader.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './ticket-completion-modal.component.html',
-  styleUrls: ['./ticket-completion-modal.component.css']
+  styleUrls: ['./ticket-completion-modal.component.scss']
 })
 export class TicketCompletionModalComponent {
   @Input() ticket: any;

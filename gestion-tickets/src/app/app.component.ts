@@ -10,19 +10,22 @@ import { CommonModule } from '@angular/common';
 import { Observable } from 'rxjs';
 import { LoaderService } from './_services/loader.service';
 import localeFr from '@angular/common/locales/fr';
+import { PushNotificationService } from './_services/pushNotification.service';
+import { NotificationComponent } from './notification/notification.component';
 
 @Component({
     selector: 'app-root',
     imports: [RouterOutlet, MatDialogModule, OverlayModule,
       AngularEditorModule,
       NgxEditorModule,
-    CommonModule],
+    CommonModule,],
     templateUrl: './app.component.html',
     styleUrls: ['./app.component.css']
 })
 export class AppComponent implements OnInit {
   http = inject(HttpClient);
   private accountService = inject(AccountService);
+  private pushService = inject(PushNotificationService);
   private router = inject(Router);
   title = 'gestion-tickets';
   users: any;
@@ -30,6 +33,7 @@ export class AppComponent implements OnInit {
   
 
   ngOnInit(): void {
+    this.pushService.subscribeToPushNotifications();
     this.setCurrentUser();
   }
 

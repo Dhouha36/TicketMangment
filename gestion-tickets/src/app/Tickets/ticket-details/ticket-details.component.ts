@@ -26,7 +26,7 @@ registerLocaleData(localeFr);
     { provide: LOCALE_ID, useValue: 'fr-FR' }
   ],
   templateUrl: './ticket-details.component.html',
-  styleUrls: ['./ticket-details.component.css']
+  styleUrls: ['./ticket-details.component.scss']
 })
 export class TicketDetailsComponent implements OnInit {
   private route = inject(ActivatedRoute);

@@ -3,12 +3,13 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { CategorieProbleme } from '../_models/categorie-probleme.model';
 import { PaginatedResult } from '../_models/pagination';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CategorieProblemeService {
-  private baseUrl = 'https://localhost:5001/api/CategorieProbleme';
+  private baseUrl = environment.apiUrl + '/CategorieProbleme';
 
   constructor(private http: HttpClient) {}
 

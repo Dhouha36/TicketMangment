@@ -2,13 +2,13 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Contrat } from '../_models/contrat';
-
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ContratService {
-  baseUrl = 'https://localhost:5001/api/contrat/'
+  baseUrl = environment.apiUrl + '/contrat/'
 
   constructor(private http: HttpClient) {}
 

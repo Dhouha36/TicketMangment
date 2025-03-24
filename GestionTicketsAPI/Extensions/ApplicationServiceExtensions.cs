@@ -8,6 +8,7 @@ using GestionTicketsAPI.Repositories.Interfaces;
 using GestionTicketsAPI.Services;
 using GestionTicketsAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace GestionTicketsAPI.Extensions
@@ -60,6 +61,10 @@ namespace GestionTicketsAPI.Extensions
 
             services.AddScoped<ICommentService, CommentService>();
             services.AddScoped<IDashboardService, DashboardService>();
+            services.AddScoped<INotificationRepository, NotificationRepository>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
+            services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 
 
 

@@ -8,7 +8,7 @@ import { NgClass, NgIf } from '@angular/common';
     selector: 'app-login',
     imports: [NgClass, NgIf, ReactiveFormsModule],
     templateUrl: './login.component.html',
-    styleUrls: ['./login.component.css']
+    styleUrls: ['./login.component.scss']
 })
 export class LoginComponent {
   accountService = inject(AccountService);
@@ -34,7 +34,7 @@ export class LoginComponent {
     
     this.accountService.login(this.loginForm.value).subscribe({
       next: () => {
-        this.router.navigateByUrl('/home/TableauDeBord');
+        this.router.navigateByUrl('/home/dashboard');
       },
       error: (error) => {
         // Supposons que le backend renvoie une erreur Unauthorized avec le message dans error.error.message

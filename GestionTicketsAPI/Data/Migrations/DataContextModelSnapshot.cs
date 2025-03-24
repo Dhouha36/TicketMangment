@@ -112,6 +112,9 @@ namespace GestionTicketsAPI.Migrations
                     b.Property<DateTime>("DateEnvoi")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<bool>("EstLu")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("Message")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -123,7 +126,7 @@ namespace GestionTicketsAPI.Migrations
 
                     b.HasIndex("UtilisateurId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notification");
                 });
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Pays", b =>
@@ -254,6 +257,32 @@ namespace GestionTicketsAPI.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("ProjetUser");
+                });
+
+            modelBuilder.Entity("GestionTicketsAPI.Entities.PushSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("P256DH")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PushSubscriptions");
                 });
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Qualification", b =>
@@ -643,7 +672,7 @@ namespace GestionTicketsAPI.Migrations
                     b.HasOne("GestionTicketsAPI.Entities.User", "Owner")
                         .WithMany()
                         .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("GestionTicketsAPI.Entities.Priorite", "Priority")

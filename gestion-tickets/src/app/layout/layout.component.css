@@ -1,3 +1,14 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+.content {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding-bottom: 1rem; /* Espace en bas du contenu */
+}
+
 /* Container principal */
 .sidenav-container {
   height: 100%;
@@ -164,6 +175,135 @@ mat-nav-list a:hover:not(.active-nav-item) {
   background-color: #333; /* Exemple : fond assombri lorsque le modal est ouvert */
   transition: background-color 0.3s ease;
 }
+/* Styles spécifiques pour le sidenav de notifications */
+mat-sidenav[position="end"] {
+  width: 350px;
+  background-color: #f8f7f2; /* Couleur beige clair comme dans l'image */
+  border-left: 1px solid #e0e0e0;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* En-tête des notifications */
+.notifications-header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #fff;
+}
+
+.notifications-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+.notifications-header button {
+  font-size: 12px;
+  color: #666;
+  text-transform: none;
+  min-width: auto;
+  padding: 0 8px;
+}
+
+/* Liste des notifications */
+.notifications-list {
+  padding: 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 64px - 50px); /* Hauteur totale moins header et marge */
+}
+
+/* Style pour chaque notification */
+.notification-item {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  position: relative;
+  background-color: #f8f7f2;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-item:hover {
+  background-color: #f0efe9;
+}
+
+/* Texte de la notification */
+.notification-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-text p {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+/* Bouton Voir */
+.notification-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.notification-actions button {
+  color: #c77c2e; /* Couleur orange comme dans l'image */
+  font-size: 13px;
+  padding: 0;
+  min-width: auto;
+  font-weight: normal;
+  text-transform: none;
+  line-height: 1;
+}
+
+/* Bouton de fermeture (X) */
+.notification-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #999;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 50%;
+}
+
+.notification-close:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Message quand il n'y a pas de notifications */
+.notifications-list p {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+}
+
+/* Titre en haut */
+.notifications-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.notifications-title h3 {
+  margin: 0;
+  font-weight: 500;
+}
+
 
 
 

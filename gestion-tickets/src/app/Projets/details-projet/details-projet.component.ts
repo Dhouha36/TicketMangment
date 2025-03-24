@@ -25,7 +25,7 @@ import { ConfirmModalComponent } from '../../confirm-modal/confirm-modal.compone
     selector: 'app-details-projet',
     imports: [FormsModule, CommonModule, NgSelectModule, MatDialogModule],
     templateUrl: './details-projet.component.html',
-    styleUrls: ['./details-projet.component.css']
+    styleUrls: ['./details-projet.component.scss']
 })
 export class DetailsProjetComponent implements OnInit {
   // --- Données du projet et membres ---

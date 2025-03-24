@@ -16,7 +16,7 @@ namespace GestionTicketsAPI.Data
     public DbSet<Commentaire> Commentaires { get; set; }
     public DbSet<Projet> Projets { get; set; }
     public DbSet<Contrat> Contrats { get; set; }
-    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Notification> Notification { get; set; }
     public DbSet<Photo> Photos { get; set; }
     public DbSet<ProjetUser> ProjetUser { get; set; }
     public DbSet<CategorieProbleme> CategorieProblemes { get; set; }
@@ -28,6 +28,7 @@ namespace GestionTicketsAPI.Data
     public DbSet<StatutDesTicket> StatutsDesTickets { get; set; }
 
     public DbSet<SocieteUser> SocieteUsers { get; set; }
+    public DbSet<PushSubscription> PushSubscriptions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

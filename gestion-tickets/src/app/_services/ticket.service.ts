@@ -7,12 +7,13 @@ import { TicketUpdateDto } from '../_models/ticketUpdateDto';
 import { TicketValidationDto } from '../_models/ticket-validation.dto';
 import { FinishTicketDto } from '../_models/finish-ticket-dto';
 import { AccountService } from './account.service';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TicketService {
-  private baseUrl = 'https://localhost:5001/api/tickets';
+  private baseUrl = environment.apiUrl + '/tickets';
 
   constructor(
     private http: HttpClient,

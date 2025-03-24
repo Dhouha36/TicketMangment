@@ -1,141 +1,76 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { LoginComponent } from './login/login.component';
-import { HomeComponent } from './home/home.component';
-import { authGuard } from './_guards/auth.guard';
+import { LayoutComponent } from './layout/layout.component'; // Composant qui contient header + sidenav
 import { TestErrorsComponent } from './errors/test-errors/test-errors.component';
 import { NotFoundComponent } from './errors/not-found/not-found.component';
 import { ServerErrorComponent } from './errors/server-error/server-error.component';
-import { DashboardComponent } from './dashboard/dashboard.component';
-import { ListUtilisateursComponent } from './utilisateurs/list-utilisateurs/list-utilisateurs.component';
-import { AjouterUtilisateurComponent } from './utilisateurs/ajouter-utilisateur/ajouter-utilisateur.component';
-import { PaysComponent } from './PaysFile/pays/pays.component';
-import { ModifierPaysComponent } from './PaysFile/modifier-pays/modifier-pays.component';
-import { AjouterPaysComponent } from './PaysFile/ajouter-pays/ajouter-pays.component';
-import { ListeProjetsComponent } from './Projets/liste-projets/liste-projets.component';
-import { ListeSocietesComponent } from './Societes/liste-societes/liste-societes.component';
-import { AjouterProjetComponent } from './Projets/ajouter-projet/ajouter-projet.component';
-import { DetailsProjetComponent } from './Projets/details-projet/details-projet.component';
-import { AjouterSocieteComponent } from './Societes/ajouter-societe/ajouter-societe.component';
-import { ModifierSocieteComponent } from './Societes/modifier-societe/modifier-societe.component';
-import { DetailsUtilisateurComponent } from './utilisateurs/details-utilisateur/details-utilisateur.component';
-import { CategoriesComponent } from './Categoriess/categories/categories.component';
-import { RoleGuard } from './_guards/role.guard';
-import { ListTicketsComponent } from './Tickets/list-tickets/list-tickets.component';
-import { AjouterTicketComponent } from './Tickets/ajouter-ticket/ajouter-ticket.component';
-import { TicketDetailsComponent } from './Tickets/ticket-details/ticket-details.component';
+import { authGuard } from './_guards/auth.guard';
 import { TableauBordComponent } from './tableau-bord/tableau-bord.component';
-import { UserProfileComponent } from './user-profile/user-profile.component';
 
 export const routes: Routes = [
+  // Page de login
   { path: '', component: LoginComponent },
+
+  // Layout principal : header + sidenav
   {
     path: 'home',
+    component: LayoutComponent,       // <-- Le composant parent (layout)
     runGuardsAndResolvers: 'always',
     canActivate: [authGuard],
-    component: HomeComponent,
     children: [
-      { path: 'dashboard', component: DashboardComponent },
-      { path: 'TableauDeBord', component: TableauBordComponent },
-      { path: 'Tickets', component: ListTicketsComponent },
-      { path: 'Tickets/ajouterTicket', component: AjouterTicketComponent },
-      { path: 'Tickets/details/:id', component: TicketDetailsComponent },
-      { path: 'profile', component: UserProfileComponent },
+      { path: 'dashboard', component: TableauBordComponent },
+      {
+        path: 'Tickets',
+        loadChildren: () =>
+          import('./Tickets/tickets.module').then(m => m.TicketsModule),
+      },
+      {
+        path: 'profile',
+        loadChildren: () =>
+          import('./user-profile/user-profile.module').then(m => m.UserProfileModule),
+      },
       {
         path: 'utilisateurs',
-        component: ListUtilisateursComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
-      },
-      {
-        path: 'utilisateurs/AjouterUtilisateur',
-        component: AjouterUtilisateurComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
-      },
-      {
-        path: 'utilisateurs/details/:id',
-        component: DetailsUtilisateurComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
+        loadChildren: () =>
+          import('./utilisateurs/utilisateurs.module').then(m => m.UtilisateursModule),
       },
       {
         path: 'Pays',
-        component: PaysComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
-      },
-      {
-        path: 'Pays/ajouterPays',
-        component: AjouterPaysComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
-      },
-      {
-        path: 'Pays/ModifierPays/:id',
-        component: ModifierPaysComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
+        loadChildren: () =>
+          import('./PaysFile/pays.module').then(m => m.PaysModule),
       },
       {
         path: 'Projets',
-        component: ListeProjetsComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin', 'Chef de Projet', 'Collaborateur'] }
-      },
-      {
-        path: 'Projets/ajouterProjet',
-        component: AjouterProjetComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin', 'Chef de Projet'] }
-      },
-      {
-        path: 'Projets/details/:id',
-        component: DetailsProjetComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin', 'Chef de Projet', 'Collaborateur'] }
+        loadChildren: () =>
+          import('./Projets/projets.module').then(m => m.ProjetsModule),
       },
       {
         path: 'Societes',
-        component: ListeSocietesComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
-      },
-      {
-        path: 'Societes/ajouterSociete',
-        component: AjouterSocieteComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
-      },
-      {
-        path: 'Societes/modifierSociete/:id',
-        component: ModifierSocieteComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
+        loadChildren: () =>
+          import('./Societes/societes.module').then(m => m.SocietesModule),
       },
       {
         path: 'Categories',
-        component: CategoriesComponent,
-        canActivate: [RoleGuard],
-        data: { roles: ['Super Admin'] }
+        loadChildren: () =>
+          import('./Categoriess/categories.module').then(m => m.CategoriesModule),
       },
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
+      // Route par défaut quand on tape /home
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
+
+  // Routes d'erreur
   { path: 'errors', component: TestErrorsComponent },
   { path: 'not-found', component: NotFoundComponent },
   { path: 'server-error', component: ServerErrorComponent },
-  { path: '**', component: LoginComponent, pathMatch: 'full' }
+
+  // Wildcard : tout chemin inconnu redirige vers login ou vers 'not-found'
+  { path: '**', redirectTo: '' }
 ];
 
 @NgModule({
-  imports: [
-    RouterModule.forRoot(routes, { 
-      anchorScrolling: 'enabled',
-      scrollOffset: [0, 1000],
-      onSameUrlNavigation: 'reload'
-    })
-  ],
+  imports: [RouterModule.forRoot(routes)],
   exports: [RouterModule]
 })
-export class AppRoutingModule { }
+export class AppRoutingModule {}

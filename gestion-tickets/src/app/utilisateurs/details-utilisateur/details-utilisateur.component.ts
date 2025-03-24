@@ -33,7 +33,7 @@ import { OverlayModalService } from '../../_services/overlay-modal.service';
   selector: 'app-details-utilisateur',
   imports: [FormsModule, NgIf, NgFor, CommonModule, PipesModule, ReactiveFormsModule, DefaultPipe],
   templateUrl: './details-utilisateur.component.html',
-  styleUrls: ['./details-utilisateur.component.css']
+  styleUrls: ['./details-utilisateur.component.scss']
 })
 export class DetailsUtilisateurComponent implements OnInit {
   private user: User | null = null;  // stocke les données utilisateur récupérées

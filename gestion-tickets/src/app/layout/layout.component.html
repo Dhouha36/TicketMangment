@@ -1,8 +1,12 @@
+<app-header (toggleNotifications)="toggleNotificationSidenav()"></app-header>
+
 <mat-sidenav-container class="sidenav-container" [class.modal-open]="isModalOpen">
-  <mat-sidenav [mode]="sidenavMode" [(opened)]="isSidenavOpen">
+
+  <!-- Sidenav principal (menu) à gauche -->
+  <mat-sidenav #menuSidenav [mode]="sidenavMode" [(opened)]="isSidenavOpen" position="start">
     <mat-nav-list>
-      <!-- Liens communs à tous les rôles -->
-      <a mat-list-item [disableRipple]="true" [routerLink]="['/home', 'TableauDeBord']" routerLinkActive="active-nav-item">
+      <!-- Liens communs -->
+      <a mat-list-item [routerLink]="['/home', 'dashboard']" routerLinkActive="active-nav-item">
         <div class="menu-item">
           <mat-icon class="nav-icon">home</mat-icon>
           <span class="nav-text">Tableau de bord</span>
@@ -14,18 +18,15 @@
           <span class="nav-text">Tickets</span>
         </div>
       </a>
-
-      <!-- Lien « Catégories des Problèmes » uniquement pour Super Admin -->
+      <!-- Lien spécifique pour Super Admin -->
       <a mat-list-item *ngIf="isSuperAdmin()" [routerLink]="['/home', 'Categories']" routerLinkActive="active-nav-item">
         <div class="menu-item">
           <mat-icon class="nav-icon">link</mat-icon>
           <span class="nav-text">Catégories des Problèmes</span>
         </div>
       </a>
-
-      <!-- Section DONNÉES DE BASE -->
+      <!-- Section Données de Base -->
       <div class="section-divider"></div>
-      <!-- Pour Super Admin : afficher tous les éléments de base -->
       <ng-container *ngIf="isSuperAdmin()">
         <div class="menu-section">
           <div class="section-title" (click)="toggleBaseData()">
@@ -60,8 +61,7 @@
           </div>
         </div>
       </ng-container>
-
-      <!-- Pour Chef de Projet et Développeur : afficher uniquement « Projets » -->
+      <!-- Pour Chef de Projet et Collaborateur -->
       <ng-container *ngIf="isChefDeProjet() || isCollaborateur()">
         <div class="menu-section">
           <div class="section-title" (click)="toggleBaseData()">
@@ -78,9 +78,7 @@
           </div>
         </div>
       </ng-container>
-      <!-- Pour Client : pas de section « Données de Base » -->
-
-      <!-- Section COMPTE : visible pour tous -->
+      <!-- Section Compte -->
       <div *ngIf="isChefDeProjet() || isCollaborateur() || isSuperAdmin()" class="section-divider"></div>
       <div class="menu-section">
         <div class="section-title" (click)="toggleAccount()">
@@ -98,11 +96,42 @@
       </div>
     </mat-nav-list>
   </mat-sidenav>
+
+  <!-- Sidenav pour les notifications (à droite) -->
+  <mat-sidenav #notifSidenav mode="over" [(opened)]="isNotificationSidenavOpen" position="end">
+    <div class="notifications-header">
+      <h2>Notifications</h2>
+      <button mat-button (click)="markAllAsRead()">Tout marquer comme lu</button>
+      <button mat-button (click)="clearNotifications()">Effacer</button>
+    </div>
+    <mat-divider></mat-divider>
+    <div class="notifications-list">
+      <div *ngIf="notifications && notifications.length > 0; else noNotif">
+        <div *ngFor="let notif of notifications" class="notification-item">
+          <div class="notification-text">
+            <p>{{ notif.message }}</p>
+            <span class="notification-time">{{ notif.dateEnvoi | date:'shortTime' }}</span>
+          </div>
+          <div class="notification-actions">
+            <button mat-button color="primary" (click)="removeNotification(notif.id)">Supprimer</button>
+          </div>
+        </div>
+      </div>
+      <ng-template #noNotif>
+        <p>Aucune notification</p>
+      </ng-template>
+    </div>
+  </mat-sidenav>
+
+  <!-- Contenu principal -->
   <mat-sidenav-content>
+    <!-- Optionnel : fond cliquable pour fermer le menu principal en mode over -->
     <div class="sidenav-backdrop" 
-       *ngIf="sidenavMode === 'over' && isSidenavOpen"
-       (click)="isSidenavOpen = false">
-  </div>
-    <router-outlet></router-outlet>
+         *ngIf="sidenavMode === 'over' && isSidenavOpen"
+         (click)="isSidenavOpen = false">
+    </div>
+    <div class="content">
+      <router-outlet></router-outlet>
+    </div>
   </mat-sidenav-content>
 </mat-sidenav-container>
