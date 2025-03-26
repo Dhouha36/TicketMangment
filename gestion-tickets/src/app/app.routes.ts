@@ -1,16 +1,20 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { LoginComponent } from './login/login.component';
+import { LoginComponent } from './connexion/login/login.component';
 import { LayoutComponent } from './layout/layout.component'; // Composant qui contient header + sidenav
 import { TestErrorsComponent } from './errors/test-errors/test-errors.component';
 import { NotFoundComponent } from './errors/not-found/not-found.component';
 import { ServerErrorComponent } from './errors/server-error/server-error.component';
 import { authGuard } from './_guards/auth.guard';
 import { TableauBordComponent } from './tableau-bord/tableau-bord.component';
+import { ForgotPasswordComponent } from './connexion/forgot-password/forgot-password.component';
+import { ResetPasswordComponent } from './connexion/reset-password/reset-password.component';
 
 export const routes: Routes = [
   // Page de login
   { path: '', component: LoginComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
 
   // Layout principal : header + sidenav
   {

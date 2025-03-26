@@ -28,9 +28,11 @@ export class AccountService {
           localStorage.setItem('user', JSON.stringify(user));
           this.currentUser.set(user);
         }
+        return user; // Ajout du return pour renvoyer l'objet utilisateur
       })
     );
   }
+  
 
   logout() {
     localStorage.removeItem('user');
@@ -146,5 +148,14 @@ export class AccountService {
   getUsersByRole(roleName: string): Observable<User[]> {
     return this.http.get<User[]>(`${this.baseUrl}users/role/${roleName}`);
   }
+
+  forgotPassword(email: string) {
+    return this.http.post(this.baseUrl + 'account/forgot-password', { email });
+  }
+
+  resetPassword(dto: { email: string; token: string; newPassword: string }): Observable<any> {
+    return this.http.post(this.baseUrl + 'account/reset-password', dto);
+  }
+  
   
 }

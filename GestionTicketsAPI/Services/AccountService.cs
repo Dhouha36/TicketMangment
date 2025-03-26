@@ -3,9 +3,12 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using GestionTicketsAPI.Data;
 using GestionTicketsAPI.DTOs;
 using GestionTicketsAPI.Entities;
+using GestionTicketsAPI.Helpers;
 using GestionTicketsAPI.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestionTicketsAPI.Services
 {
@@ -15,8 +18,10 @@ namespace GestionTicketsAPI.Services
     private readonly ISocieteRepository _societeRepository;
     private readonly ITokenService _tokenService;
     private readonly IMapper _mapper;
+    private readonly DataContext _context;
 
     public AccountService(
+        DataContext context,
         IAccountRepository accountRepository,
         ISocieteRepository societeRepository,
         ITokenService tokenService,
@@ -26,6 +31,7 @@ namespace GestionTicketsAPI.Services
       _societeRepository = societeRepository;
       _tokenService = tokenService;
       _mapper = mapper;
+      _context = context;
     }
 
     public async Task<UserDto> RegisterAsync(RegisterDto registerDto)
@@ -122,6 +128,52 @@ namespace GestionTicketsAPI.Services
       userDto.Token = _tokenService.CreateToken(user);
 
       return userDto;
+    }
+
+    public async Task<User> GetUserByEmailAsync(string email)
+    {
+      // Par exemple, utiliser le repository pour récupérer l'utilisateur
+      return await _accountRepository.GetUserByEmailAsync(email);
+    }
+
+    public async Task SavePasswordResetToken(User user, string token)
+    {
+      // Supprimer un éventuel token existant pour l'utilisateur
+      var existingToken = await _context.PasswordResetTokens.FirstOrDefaultAsync(p => p.UserId == user.Id);
+      if (existingToken != null)
+      {
+        _context.PasswordResetTokens.Remove(existingToken);
+      }
+
+      var resetToken = new PasswordResetToken
+      {
+        UserId = user.Id,
+        Token = token,
+        Expiration = DateTime.UtcNow.AddHours(1) // par exemple 1 heure de validité
+      };
+
+      _context.PasswordResetTokens.Add(resetToken);
+      await _context.SaveChangesAsync();
+    }
+
+    public async Task<PasswordResetToken> GetPasswordResetToken(User user)
+    {
+      return await _context.PasswordResetTokens.FirstOrDefaultAsync(p => p.UserId == user.Id);
+    }
+
+    public async Task RemovePasswordResetToken(User user)
+    {
+      var tokenEntity = await _context.PasswordResetTokens.FirstOrDefaultAsync(p => p.UserId == user.Id);
+      if (tokenEntity != null)
+      {
+        _context.PasswordResetTokens.Remove(tokenEntity);
+        await _context.SaveChangesAsync();
+      }
+    }
+
+    public async Task<bool> SaveAllAsync()
+    {
+      return await _context.SaveChangesAsync() > 0;
     }
   }
 }

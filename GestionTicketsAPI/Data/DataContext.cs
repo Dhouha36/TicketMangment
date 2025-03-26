@@ -28,6 +28,7 @@ namespace GestionTicketsAPI.Data
     public DbSet<StatutDesTicket> StatutsDesTickets { get; set; }
 
     public DbSet<SocieteUser> SocieteUsers { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
