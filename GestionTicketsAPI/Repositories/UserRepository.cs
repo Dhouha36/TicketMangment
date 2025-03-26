@@ -98,7 +98,7 @@ namespace GestionTicketsAPI.Repositories
         _context.Contrats.RemoveRange(userContracts);
       }
 
-  
+
 
       // Réassigner les projets où l'utilisateur est ChefProjet
       var projectsAsChef = await _context.Projets
@@ -146,37 +146,75 @@ namespace GestionTicketsAPI.Repositories
     // Implémentation de GetUserProjectsAsync
     public async Task<PagedList<Projet>> GetUserProjectsAsync(int userId, UserParams userParams)
     {
-      var query = _context.ProjetUser
-        .Include(pm => pm.Projet)
-            .ThenInclude(p => p.Pays)
-        .Include(pm => pm.Projet)
-            .ThenInclude(p => p.Societe)
-        .Where(pm => pm.UserId == userId)
-        .Select(pm => pm.Projet)
-        .AsQueryable();
+      // Projets associés via l'entité ProjetUser
+      var associatedProjects = _context.ProjetUser
+          .Include(pm => pm.Projet)
+              .ThenInclude(p => p.Pays)
+          .Include(pm => pm.Projet)
+              .ThenInclude(p => p.Societe)
+          .Where(pm => pm.UserId == userId)
+          .Select(pm => pm.Projet);
+
+      // Projets où l'utilisateur est ChefProjet
+      var chefProjects = _context.Projets
+          .Include(p => p.Pays)
+          .Include(p => p.Societe)
+          .Where(p => p.ChefProjetId == userId);
+
+      // Combinaison des deux requêtes
+      var combinedQuery = associatedProjects.Union(chefProjects).AsQueryable();
 
       if (!string.IsNullOrEmpty(userParams.SearchTerm))
       {
-        query = query.Where(p => p.Nom.Contains(userParams.SearchTerm));
+        combinedQuery = combinedQuery.Where(p => p.Nom.Contains(userParams.SearchTerm));
       }
 
-      return await PagedList<Projet>.CreateAsync(query, userParams.PageNumber, userParams.PageSize);
+      return await PagedList<Projet>.CreateAsync(combinedQuery, userParams.PageNumber, userParams.PageSize);
     }
+
 
     // Implémentation de GetUserTicketsAsync
     public async Task<PagedList<Ticket>> GetUserTicketsAsync(int userId, UserParams userParams)
     {
-      var query = _context.Tickets
-          .Where(t => t.OwnerId == userId) // Mise à jour : Utiliser OwnerId
-          .AsQueryable();
+      // Récupérer d'abord les identifiants des tickets
+      var ownerTicketIds = _context.Tickets
+          .Where(t => t.OwnerId == userId)
+          .Select(t => t.Id);
+
+      var responsibleTicketIds = _context.Tickets
+          .Where(t => t.ResponsibleId == userId)
+          .Select(t => t.Id);
+
+      var chefTicketIds = _context.Tickets
+          .Where(t => t.Projet.ChefProjetId == userId)
+          .Select(t => t.Id);
+
+      var associatedTicketIds = _context.Tickets
+          .Where(t => _context.ProjetUser.Any(pu => pu.ProjetId == t.ProjetId && pu.UserId == userId))
+          .Select(t => t.Id);
+
+      var combinedIds = ownerTicketIds
+          .Union(responsibleTicketIds)
+          .Union(chefTicketIds)
+          .Union(associatedTicketIds);
+
+      // Ensuite, chargez les tickets avec tous les Include nécessaires
+      var combinedQuery = _context.Tickets
+          .Include(t => t.Projet)
+          .Include(t => t.Owner)
+          .Include(t => t.Responsible)
+          .Include(t => t.ProblemCategory)
+          .Where(t => combinedIds.Contains(t.Id));
 
       if (!string.IsNullOrEmpty(userParams.SearchTerm))
       {
-        query = query.Where(t => t.Title.Contains(userParams.SearchTerm)); // Mise à jour : Utiliser Title
+        combinedQuery = combinedQuery.Where(t => t.Title.Contains(userParams.SearchTerm));
       }
 
-      return await PagedList<Ticket>.CreateAsync(query, userParams.PageNumber, userParams.PageSize);
+      return await PagedList<Ticket>.CreateAsync(combinedQuery, userParams.PageNumber, userParams.PageSize);
+
     }
+
 
     // Méthode Update pour marquer l'entité comme modifiée
     public void Update(User user)

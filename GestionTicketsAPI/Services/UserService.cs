@@ -68,11 +68,11 @@ namespace GestionTicketsAPI.Services
       return pagedProjetDtos;
     }
 
-    public async Task<PagedList<Ticket>> GetUserTicketsPagedAsync(int userId, UserParams userParams)
+    public async Task<PagedList<TicketDto>> GetUserTicketsPagedAsync(int userId, UserParams userParams)
     {
       var ticketsPaged = await _userRepository.GetUserTicketsAsync(userId, userParams);
-      var ticketDtos = _mapper.Map<IEnumerable<Ticket>>(ticketsPaged.ToList());
-      var pagedTicketDtos = new PagedList<Ticket>(
+      var ticketDtos = _mapper.Map<IEnumerable<TicketDto>>(ticketsPaged.ToList());
+      var pagedTicketDtos = new PagedList<TicketDto>(
           ticketDtos.ToList(),
           ticketsPaged.TotalCount,
           ticketsPaged.CurrentPage,
@@ -80,6 +80,7 @@ namespace GestionTicketsAPI.Services
       );
       return pagedTicketDtos;
     }
+
 
     // Ajout de la fonctionnalité de mise à jour d'un utilisateur
     public async Task<bool> UpdateUserAsync(UserUpdateDto userUpdateDto)

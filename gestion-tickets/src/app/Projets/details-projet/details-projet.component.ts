@@ -112,12 +112,26 @@ export class DetailsProjetComponent implements OnInit {
     if (this.projet && this.projet.id) {
       this.projetService.getMembresProjet(this.projet.id).subscribe({
         next: (data: ProjetMember[]) => {
+          // Affecte la liste des membres récupérée
           this.membres = data;
+          // Si un chef de projet est défini et qu'il n'est pas déjà dans la liste, on l'ajoute
+          if (this.projet.chefProjet && !this.membres.some(m => m.userId === this.projet.chefProjet!.id)) {
+            const chefMember: ProjetMember = {
+              projetId: this.projet.id, // Ajout de la propriété manquante
+              userId: this.projet.chefProjet.id,
+              firstName: this.projet.chefProjet.firstName,
+              lastName: this.projet.chefProjet.lastName,
+              role: this.projet.chefProjet.role ? this.projet.chefProjet.role : 'Chef de projet',
+              selected: false
+            };
+            this.membres.unshift(chefMember);
+          }          
         },
         error: (err) => { console.error('Erreur lors du chargement des membres', err); }
       });
     }
   }
+  
 
   // --- Filtrage et pagination des membres (client-side) ---
   get displayedMembres(): ProjetMember[] {

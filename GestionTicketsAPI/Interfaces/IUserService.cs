@@ -13,7 +13,7 @@ public interface IUserService
         // Nouvelle méthode sans pagination
         Task<IEnumerable<UserDto>> GetAllUsersNoPaginationAsync();
         Task<PagedList<ProjetDto>> GetUserProjectsPagedAsync(int userId, UserParams userParams);
-        Task<PagedList<Ticket>> GetUserTicketsPagedAsync(int userId, UserParams userParams);
+        Task<PagedList<TicketDto>> GetUserTicketsPagedAsync(int userId, UserParams userParams);
         
         // Récupère un utilisateur par son identifiant et le transforme en DTO
         Task<UserDto?> GetUserByIdAsync(int id);

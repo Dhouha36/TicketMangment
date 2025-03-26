@@ -219,7 +219,6 @@
         <tr>
           <th>Nom du projet</th>
           <th>Pays</th>
-          <th>Description</th>
           <th></th>
         </tr>
       </thead>
@@ -228,7 +227,6 @@
           <tr *ngFor="let projet of displayedProjects">
             <td>{{ projet.nom | default:'Aucun' }}</td>
             <td>{{ projet.nomPays | default:'Aucun pays' }}</td>
-            <td>{{ projet.description | default:'Aucune description' }}</td>
             <td class="actions">
               <button class="view-btn" (click)="viewProjet(projet.id)">
                 <span class="material-icons">visibility</span>

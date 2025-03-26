@@ -18,6 +18,7 @@ public class ProjetRepository : IProjetRepository
   public async Task<IEnumerable<Projet>> GetProjetsAsync()
   {
     return await _context.Projets
+        .Include(p => p.ChefProjet)
         .Include(p => p.Societe)
             .ThenInclude(s => s.Pays)
         .Include(p => p.ProjetUsers)
@@ -27,6 +28,7 @@ public class ProjetRepository : IProjetRepository
   public async Task<PagedList<Projet>> GetProjetsPagedAsync(UserParams projetParams)
   {
     var query = _context.Projets
+        .Include(p => p.ChefProjet)   
         .Include(p => p.Societe)
             .ThenInclude(s => s.Pays)
         .OrderByDescending(t => t.CreatedAt)
@@ -50,6 +52,7 @@ public class ProjetRepository : IProjetRepository
   public async Task<Projet?> GetProjetByIdAsync(int id)
   {
     return await _context.Projets
+        .Include(p => p.ChefProjet)
         .Include(p => p.Societe)
             .ThenInclude(s => s.Pays)
         .Include(p => p.ProjetUsers)

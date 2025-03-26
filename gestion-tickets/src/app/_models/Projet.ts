@@ -8,10 +8,10 @@ export interface Projet {
   societeId?: number | null;
   clientId?: number | null;
   chefProjetId?: number;
+  chefProjet?: User;
   idPays: number;
   nomSociete?: string;  
   nomPays?: string;    
   selected?: boolean; 
   utilisateurs?: User[];
 }
-

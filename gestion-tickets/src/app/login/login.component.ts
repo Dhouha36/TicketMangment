@@ -34,7 +34,7 @@ export class LoginComponent {
     
     this.accountService.login(this.loginForm.value).subscribe({
       next: () => {
-        this.router.navigateByUrl('/home/TableauDeBord');
+        this.router.navigateByUrl('/home/dashboard');
       },
       error: (error) => {
         // Supposons que le backend renvoie une erreur Unauthorized avec le message dans error.error.message

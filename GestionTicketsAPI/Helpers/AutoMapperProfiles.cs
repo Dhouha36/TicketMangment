@@ -26,9 +26,10 @@ namespace GestionTicketsAPI.Helpers
           .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.paysPhoto != null ? src.paysPhoto.Url : null))
           .ForMember(dest => dest.CodeTel, opt => opt.MapFrom(src => src.CodeTel));
       CreateMap<PaysUpdateDto, Pays>();
-      CreateMap<Projet, ProjetDto>()
-          .ForMember(dest => dest.NomPays, opt => opt.MapFrom(src => src.Societe.Pays.Nom))
-          .ForMember(dest => dest.NomSociete, opt => opt.MapFrom(src => src.Societe.Nom));
+        CreateMap<Projet, ProjetDto>()
+            .ForMember(dest => dest.NomPays, opt => opt.MapFrom(src => src.Societe.Pays.Nom))
+            .ForMember(dest => dest.NomSociete, opt => opt.MapFrom(src => src.Societe.Nom))
+            .ForMember(dest => dest.ChefProjet, opt => opt.MapFrom(src => src.ChefProjet));
       CreateMap<ProjetDto, Projet>()
           .ForMember(dest => dest.IdPays, opt => opt.Ignore())
           .ForMember(dest => dest.ChefProjetId, opt => opt.MapFrom(src => src.ChefProjetId));
@@ -49,21 +50,20 @@ namespace GestionTicketsAPI.Helpers
 
       // Mise à jour pour l'entité Ticket et ses DTOs :
       CreateMap<Ticket, TicketDto>()
-          .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.Owner))
-          .ForMember(dest => dest.ProblemCategory, opt => opt.MapFrom(src => src.ProblemCategory))
-          .ForMember(dest => dest.Projet, opt => opt.MapFrom(src => src.Projet))
-          .ForMember(dest => dest.Responsible, opt => opt.MapFrom(src => src.Responsible))
-          // Conversion des dates en heure locale
-          .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt.ToLocalTime()))
-          .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt.HasValue
-                                                                      ? src.UpdatedAt.Value.ToLocalTime()
-                                                                      : (DateTime?)null))
-          .ForMember(dest => dest.ApprovedAt, opt => opt.MapFrom(src => src.ApprovedAt.HasValue
-                                                                      ? src.ApprovedAt.Value.ToLocalTime()
-                                                                      : (DateTime?)null))
-          .ForMember(dest => dest.SolvedAt, opt => opt.MapFrom(src => src.SolvedAt.HasValue
-                                                                      ? src.SolvedAt.Value.ToLocalTime()
-                                                                      : (DateTime?)null))
+            .ForMember(dest => dest.Owner, opt => opt.MapFrom(src => src.Owner))
+            .ForMember(dest => dest.ProblemCategory, opt => opt.MapFrom(src => src.ProblemCategory))
+            .ForMember(dest => dest.Projet, opt => opt.MapFrom(src => src.Projet))
+            .ForMember(dest => dest.Responsible, opt => opt.MapFrom(src => src.Responsible))
+            .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => src.CreatedAt.ToLocalTime()))
+            .ForMember(dest => dest.UpdatedAt, opt => opt.MapFrom(src => src.UpdatedAt.HasValue
+                                                                        ? src.UpdatedAt.Value.ToLocalTime()
+                                                                        : (DateTime?)null))
+            .ForMember(dest => dest.ApprovedAt, opt => opt.MapFrom(src => src.ApprovedAt.HasValue
+                                                                        ? src.ApprovedAt.Value.ToLocalTime()
+                                                                        : (DateTime?)null))
+            .ForMember(dest => dest.SolvedAt, opt => opt.MapFrom(src => src.SolvedAt.HasValue
+                                                                        ? src.SolvedAt.Value.ToLocalTime()
+                                                                        : (DateTime?)null))
           .ReverseMap()
               .ForMember(dest => dest.Owner, opt => opt.Ignore())
               .ForMember(dest => dest.ProblemCategory, opt => opt.Ignore())

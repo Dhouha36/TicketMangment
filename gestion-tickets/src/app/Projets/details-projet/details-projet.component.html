@@ -56,8 +56,15 @@
         </div>
       </div>
     </div>
-    
-    
+
+    <!-- Chef de projet -->
+    <div class="info-item chef-projet">
+      <span class="info-label">Chef de projet</span>
+      <span class="info-value" *ngIf="!editMode && projet && projet.chefProjet">
+        {{ projet.chefProjet.firstName }} {{ projet.chefProjet.lastName }}
+      </span>
+    </div>
+
   </div>
 
   <!-- Boutons d'édition / sauvegarde / annulation -->
@@ -84,7 +91,9 @@
         <td colspan="4">
           <div class="header-actions">
             <div class="left-actions">
-              <button class="add-user-btn" *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet'"  (click)="openUserSelector()">
+              <button class="add-user-btn"
+                *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet'"
+                (click)="openUserSelector()">
                 <span class="material-icons">person_add</span>
               </button>
             </div>
@@ -109,7 +118,9 @@
         <th>Nom</th>
         <th>Rôle</th>
         <th class="actions">
-          <button class="delet-btn" *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet'"  (click)="deleteSelectedMembers()">
+          <button class="delet-btn"
+            *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet'"
+            (click)="deleteSelectedMembers()">
             <span class="material-icons">delete</span>
           </button>
         </th>
@@ -129,7 +140,9 @@
           <td>{{ membre.firstName }} {{ membre.lastName }}</td>
           <td><span class="role">{{ membre.role }}</span></td>
           <td class="actions">
-            <button class="delet-btn" *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet'"  (click)="removeUser(membre.userId)">
+            <button class="delet-btn"
+              *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet'"
+              (click)="removeUser(membre.userId)">
               <span class="material-icons">delete</span>
             </button>
           </td>

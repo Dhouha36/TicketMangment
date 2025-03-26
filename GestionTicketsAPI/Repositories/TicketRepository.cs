@@ -57,23 +57,32 @@ namespace GestionTicketsAPI.Repositories
           .OrderByDescending(t => t.CreatedAt) // Tri par date de création
           .AsQueryable();
 
-      // Si l'utilisateur n'est pas un super admin,
-      // on impose que le ticket soit lié à un projet
-      // et que l'utilisateur soit associé au projet.
-      // Pour les chefs de projet, on vérifie l'association via le ChefProjetId.
+      // Si l'utilisateur n'est pas un super admin
       if (!ticketParams.Role?.Replace(" ", "").Equals("superadmin", StringComparison.OrdinalIgnoreCase) ?? true)
       {
         if (string.Equals(ticketParams.Role, "chef de projet", StringComparison.OrdinalIgnoreCase))
         {
-          query = query.Where(t =>
-              t.Projet != null &&
-              t.Projet.ChefProjetId == ticketParams.UserId);
+          // Pour un chef de projet, on autorise à la fois les tickets où il est le chef du projet
+          // et ceux qui lui sont assignés en tant que responsable.
+          query = query.Where(t => t.Projet != null &&
+                                   (t.Projet.ChefProjetId == ticketParams.UserId || t.ResponsibleId == ticketParams.UserId));
         }
         else
         {
-          query = query.Where(t =>
-              t.Projet != null &&
-              _context.ProjetUser.Any(pu => pu.ProjetId == t.Projet.Id && pu.UserId == ticketParams.UserId));
+          // Pour les autres rôles, on vérifie que le ticket est lié à un projet et que l'utilisateur est associé.
+          query = query.Where(t => t.Projet != null &&
+                                   _context.ProjetUser.Any(pu => pu.ProjetId == t.Projet.Id && pu.UserId == ticketParams.UserId));
+
+          if (string.Equals(ticketParams.Role, "client", StringComparison.OrdinalIgnoreCase))
+          {
+            // Le client voit uniquement les tickets dont il est le propriétaire.
+            query = query.Where(t => t.Owner != null && t.Owner.Id == ticketParams.UserId);
+          }
+          else if (string.Equals(ticketParams.Role, "collaborateur", StringComparison.OrdinalIgnoreCase))
+          {
+            // Le collaborateur voit uniquement les tickets qui lui sont assignés.
+            query = query.Where(t => t.ResponsibleId == ticketParams.UserId);
+          }
         }
       }
 
@@ -81,29 +90,8 @@ namespace GestionTicketsAPI.Repositories
       if (!string.IsNullOrEmpty(ticketParams.SearchTerm))
       {
         var lowerSearchTerm = ticketParams.SearchTerm.ToLower();
-        query = query.Where(t => t.Title.ToLower().Contains(lowerSearchTerm)
-                               || t.Description.ToLower().Contains(lowerSearchTerm));
-      }
-
-      // Filtrage complémentaire selon le rôle
-      if (!ticketParams.Role?.Replace(" ", "").Equals("superadmin", StringComparison.OrdinalIgnoreCase) ?? true)
-      {
-        if (string.Equals(ticketParams.Role, "client", StringComparison.OrdinalIgnoreCase))
-        {
-          // Le client voit uniquement les tickets dont il est le propriétaire
-          query = query.Where(t => t.Owner != null && t.Owner.Id == ticketParams.UserId);
-        }
-        else if (string.Equals(ticketParams.Role, "collaborateur", StringComparison.OrdinalIgnoreCase))
-        {
-          // Le collaborateur voit uniquement les tickets qui lui sont assignés
-          query = query.Where(t => t.ResponsibleId == ticketParams.UserId);
-        }
-        else if (string.Equals(ticketParams.Role, "chef de projet", StringComparison.OrdinalIgnoreCase))
-        {
-          // En plus du filtre par ChefProjetId, on peut autoriser
-          // le chef de projet à voir les tickets qui lui sont assignés.
-          query = query.Where(t => t.ResponsibleId == ticketParams.UserId || t.Projet.ChefProjetId == ticketParams.UserId);
-        }
+        query = query.Where(t => t.Title.ToLower().Contains(lowerSearchTerm) ||
+                                 t.Description.ToLower().Contains(lowerSearchTerm));
       }
 
       return await PagedList<Ticket>.CreateAsync(query, ticketParams.PageNumber, ticketParams.PageSize);
