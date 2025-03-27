@@ -23,7 +23,7 @@ public class AccountController : BaseApiController
   private readonly IAccountRepository _accountRepository;
 
   public AccountController(
-      IAccountRepository accountRepository
+      IAccountRepository accountRepository,
       IAccountService accountService,
       IUserService userService,
       EmailService emailService,
@@ -162,7 +162,7 @@ public class AccountController : BaseApiController
         user.PasswordSalt = hmac.Key;
 
         // Mise à jour de l'utilisateur (selon votre méthode d'update)
-        _accountRepository.Update(user);
+        //_accountRepository.Update(user);
         await _accountService.SaveAllAsync();
 
         // Supprimer le token après usage
