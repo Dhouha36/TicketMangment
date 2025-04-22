@@ -30,8 +30,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
               return throwError(() => error.error);
             }
           case 401:
-            toastr.error(error.error, 'Erreur 401');
-            // Optionnel : on peut déclencher le logout ici
+            
             accountService.logout();
             return throwError(() => error);
           case 404:

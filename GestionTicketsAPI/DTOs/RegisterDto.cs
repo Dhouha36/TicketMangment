@@ -25,10 +25,6 @@ namespace GestionTicketsAPI.DTOs
         
         public bool Actif { get; set; } = true;
         
-        [Required]
-        [StringLength(16, MinimumLength = 8)]
-        public string Password { get; set; } = string.Empty;
-        
         // L'utilisateur peut appartenir à une société (optionnel)
         public int? SocieteId { get; set; }
         

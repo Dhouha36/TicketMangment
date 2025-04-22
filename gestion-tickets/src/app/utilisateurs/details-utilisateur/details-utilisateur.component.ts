@@ -57,8 +57,6 @@ export class DetailsUtilisateurComponent implements OnInit {
   ticketPageSize: number = 5;
   totalTickets: number = 0;
 
-  passwordVisible = false;
-  confirmPasswordVisible = false;
   paysList: Pays[] = [];
   societesList: Societe[] = [];
 
@@ -239,9 +237,6 @@ export class DetailsUtilisateurComponent implements OnInit {
       pays: ['', Validators.required],
       role: ['', Validators.required],
       societeId: [''],
-      // Ces champs sont optionnels, à renseigner uniquement si l’utilisateur souhaite changer son mot de passe
-      nouveauPassword: ['', [Validators.minLength(8), Validators.maxLength(16)]],
-      confirmNouveauPassword: [''],
       numTelephone: ['', [
         Validators.required,
         Validators.pattern(/^[0-9\s]+$/),
@@ -249,7 +244,7 @@ export class DetailsUtilisateurComponent implements OnInit {
         Validators.maxLength(10)
       ]],
       actif: [false]
-    }, { validators: newPasswordMatchValidator });
+    });
   }
 
 
@@ -358,14 +353,6 @@ export class DetailsUtilisateurComponent implements OnInit {
         // Les champs de mot de passe restent vides
       });
     }
-  }
-
-  togglePasswordVisibility(): void {
-    this.passwordVisible = !this.passwordVisible;
-  }
-
-  toggleConfirmPasswordVisibility(): void {
-    this.confirmPasswordVisible = !this.confirmPasswordVisible;
   }
   // Méthodes pour le contrat
 

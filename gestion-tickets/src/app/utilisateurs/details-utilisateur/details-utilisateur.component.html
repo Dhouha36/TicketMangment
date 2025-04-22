@@ -83,25 +83,6 @@
       </div>
 
       <div class="form-row">
-        <div class="form-group">
-          <label for="nouveauPassword">Mot de passe <span class="required">*</span></label>
-          <div class="password-container">
-            <input id="nouveauPassword" [type]="passwordVisible ? 'text' : 'password'" formControlName="nouveauPassword"
-              class="form-control"
-              [class.is-invalid]="userForm.controls['nouveauPassword'].touched && userForm.controls['nouveauPassword'].invalid" />
-            <i class="fa" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'"
-              (click)="togglePasswordVisibility()"></i>
-            <div *ngIf="userForm.controls['nouveauPassword'].hasError('required')" class="invalid-feedback text-start">
-              Mot de passe est obligatoire
-            </div>
-            <div *ngIf="userForm.controls['nouveauPassword'].hasError('minlength')" class="invalid-feedback text-start">
-              Mot de passe doit avoir au moins 8 caractères
-            </div>
-            <div *ngIf="userForm.controls['nouveauPassword'].hasError('maxlength')" class="invalid-feedback text-start">
-              Mot de passe ne doit pas dépasser 16 caractères
-            </div>
-          </div>
-        </div>
 
         <div class="form-group">
           <label for="numTelephone">Numéro de Téléphone <span class="required">*</span></label>
@@ -129,27 +110,8 @@
           <div *ngIf="userForm.controls['numTelephone'].hasError('pattern')" class="invalid-feedback text-start">
             Numéro de téléphone invalide (exemple : +216 54 567 589)
           </div>
-        </div>        
-      </div>
-
-      <div class="form-row">
-        <div class="form-group">
-          <label for="confirmNouveauPassword">Confirmer le mot de passe <span class="required">*</span></label>
-          <div class="password-container">
-            <input id="confirmNouveauPassword" [type]="confirmPasswordVisible ? 'text' : 'password'"
-              formControlName="confirmNouveauPassword" class="form-control"
-              [class.is-invalid]="userForm.controls['confirmNouveauPassword'].touched && userForm.controls['confirmNouveauPassword'].invalid" />
-            <i class="fa" [ngClass]="confirmPasswordVisible ? 'fa-eye-slash' : 'fa-eye'"
-              (click)="toggleConfirmPasswordVisibility()"></i>
-            <div *ngIf="userForm.controls['confirmNouveauPassword'].hasError('required')" class="invalid-feedback text-start">
-              Confirmation du mot de passe est obligatoire
-            </div>
-            <div *ngIf="userForm.hasError('passwordMismatch') && userForm.get('confirmNouveauPassword')?.touched" class="invalid-feedback text-start">
-              Les mots de passe ne sont pas identiques
-            </div>            
-          </div>
-        </div>
-
+        </div>    
+        
         <div class="form-group toggle-container">
           <div class="toggle-row">
             <div class="toggle-group">
@@ -162,7 +124,6 @@
           </div>
         </div>
       </div>
-
       <!-- Boutons -->
       <div class="button-group">
         <button type="submit" class="btn-create" [disabled]="userForm.invalid || isLoading">

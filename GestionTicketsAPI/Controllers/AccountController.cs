@@ -35,43 +35,29 @@ public class AccountController : BaseApiController
   {
     try
     {
-      // Appel au service d'inscription
       var userDto = await _accountService.RegisterAsync(registerDto);
 
-      // Préparation du corps de l'e-mail en HTML, avec un formatage plus professionnel
       var body = $@"
 <html>
   <body style='font-family: Arial, sans-serif; color: #333;'>
     <p>Bonjour {userDto.FirstName} {userDto.LastName},</p>
-    
-    <p>Nous sommes ravis de vous accueillir au sein de notre plateforme. Votre compte a été créé avec succès et vous pouvez dès à présent accéder à votre espace personnel.</p>
-    
+    <p>Votre compte a été créé avec succès.</p>
     <p><strong>Vos identifiants de connexion :</strong></p>
     <ul>
       <li><strong>Email :</strong> {userDto.Email}</li>
-      <li><strong>Mot de passe :</strong> {registerDto.Password}</li>
+      <li><strong>Mot de passe :</strong> {userDto.InitialPassword}</li>
       <li><strong>Rôle :</strong> {userDto.Role}</li>
     </ul>
-    
-    <p>Pour accéder à l'application, cliquez sur le lien ci-dessous :</p>
-    <p>
-      <a href='https://simsoft-gt.tn/' style='color: #007BFF; text-decoration: none;' target='_blank'>
-        Accéder à l'application
-      </a>
-    </p>
-    
-    <p>Nous vous remercions de votre confiance et restons à votre disposition pour toute information complémentaire.</p>
-    
+    <p><a href='https://simsoft-gt.tn/' style='color: #007BFF;' target='_blank'>Accéder à l'application</a></p>
     <p>Cordialement,<br>L'équipe Simsoft</p>
   </body>
 </html>";
 
-      // Envoi de l'e-mail en tâche de fond via Hangfire.
       BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
           $"{userDto.FirstName} {userDto.LastName}",
           userDto.Email,
           "Bienvenue dans notre application",
-          body // Utilisation du corps en HTML
+          body
       ));
 
       return Ok(userDto);

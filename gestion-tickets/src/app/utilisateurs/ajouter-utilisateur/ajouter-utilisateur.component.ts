@@ -26,8 +26,6 @@ import { OverlayModalService } from '../../_services/overlay-modal.service';
 export class AjouterUtilisateurComponent implements OnInit {
   registerForm: FormGroup;
   roles: Role[] = [];
-  passwordVisible = false;
-  confirmPasswordVisible = false;
   paysList: Pays[] = [];
   societesList: Societe[] = [];
   selectedCountry: Pays | undefined;
@@ -55,14 +53,12 @@ export class AjouterUtilisateurComponent implements OnInit {
       pays: ['', Validators.required],
       role: ['', Validators.required],
       societe: [{ value: '', disabled: true }],
-      password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(16)]],
       numTelephone: ['', [
         Validators.required,
         Validators.pattern(/^[0-9\s]+$/),
         Validators.minLength(8),
         Validators.maxLength(10)
       ]],
-      confirmPassword: ['', Validators.required],
       actif: [false],
       contrat: [false],
       contract: this.fb.group({
@@ -70,7 +66,7 @@ export class AjouterUtilisateurComponent implements OnInit {
         dateFin: ['', Validators.required],
         type: ['Standard', Validators.required]
       })
-    }, { validators: passwordMatchValidator });
+    });
   }
 
   ngOnInit(): void {
@@ -205,7 +201,6 @@ export class AjouterUtilisateurComponent implements OnInit {
         numtelephone: fullPhoneNumber,
         pays: +formValue.pays,
         actif: formValue.actif,
-        password: formValue.password,
         societeId: hasSociete ? +formValue.societe : null,
         contract: null
       };
@@ -255,27 +250,5 @@ export class AjouterUtilisateurComponent implements OnInit {
       this.router.navigate(['/home/utilisateurs']);
     }
   }
-
-  togglePasswordVisibility(): void {
-    this.passwordVisible = !this.passwordVisible;
-  }
-
-  toggleConfirmPasswordVisibility(): void {
-    this.confirmPasswordVisible = !this.confirmPasswordVisible;
-  }
 }
 
-export const passwordMatchValidator: ValidatorFn = (control: AbstractControl): ValidationErrors | null => {
-  const password = control.get('password');
-  const confirmPassword = control.get('confirmPassword');
-
-  if (password && confirmPassword && password.value !== confirmPassword.value) {
-    confirmPassword.setErrors({ isMatching: true });
-    return { isMatching: true };
-  } else {
-    if (confirmPassword?.hasError('isMatching')) {
-      confirmPassword.setErrors(null);
-    }
-    return null;
-  }
-};
