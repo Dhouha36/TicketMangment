@@ -45,12 +45,6 @@
             <mat-icon class="nav-icon">{{ isBaseDataOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
           </div>
           <div *ngIf="isBaseDataOpen" class="submenu">
-            <a mat-list-item [routerLink]="['/home', 'Pays']" routerLinkActive="active-nav-item">
-              <div class="menu-item">
-                <mat-icon class="nav-icon">flag</mat-icon>
-                <span class="nav-text">Pays</span>
-              </div>
-            </a>
             <a mat-list-item [routerLink]="['/home', 'Projets']" routerLinkActive="active-nav-item">
               <div class="menu-item">
                 <mat-icon class="nav-icon">work</mat-icon>

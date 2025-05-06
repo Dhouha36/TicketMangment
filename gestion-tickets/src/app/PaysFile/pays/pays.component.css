@@ -117,7 +117,7 @@ h2 {
   color: #f38932;
 }
 
-.edit-btn:hover, .delete-btn:hover {
+.edit-btn:hover{
   color: #f07d1f;
   transform: scale(1.1);
 }

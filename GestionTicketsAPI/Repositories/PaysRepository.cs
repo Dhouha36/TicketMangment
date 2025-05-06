@@ -40,6 +40,7 @@ public class PaysRepository : IPaysRepository
   public async Task<Pays?> GetPaysByIdAsync(int idPays)
   {
     return await _context.Pays
+        .Include(p => p.Societes) 
         .Include(p => p.paysPhoto)
         .FirstOrDefaultAsync(p => p.IdPays == idPays);
   }

@@ -12,6 +12,8 @@ import { FormsModule } from '@angular/forms';
 import { TicketFilterRequest } from '../_models/TicketFilterRequest';
 import { curveBasis } from 'd3';
 import { forkJoin } from 'rxjs';
+import { PaysModalComponent } from '../PaysFile/pays-modal/pays-modal.component';
+import { OverlayModalService } from '../_services/overlay-modal.service';
 
 @Component({
   selector: 'app-tableau-bord',
@@ -89,7 +91,8 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     private router: Router,
     private dashboardService: DashboardService,
     private route: ActivatedRoute,
-    private globalLoaderService: GlobalLoaderService
+    private globalLoaderService: GlobalLoaderService,
+    private overlayModalService: OverlayModalService
   ) { }
 
   ngOnInit(): void {
@@ -334,5 +337,12 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
         });
     }
   }
-  
+  openPaysModal() {
+    const modalRef = this.overlayModalService.open(PaysModalComponent);
+    // modalRef est ici l'instance de PaysModalComponent
+    modalRef.added.subscribe(() => {
+      // Recharge le compteur dès qu’un pays est ajouté dans le modal
+      this.loadDashboardCounts();
+    });
+  }
 }

@@ -116,11 +116,22 @@ namespace GestionTicketsAPI.Controllers
 
     [Authorize]
     [HttpGet("supprimerPays/{idPays}")]
-    public async Task<ActionResult> DeletePays(int idPays)
+    public async Task<IActionResult> DeletePays(int idPays)
     {
-      var deleted = await _paysService.DeletePaysAsync(idPays);
-      if (!deleted) return BadRequest("Erreur lors de la suppression du pays.");
-      return NoContent();
+        try
+        {
+            var deleted = await _paysService.DeletePaysAsync(idPays);
+            return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            // 409 Conflict pour traitement dans l'intercepteur
+            return Conflict(ex.Message);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, "Erreur serveur inattendue.");
+        }
     }
 
   }

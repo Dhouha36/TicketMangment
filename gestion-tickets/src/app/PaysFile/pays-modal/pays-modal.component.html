@@ -1,0 +1,63 @@
+<!-- Backdrop -->
+<div class="modal-backdrop" (click)="close()">
+  <!-- Contenu du modal -->
+  <div class="modal-show" (click)="$event.stopPropagation()">
+    
+    <!-- Header -->
+    <div class="modal-header">
+      <h4 class="modal-title">Gestion des pays</h4>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body d-flex gap-4">
+      <!-- Pays déjà ajoutés -->
+      <div class="flex-fill">
+        <h5>Pays déjà ajoutés</h5>
+        <ul class="list-group">
+          <li *ngFor="let p of existingPays"
+              class="list-group-item d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+              <img [src]="p.photoUrl" width="24" class="me-2">
+              {{ p.nom }} ({{ p.codeTel }})
+            </div>
+            <button class="delete-btn" (click)="deletePays(p.idPays)">
+              <span class="material-icons">delete</span>
+            </button>
+          </li>
+        </ul>        
+      </div>
+
+      <!-- Pays disponibles -->
+      <div class="flex-fill">
+        <h5>Pays disponibles</h5>
+
+        <!-- Champ de recherche -->
+        <div class="mb-3">
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Rechercher un pays…"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()"
+          />
+        </div>
+
+        <ul class="list-group">
+          <li *ngFor="let p of filteredPays" class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <img [src]="p.photoUrl" width="24" class="me-2" /> {{ p.nom }} ({{ p.codeTel }})
+            </div>
+            <button type="button" class="btn btn-success" (click)="promptAddCountry(p)">
+              <span class="material-icons">add</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" (click)="close()">Annuler</button>
+    </div>
+  </div>
+</div>

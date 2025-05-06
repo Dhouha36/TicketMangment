@@ -1,5 +1,6 @@
 using System;
 using AutoMapper;
+using GestionTicketsAPI.Data;
 using GestionTicketsAPI.DTOs;
 using GestionTicketsAPI.Entities;
 using GestionTicketsAPI.Interfaces;
@@ -9,12 +10,19 @@ namespace GestionTicketsAPI.Services;
 public class PaysService : IPaysService
 {
   private readonly IPaysRepository _paysRepository;
+  private readonly DataContext _context;
   private readonly IMapper _mapper;
+  private readonly IWebHostEnvironment  _env;
+  private readonly HttpClient           _httpClient;
 
-  public PaysService(IPaysRepository paysRepository, IMapper mapper)
+  public PaysService(IPaysRepository paysRepository, IMapper mapper, IWebHostEnvironment env, DataContext context,
+                       IHttpClientFactory httpFactory)
   {
     _paysRepository = paysRepository;
     _mapper = mapper;
+    _env     = env;
+    _context = context;
+    _httpClient = httpFactory.CreateClient();
   }
 
   public async Task<IEnumerable<PaysDto>> GetPaysAsync()
@@ -78,36 +86,84 @@ public class PaysService : IPaysService
   }
 
 
-  public async Task<PaysDto> AddPaysAsync(string nom, string? codeTel, string? fileBase64)
-  {
-    if (string.IsNullOrWhiteSpace(nom))
-      throw new Exception("Le nom du pays est requis.");
-    if (string.IsNullOrWhiteSpace(fileBase64))
-      throw new Exception("Veuillez fournir une photo valide.");
-
-    IFormFile file;
-    try
+  public async Task<PaysDto> AddPaysAsync(string nom,
+                                            string? codeTel,
+                                            string? fileBase64OrUrl)
     {
-      // On suppose que fileBase64 est au format "data:<mimeType>;base64,<data>"
-      var commaIndex = fileBase64.IndexOf(',');
-      if (commaIndex < 0)
-        throw new Exception("Le format de la chaîne base64 est invalide.");
+        if (string.IsNullOrWhiteSpace(nom))
+            throw new Exception("Le nom du pays est requis.");
+        if (string.IsNullOrWhiteSpace(fileBase64OrUrl))
+            throw new Exception("Veuillez fournir une photo valide.");
 
-      var base64Data = fileBase64.Substring(commaIndex + 1);
-      var bytes = Convert.FromBase64String(base64Data);
-      var stream = new MemoryStream(bytes);
-      // Vous pouvez ajuster le nom et le type MIME selon vos besoins
-      file = new FormFile(stream, 0, stream.Length, "file", "uploadedFile.jpg");
+        byte[] bytes;
+        string extension;
+
+        // 1) Si c'est une URL absolue, on la télécharge
+        if (Uri.TryCreate(fileBase64OrUrl, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == "http" || uri.Scheme == "https"))
+        {
+            bytes = await _httpClient.GetByteArrayAsync(uri);
+            // récupère l'extension depuis le chemin d'URL
+            extension = Path.GetExtension(uri.AbsolutePath).TrimStart('.');
+            if (string.IsNullOrEmpty(extension))
+                extension = "jpg";
+        }
+        else
+        {
+            // 2) Sinon, on suppose un DataURI Base64 comme avant
+            var commaIndex = fileBase64OrUrl.IndexOf(',');
+            if (commaIndex < 0)
+                throw new Exception("Le format de la chaîne base64 est invalide.");
+
+            var header     = fileBase64OrUrl.Substring(5, commaIndex - 5);
+            var mimeType   = header.Split(';')[0];
+            var base64Data = fileBase64OrUrl[(commaIndex + 1)..];
+
+            try
+            {
+                bytes = Convert.FromBase64String(base64Data);
+            }
+            catch
+            {
+                throw new Exception("Le contenu base64 n'est pas valide.");
+            }
+
+            extension = mimeType switch
+            {
+                "image/png"  => "png",
+                "image/gif"  => "gif",
+                "image/jpeg" => "jpg",
+                _            => "jpg"
+            };
+        }
+
+        // 3) Sauvegarde le fichier dans wwwroot/assets
+        var fileName     = $"{Guid.NewGuid()}.{extension}";
+        var assetsFolder = Path.Combine(_env.WebRootPath, "assets");
+        Directory.CreateDirectory(assetsFolder);
+        var filePath     = Path.Combine(assetsFolder, fileName);
+        await File.WriteAllBytesAsync(filePath, bytes);
+
+        // 4) Crée l'entité et persiste
+        var photo = new Photo { Url = $"assets/{fileName}" };
+        var pays  = new Pays
+        {
+            Nom       = nom,
+            CodeTel   = codeTel,
+            paysPhoto = photo
+        };
+        _context.Pays.Add(pays);
+        await _context.SaveChangesAsync();
+
+        // 5) Retourne un DTO « plat »
+        return new PaysDto
+        {
+            IdPays   = pays.IdPays,
+            Nom      = pays.Nom,
+            CodeTel  = pays.CodeTel,
+            PhotoUrl = photo.Url
+        };
     }
-    catch (Exception ex)
-    {
-      throw new Exception("Erreur lors de la conversion du fichier : " + ex.Message);
-    }
-
-    // Déléguer à la méthode interne qui accepte un IFormFile
-    return await AddPaysFromFileAsync(nom, codeTel, file);
-  }
-
   private async Task<PaysDto> AddPaysFromFileAsync(string nom, string? codeTel, IFormFile file)
   {
     // 1. Sauvegarder le fichier localement
@@ -139,32 +195,33 @@ public class PaysService : IPaysService
 
 
   public async Task<bool> DeletePaysAsync(int idPays)
-  {
-    // 1. Récupérer le pays en base
+{
+    // 1. Récupérer le pays en base, incluant ses sociétés
     var pays = await _paysRepository.GetPaysByIdAsync(idPays);
-    if (pays == null) return false;
+    if (pays == null) 
+        return false;
 
-    // 2. S'il y a une photo associée, la supprimer du disque
-    if (pays.paysPhoto != null && !string.IsNullOrEmpty(pays.paysPhoto.Url))
+    // 2. Refuser la suppression s’il y a au moins 1 Societe associée
+    if (pays.Societes != null && pays.Societes.Any())
+        throw new InvalidOperationException(
+            "Impossible de supprimer ce pays : des sociétés y sont associées."
+        );
+
+    // 3. Supprimer la photo du disque
+    if (!string.IsNullOrEmpty(pays.paysPhoto?.Url))
     {
-      // Construit le chemin absolu vers le fichier
-      var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", pays.paysPhoto.Url);
-      if (File.Exists(filePath))
-      {
-        File.Delete(filePath);
-      }
+        var filePath = Path.Combine(
+            Directory.GetCurrentDirectory(), 
+            "wwwroot", 
+            pays.paysPhoto.Url
+        );
+        if (File.Exists(filePath)) File.Delete(filePath);
     }
 
-    // 3. Supprimer le pays de la base (et donc la photo associée, 
-    //    si la relation est configurée en cascade ou si vous gérez manuellement la suppression).
+    // 4. Supprimer le pays
     _paysRepository.RemovePays(pays);
-
-    // 4. Sauvegarder les changements
     return await _paysRepository.SaveAllAsync();
-  }
-
-
-
+}
 
   public async Task<bool> PaysExists(string nom)
   {

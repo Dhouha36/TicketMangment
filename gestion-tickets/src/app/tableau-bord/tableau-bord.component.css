@@ -370,6 +370,27 @@
   border-color: #fa9745;
   box-shadow: 0 0 0 3px rgba(250, 151, 69, 0.2);
 }
+
+/* applique un flex-column sur les stat-box avec bouton d’action */
+.stat-box.has-action {
+  display: flex;
+  flex-direction: column;
+}
+
+/* espacement sous la ligne de titre */
+.stat-box.has-action .stat-header {
+  margin-bottom: 0.75rem;
+}
+
+/* réduit légèrement la taille du bouton pour qu’il ne remplisse pas trop la ligne */
+.stat-box.has-action .btn-sm {
+  padding: 0.25rem 0.3rem;
+  color: #ffffff;
+  background-color: #fa9745;
+  border: none;
+  font-size: 0.9rem;
+}
+
 /* Responsive Styles */
 @media (max-width: 1280px) {
   .stats-container {

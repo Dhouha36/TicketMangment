@@ -22,6 +22,7 @@ import { ProjectModalComponent } from '../project-modal/project-modal.component'
 import { ConfirmModalComponent } from '../../confirm-modal/confirm-modal.component';
 import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
+import { take } from 'rxjs';
 
 @Component({
     selector: 'app-modifier-societe',
@@ -62,6 +63,7 @@ export class ModifierSocieteComponent implements OnInit {
   isPaysDropdownOpen: boolean = false;
 
   isLoading: boolean = false;
+  selectedCountry?: Pays;
 
   constructor(
     private route: ActivatedRoute,
@@ -95,6 +97,11 @@ export class ModifierSocieteComponent implements OnInit {
       this.societeId = +params['id'];
       this.loadSocieteDetails();
     });
+
+    this.societeForm.get('paysId')!.valueChanges
+      .subscribe((id: number) => {
+        this.selectedCountry = this.pays.find(p => p.idPays === +id);
+      });
   }
 
   private initForms(): void {
@@ -117,84 +124,96 @@ export class ModifierSocieteComponent implements OnInit {
   }
 
   private loadSocieteDetails(): void {
-    // Active le loader global
     this.globalLoaderService.showGlobalLoader();
   
-    this.societeService.getSocieteDetails(this.societeId).subscribe(
-      (details: Societe) => {
+    this.societeService.getSocieteDetails(this.societeId).subscribe({
+      next: (details: Societe) => {
         this.societeDetails = details;
-        // Mettez à jour vos formulaires avec les valeurs récupérées
-        this.societeForm.patchValue({
-          nom: details.nom,
-          adresse: details.adresse,
-          telephone: details.telephone,
-          paysId: details.paysId 
-        });
-        if (details.contrat) {
-          this.contratForm.patchValue({
-            id: details.contrat.id,
-            dateDebut: details.contrat.dateDebut
-              ? new Date(details.contrat.dateDebut + 'Z').toISOString().substring(0, 10)
-              : '',
-            dateFin: details.contrat.dateFin
-              ? new Date(details.contrat.dateFin + 'Z').toISOString().substring(0, 10)
-              : '',
-            type: details.contrat.type,
-            typeContrat: details.contrat.typeContrat
-          });
+  
+        // On récupère la country complète depuis la liste déjà chargée
+        this.selectedCountry = this.pays.find(p => p.idPays === details.paysId);
+  
+        // Découpage du fullPhone en préfixe + partie locale
+        const fullPhone = details.telephone || '';
+        const prefix    = this.selectedCountry?.codeTel || '';
+        let localPart   = fullPhone;
+  
+        if (prefix && fullPhone.startsWith(prefix)) {
+          localPart = fullPhone.slice(prefix.length).trim();
         }
-        // Chargement des projets et utilisateurs associés
+  
+        // Patch du formulaire : on passe la partie locale seule
+        this.societeForm.patchValue({
+          nom:       details.nom,
+          adresse:   details.adresse,
+          paysId:    details.paysId,
+          telephone: localPart
+        });
+  
+        // Chargez aussi projets & utilisateurs…
         this.loadProjects();
         this.loadSocieteUsers();
       },
-      error => {
-        console.error('Erreur lors de la récupération des détails', error);
+      error: err => {
+        console.error('Erreur lors de la récupération des détails', err);
         this.toastr.error('Erreur lors de la récupération des détails');
       },
-      () => {
-        // Masque le loader global lorsque l'opération est terminée
+      complete: () => {
         this.globalLoaderService.hideGlobalLoader();
       }
-    );
+    });
   }
+   
   
 
   onSubmit(): void {
-    if (!this.societeForm.dirty) {
-      this.toastr.warning("Veuillez modifier au moins un champ.");
+    if (this.societeForm.invalid) {
+      this.toastr.warning("Veuillez corriger les erreurs du formulaire.");
       return;
     }
-    if (this.societeForm.valid) {
-      const modalInstance = this.overlayModalService.open(ConfirmModalComponent);
-      modalInstance.message = "Confirmez-vous la modification de la société ?";
-      
-      modalInstance.confirmed.subscribe(() => {
-        const updatedSociete: Societe = {
-          ...this.societeDetails,
-          ...this.societeForm.value
-        };
-        // Active le loader avant l'appel
-        this.loaderService.showLoader();
-        this.societeService.updateSociete(this.societeDetails.id, updatedSociete).subscribe({
-          next: () => {
-            this.toastr.success("Société modifiée avec succès");
-            this.loaderService.hideLoader();
-          },
-          error: error => {
-            console.error('Erreur lors de la mise à jour de la société', error);
-            this.toastr.error("Erreur lors de la mise à jour de la société");
-            this.loaderService.hideLoader();
-          }
-        });
-        this.overlayModalService.close();
+  
+    // 1) on récupère la partie locale saisie
+    const localNumber = this.societeForm.get('telephone')!.value as string;
+  
+    // 2) on reconstruit le numéro complet avec préfixe
+    const prefix     = this.selectedCountry?.codeTel || '';
+    const fullNumber = prefix
+      ? `${prefix} ${localNumber.trim()}`
+      : localNumber.trim();
+  
+    // 3) on construit l'objet à envoyer
+    const updated: Societe = {
+      ...this.societeDetails,
+      ...this.societeForm.value,
+      telephone: fullNumber
+    };
+  
+    // 4) confirmation et appel au service
+    const modal = this.overlayModalService.open(ConfirmModalComponent);
+    modal.message = "Confirmez-vous la modification de la société ?";
+  
+    modal.confirmed.pipe(take(1)).subscribe(() => {
+      this.loaderService.showLoader();
+      this.societeService.updateSociete(this.societeId, updated).subscribe({
+        next: () => {
+          this.toastr.success("Société modifiée avec succès");
+          this.loaderService.hideLoader();
+          // rafraîchir la vue si besoin
+          this.loadSocieteDetails();
+        },
+        error: err => {
+          console.error('Erreur lors de la mise à jour de la société', err);
+          this.toastr.error("Erreur lors de la mise à jour de la société");
+          this.loaderService.hideLoader();
+        }
       });
-      
-      modalInstance.cancelled.subscribe(() => {
-        this.overlayModalService.close();
-      });
-    }
-  }
-
+      this.overlayModalService.close();
+    });
+  
+    modal.cancelled.pipe(take(1)).subscribe(() => {
+      this.overlayModalService.close();
+    });
+  }  
     
   onSubmitContrat(): void {
     if (this.contratForm.valid) {
@@ -257,27 +276,45 @@ export class ModifierSocieteComponent implements OnInit {
   }
   
   onCancel(): void {
+    // 1) Réinitialisation des champs de base
+    const fullPhone = this.societeDetails.telephone || '';
+    const prefix    = this.selectedCountry?.codeTel || '';
+    let localPart   = fullPhone;
+  
+    // 2) Si le téléphone commence par le préfixe, on extrait la partie locale
+    if (prefix && fullPhone.startsWith(prefix)) {
+      localPart = fullPhone.slice(prefix.length).trim();
+    }
+  
+    // 3) Patch du formulaire : nom, adresse et téléphone local seul
     this.societeForm.patchValue({
-      nom: this.societeDetails.nom,
-      adresse: this.societeDetails.adresse,
-      telephone: this.societeDetails.telephone
+      nom:       this.societeDetails.nom,
+      adresse:   this.societeDetails.adresse,
+      telephone: localPart,
+      paysId:    this.societeDetails.paysId
     });
+  
+    // 4) Réinitialisation du formulaire contrat, comme avant
     if (this.societeDetails.contrat) {
       this.contratForm.patchValue({
-        id: this.societeDetails.contrat.id,
-        dateDebut: this.societeDetails.contrat.dateDebut
-          ? new Date(this.societeDetails.contrat.dateDebut).toISOString().substring(0, 10)
+        id:           this.societeDetails.contrat.id,
+        dateDebut:    this.societeDetails.contrat.dateDebut
+          ? new Date(this.societeDetails.contrat.dateDebut + 'Z')
+              .toISOString().substring(0, 10)
           : '',
-        dateFin: this.societeDetails.contrat.dateFin
-          ? new Date(this.societeDetails.contrat.dateFin).toISOString().substring(0, 10)
+        dateFin:      this.societeDetails.contrat.dateFin
+          ? new Date(this.societeDetails.contrat.dateFin + 'Z')
+              .toISOString().substring(0, 10)
           : '',
-        type: this.societeDetails.contrat.type,
-        typeContrat: this.societeDetails.contrat.typeContrat
+        type:         this.societeDetails.contrat.type,
+        typeContrat:  this.societeDetails.contrat.typeContrat
       });
     }
+  
+    // 5) On remet les formulaires en état “non modifié”
     this.societeForm.markAsPristine();
     this.contratForm.markAsPristine();
-  }
+  }  
   
   switchTab(tab: string): void {
     this.activeTab = tab;
@@ -468,12 +505,17 @@ export class ModifierSocieteComponent implements OnInit {
   }  
 
   loadPays(): void {
-    this.paysService.getPays(this.paysSearchTerm).subscribe({
-      next: (data) => {
-        this.filteredPays = data;
-        this.pays = data;
+    this.paysService.getPays().subscribe({
+      next: (data: Pays[]) => {
+        this.pays = data;            // stocke la liste des pays
+        this.filteredPays = data;     // si vous en aviez besoin ailleurs
+        // Une fois les pays chargés, on, peut charger les détails
+        this.loadSocieteDetails();
       },
-      error: (err) => { console.error('Erreur lors de la récupération des pays', err); }
+      error: err => {
+        console.error('Erreur lors de la récupération des pays', err);
+        this.toastr.error('Impossible de charger la liste des pays.');
+      }
     });
   }
 

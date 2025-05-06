@@ -51,23 +51,7 @@ export class PaysComponent {
       this.selectedFile = null; // Réinitialisez si aucun fichier n'est sélectionné
     }
   }
-  
-  uploadPhoto(): void {
-    if (this.selectedPaysId && this.selectedFile) {
-      this.paysService.addPhoto(this.selectedPaysId, this.selectedFile).subscribe({
-        next: () => {
-          this.toastr.success('Photo ajoutée avec succès !');
-          this.loadPays(); // Rafraîchir la liste des pays
-        },
-        error: (err) => {
-          console.error('Erreur lors de l\'ajout de la photo', err);
-          this.toastr.error(err,'Erreur lors de l\'ajout de la photo');
-        },
-      });
-    } else {
-      this.toastr.warning('Veuillez sélectionner un pays et un fichier.');
-    }
-  }
+
 
   editPays(idPays: string): void {
     // Logique pour rediriger ou ouvrir un formulaire de modification

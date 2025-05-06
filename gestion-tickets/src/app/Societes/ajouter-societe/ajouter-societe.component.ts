@@ -8,6 +8,7 @@ import { CommonModule } from '@angular/common';
 import { ContractDialogComponent } from '../../contract-dialog/contract-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
 import { LoaderService } from '../../_services/loader.service';
+import { Pays } from 'src/app/_models/pays';
 
 @Component({
     selector: 'app-ajouter-societe',
@@ -20,6 +21,7 @@ export class AjouterSocieteComponent implements OnInit {
   paysList: any[] = []; // Liste des pays
   societesList: any[] = []; // Liste des sociétés
   isLoading: boolean = false;
+  selectedCountry?: Pays;
 
   constructor(
     private fb: FormBuilder,
@@ -76,6 +78,11 @@ export class AjouterSocieteComponent implements OnInit {
       this.societeForm.get('contract.dateFin')?.updateValueAndValidity();
       this.societeForm.get('contract.type')?.updateValueAndValidity();
     });
+
+    this.societeForm.get('paysId')!.valueChanges
+      .subscribe((id: number) => {
+        this.selectedCountry = this.paysList.find(p => p.idPays === +id)!;
+      });
   }
 
   clearContractValidators(): void {

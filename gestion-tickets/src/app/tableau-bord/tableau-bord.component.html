@@ -11,28 +11,29 @@
         <div class="stat-value">{{ ticketsCount || 0 }}</div>
         <div class="stat-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M15.58,16.8L12,14.5L8.42,16.8L9.5,12.68L6.21,10L10.46,9.74L12,5.8L13.54,9.74L17.79,10L14.5,12.68M20,12C20,10.89 20.9,10 22,10V6C22,4.89 21.1,4 20,4H4A2,2 0 0,0 2,6V10C3.11,10 4,10.9 4,12A2,2 0 0,1 2,14V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V14A2,2 0 0,1 20,12Z"/>
+            <path
+              d="M15.58,16.8L12,14.5L8.42,16.8L9.5,12.68L6.21,10L10.46,9.74L12,5.8L13.54,9.74L17.79,10L14.5,12.68M20,12C20,10.89 20.9,10 22,10V6C22,4.89 21.1,4 20,4H4A2,2 0 0,0 2,6V10C3.11,10 4,10.9 4,12A2,2 0 0,1 2,14V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V14A2,2 0 0,1 20,12Z" />
           </svg>
         </div>
       </a>
     </div>
 
     <!-- Mes tickets : uniquement pour Chef de Projet -->
-<div class="stat-box" *ngIf="isChefDeProjet()">
-  <a [routerLink]="['/home', 'Tickets']" class="stat-content">
-    <div class="stat-title">Mes tickets</div>
-    <div class="stat-value">{{ myTicketsCount || 0 }}</div>
-    <div class="stat-icon">
-      <!-- icône adaptée, par ex. user-account -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12
+    <div class="stat-box" *ngIf="isChefDeProjet()">
+      <a [routerLink]="['/home', 'Tickets']" class="stat-content">
+        <div class="stat-title">Mes tickets</div>
+        <div class="stat-value">{{ myTicketsCount || 0 }}</div>
+        <div class="stat-icon">
+          <!-- icône adaptée, par ex. user-account -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12
                  A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14
                  C16.42,14 20,15.79 20,18V20H4V18
-                 C4,15.79 7.58,14 12,14Z"/>
-      </svg>
+                 C4,15.79 7.58,14 12,14Z" />
+          </svg>
+        </div>
+      </a>
     </div>
-  </a>
-</div>
 
 
     <!-- Projets : visible pour SuperAdmin, Chef de Projet et Collaborateur -->
@@ -42,7 +43,8 @@
         <div class="stat-value">{{ projectsCount || 0 }}</div>
         <div class="stat-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M10,2H14A2,2 0 0,1 16,4V6H20A2,2 0 0,1 22,8V19A2,2 0 0,1 20,21H4C2.89,21 2,20.1 2,19V8C2,6.89 2.89,6 4,6H8V4C8,2.89 8.89,2 10,2M14,6V4H10V6H14Z"/>
+            <path
+              d="M10,2H14A2,2 0 0,1 16,4V6H20A2,2 0 0,1 22,8V19A2,2 0 0,1 20,21H4C2.89,21 2,20.1 2,19V8C2,6.89 2.89,6 4,6H8V4C8,2.89 8.89,2 10,2M14,6V4H10V6H14Z" />
           </svg>
         </div>
       </a>
@@ -50,50 +52,58 @@
 
 
     <!-- Pays : uniquement pour SuperAdmin -->
-    <div class="stat-box" *ngIf="isSuperAdmin()">
-      <a [routerLink]="['/home', 'Pays']" class="stat-content">
+    <div class="stat-box has-action" *ngIf="isSuperAdmin()">
+      <!-- 1) ligne de titre + bouton -->
+      <div class="stat-header d-flex align-items-center justify-content-between">
         <div class="stat-title">Pays</div>
-        <div class="stat-value">{{ paysCount || 3 }}</div>
+        <button type="button" class="btn btn-success btn-sm" (click)="openPaysModal()">
+          <span class="material-icons">add</span>
+        </button>
+      </div>
+
+      <!-- 2) zone cliquable pour la valeur + icône -->
+      <a [routerLink]="['/home', 'Pays']" class="stat-content">
+        <div class="stat-value">{{ paysCount || 0 }}</div>
         <div class="stat-icon">
           <!-- Globe icon -->
-          <svg xmlns="http://www.w3.org/2000/svg"
-               viewBox="0 0 24 24"
-               fill="currentColor">
-            <path fill-rule="evenodd" clip-rule="evenodd"
-                  d="M12 2a10 10 0 100 20 10 10 0 000-20zm6.93 11h-3.02c-.15 1.17-.46 2.29-.91 3.32
-                     1.86-.85 3.27-2.52 3.93-4.32zm-6.93 6a8.01 8.01 0 01-4.47-1.36c.53-1.02.92-2.12
-                     1.15-3.29h3.32v4.65zm0-6H7.75a14.16 14.16 0 01-.2-2c0-.67.05-1.33.15-1.98H12v3.98zm0-5H8.05
-                     c-.23-1.17-.62-2.27-1.15-3.29A8.01 8.01 0 0112 4v4zm1-4c1.54.17 2.97.75 4.17 1.66-.45
-                     1.03-.76 2.15-.91 3.32h-3.26V2zm4.17 5.34c-.48-1.01-1.12-1.94-1.9-2.75a8.03 8.03 0 013.4
-                     3.22h-1.5zm1.9 3.32a8.03 8.03 0 01-3.4 3.22c.78-.81 1.42-1.74 1.9-2.75h1.5z"/>
-          </svg>
-        </div>
-      </a>
-    </div>    
-
-    <!-- Sociétés : uniquement pour SuperAdmin -->
-    <div class="stat-box" *ngIf="isSuperAdmin()">
-      <a [routerLink]="['/home', 'Societes']" class="stat-content">
-        <div class="stat-title">Sociétés</div>
-        <div class="stat-value">{{ societesCount || 4 }}</div>
-        <div class="stat-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M10,2V4.26L12,5.59V4H22V19H17V21H24V2H10M7.5,5L0,10V21H15V10L7.5,5M14,6V6.93L7.5,11.93L1,6.93V6H14Z"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2a10 10 0 100 20 10 10 0 000-20zm6.93 11h-3.02c-.15 1.17-.46 2.29-.91 3.32
+                 1.86-.85 3.27-2.52 3.93-4.32zm-6.93 6a8.01 8.01 0 01-4.47-1.36c.53-1.02.92-2.12
+                 1.15-3.29h3.32v4.65zm0-6H7.75a14.16 14.16 0 01-.2-2c0-.67.05-1.33.15-1.98H12v3.98zm0-5H8.05
+                 c-.23-1.17-.62-2.27-1.15-3.29A8.01 8.01 0 0112 4v4zm1-4c1.54.17 2.97.75 4.17 1.66-.45
+                 1.03-.76 2.15-.91 3.32h-3.26V2zm4.17 5.34c-.48-1.01-1.12-1.94-1.9-2.75a8.03 8.03 0 013.4
+                 3.22h-1.5zm1.9 3.32a8.03 8.03 0 01-3.4 3.22c.78-.81 1.42-1.74 1.9-2.75h1.5z" />
           </svg>
         </div>
       </a>
     </div>
 
-        
+
+    <!-- Sociétés : uniquement pour SuperAdmin -->
+    <div class="stat-box" *ngIf="isSuperAdmin()">
+      <a [routerLink]="['/home', 'Societes']" class="stat-content">
+        <div class="stat-title">Sociétés</div>
+        <div class="stat-value">{{ societesCount || 0 }}</div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M10,2V4.26L12,5.59V4H22V19H17V21H24V2H10M7.5,5L0,10V21H15V10L7.5,5M14,6V6.93L7.5,11.93L1,6.93V6H14Z" />
+          </svg>
+        </div>
+      </a>
+    </div>
+
+
 
     <!-- Utilisateurs : uniquement pour SuperAdmin -->
     <div class="stat-box" *ngIf="isSuperAdmin()">
       <a [routerLink]="['/home', 'utilisateurs']" class="stat-content">
         <div class="stat-title">Clients</div>
-        <div class="stat-value">{{ clientsCount || 10 }}</div>
+        <div class="stat-value">{{ clientsCount || 0 }}</div>
         <div class="stat-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+            <path
+              d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
           </svg>
         </div>
       </a>
@@ -102,10 +112,11 @@
     <div class="stat-box" *ngIf="isSuperAdmin()">
       <a [routerLink]="['/home', 'utilisateurs']" class="stat-content">
         <div class="stat-title">Personnel</div>
-        <div class="stat-value">{{ personnelCount || 10 }}</div>
+        <div class="stat-value">{{ personnelCount || 0 }}</div>
         <div class="stat-icon">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z"/>
+            <path
+              d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
           </svg>
         </div>
       </a>
@@ -124,7 +135,7 @@
           </option>
         </select>
       </label>
-      
+
       <label>
         Personnel :
         <select [(ngModel)]="filter.personnelId" name="personnelId">
@@ -142,7 +153,7 @@
       à
       <input type="date" [(ngModel)]="filter.end" name="end" />
     </label>
-  
+
     <label>
       Par :
       <select [(ngModel)]="filter.granularity" name="granularity">
@@ -152,77 +163,51 @@
         <option value="yearly">Année</option>
       </select>
     </label>
-  
+
     <button type="submit">Appliquer</button>
   </form>
-  
+
   <!-- Graphiques dynamiques -->
   <div class="charts-container">
     <div class="charts-grid">
       <!-- Ligne 1 -->
       <div class="chart-box">
-        <ngx-charts-line-chart
-          [view]="[500,300]"
-          [scheme]="colorScheme"
-          [results]="userSeries"
-          [legend]="false"            
-          [xAxis]="true"              
-          [yAxis]="true"               
-          [showGridLines]="true"       
-          [autoScale]="true"          
-          [curve]="curve"              
-          [showXAxisLabel]="true"
-          [xAxisLabel]="'Période'"
-          [showYAxisLabel]="true"
-          [yAxisLabel]="'Nombre de tickets'"
-          [animations]="true"          
-        ></ngx-charts-line-chart>
+        <ngx-charts-line-chart [view]="[500,300]" [scheme]="colorScheme" [results]="userSeries" [legend]="false"
+          [xAxis]="true" [yAxis]="true" [showGridLines]="true" [autoScale]="true" [curve]="curve"
+          [showXAxisLabel]="true" [xAxisLabel]="'Période'" [showYAxisLabel]="true" [yAxisLabel]="'Nombre de tickets'"
+          [animations]="true"></ngx-charts-line-chart>
       </div>
-  
+
       <div class="chart-box">
-        <ngx-charts-bar-vertical
-          [view]="[500,300]"
-          [scheme]="colorScheme"
-          [results]="statusSeries"
-          [legend]="false"
-          [xAxis]="true"
-          [yAxis]="true"
-          [showXAxisLabel]="true"
-          [xAxisLabel]="'Statut'"
-          [showYAxisLabel]="true"
+        <ngx-charts-bar-vertical [view]="[500,300]" [scheme]="colorScheme" [results]="statusSeries" [legend]="false"
+          [xAxis]="true" [yAxis]="true" [showXAxisLabel]="true" [xAxisLabel]="'Statut'" [showYAxisLabel]="true"
           [yAxisLabel]="'Nombre de tickets'">
         </ngx-charts-bar-vertical>
       </div>
-  
+
       <!-- Ligne 2 -->
       <div class="chart-box">
-        <ngx-charts-pie-chart 
-          [view]="[500,300]"
-          [scheme]=" isPieNoData() ? noDataScheme : colorScheme "
-          [results]="ticketCounts"
-          [legend]="true"
-          [legendPosition]="LegendPosition.Below"
-          [legendTitle]="'Légende'"
-          [explodeSlices]="false"
-          [labels]="true">
+        <ngx-charts-pie-chart [view]="[500,300]" [scheme]=" isPieNoData() ? noDataScheme : colorScheme "
+          [results]="ticketCounts" [legend]="true" [legendPosition]="LegendPosition.Below" [legendTitle]="'Légende'"
+          [explodeSlices]="false" [labels]="true">
         </ngx-charts-pie-chart>
       </div>
-    </div>  
-  <!-- Tableau récapitulatif -->
-  <table class="table-stats">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Statut</th>
-        <th>Nombre de tickets</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let stat of ticketCounts">
-        <td>{{ stat.id }}</td>
-        <td>{{ stat.name }}</td>
-        <td>{{ stat.name === 'Aucune donnée' ? 0 : stat.value }}</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+    </div>
+    <!-- Tableau récapitulatif -->
+    <table class="table-stats">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Statut</th>
+          <th>Nombre de tickets</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let stat of ticketCounts">
+          <td>{{ stat.id }}</td>
+          <td>{{ stat.name }}</td>
+          <td>{{ stat.name === 'Aucune donnée' ? 0 : stat.value }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
