@@ -186,14 +186,11 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
 
   setChartSize(): void {
     const width = window.innerWidth;
-    let chartWidth = width / 2 - 24;  // 24 = 2 * gap (12px) ou ajustez selon votre gap
-    const chartHeight = 300;
-  
-    // bornes min/max si besoin
-    chartWidth = Math.max(300, Math.min(600, chartWidth));
-  
+    // Exemple : on réduit la largeur / hauteur pour mobile ou tout le temps
+    const chartWidth  = Math.max(300, Math.min(500, width / 2 - 24));
+    const chartHeight = 300; // <–– hauteur fixe plus petite
     this.view = [chartWidth, chartHeight];
-  }
+  } 
   
   isSuperAdmin(): boolean {
     return this.currentUser?.role === 'Super Admin';

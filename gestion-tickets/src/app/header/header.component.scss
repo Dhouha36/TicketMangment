@@ -72,10 +72,9 @@ body {
   display: flex;
   align-items: center;
   margin-left: auto;
-  flex-shrink: 1;
-  position: relative;
+  /* on force pas de retour à la ligne */
+  flex-wrap: nowrap;
 }
-
 /* Container de la barre de recherche */
 .search-container {
   position: relative;
@@ -88,10 +87,10 @@ body {
   background: #f1f1f1;
   border-radius: 12px;
   padding: 12px;
-  width: 300px;
+  /* on remplace width/min-width fixes par flex */
+  flex: 1 1 auto;    /* peut grandir et rétrécir */
+  max-width: 300px;  /* limite sa taille maximale */
   margin-right: 20px;
-  flex-shrink: 1;
-  min-width: 300px;
   transition: background 0.3s ease;
 }
 
@@ -220,7 +219,8 @@ body {
 .actions {
   display: flex;
   align-items: center;
-  flex-shrink: 0;
+  flex-shrink: 0; /* empêchent le shrink */
+  gap: 10px;
 }
 
 .action-item {
@@ -240,6 +240,9 @@ body {
   margin-left: 10px;
 }
 
+.action-item, .notif-button {
+  flex-shrink: 0; /* leurs tailles restent stables */
+}
 /* Menu de notifications avec transition */
 .notification-wrapper {
   position: relative;
@@ -525,7 +528,7 @@ body {
   }
   
   .search-bar {
-    width: calc(100% - 100px);
+    width: calc(100% - 0px);
     margin-right: 10px;
   }
   

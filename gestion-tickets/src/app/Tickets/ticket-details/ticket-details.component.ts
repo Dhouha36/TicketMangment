@@ -206,9 +206,11 @@ export class TicketDetailsComponent implements OnInit {
     modalInstance.finished.subscribe((finishData: FinishTicketDto) => {
       // Appel à la méthode qui gère la validation et les mises à jour
       this.updateTicketCompletion(finishData);
+      this.isLoading =!this.isLoading;
     });
     modalInstance.closed.subscribe(() => {
       this.overlayModalService.close();
+      this.isLoading =!this.isLoading;
     });
   }
   

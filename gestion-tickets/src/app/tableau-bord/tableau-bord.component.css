@@ -371,18 +371,6 @@
   box-shadow: 0 0 0 3px rgba(250, 151, 69, 0.2);
 }
 
-/* applique un flex-column sur les stat-box avec bouton d’action */
-.stat-box.has-action {
-  display: flex;
-  flex-direction: column;
-}
-
-/* espacement sous la ligne de titre */
-.stat-box.has-action .stat-header {
-  margin-bottom: 0.75rem;
-}
-
-/* réduit légèrement la taille du bouton pour qu’il ne remplisse pas trop la ligne */
 .stat-box.has-action .btn-sm {
   padding: 0.25rem 0.3rem;
   color: #ffffff;
@@ -390,86 +378,77 @@
   border: none;
   font-size: 0.9rem;
 }
-
 /* Responsive Styles */
-@media (max-width: 1280px) {
+/* 1. Sur petits écrans, une seule colonne pour les stat-box et les charts */
+@media (max-width: 768px) {
   .stats-container {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr !important;
   }
-  
-  .chart-box {
-    padding: 1rem;
+  .charts-grid {
+    grid-template-columns: 1fr !important;
   }
 }
 
-@media (max-width: 992px) {
+/* 2. Sur très petits écrans, réduire les paddings et tailles de textes */
+@media (max-width: 480px) {
   .dashboard-container {
-    padding: 1.5rem;
+    padding: 1rem;
   }
-
-  .stats-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .stat-value {
-    font-size: 2rem;
-  }
-  
   .page-title {
     font-size: 1.5rem;
   }
-  
-  .filters-form {
-    flex-direction: column;
-    gap: 1rem;
+  .stat-box {
+    padding: 0.75rem;
+    min-height: 100px;
   }
-  
-  .filter-group {
+  .stat-title {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+  }
+  .stat-value {
+    font-size: 2rem;
+  }
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filters label {
     width: 100%;
   }
 }
 
-@media (max-width: 576px) {
-  .dashboard-container {
-    padding: 1rem;
-  }
-  
-  .stats-container {
-    grid-template-columns: 1fr;
-  }
-  
-  .stat-box {
-    padding: 1.25rem;
-  }
-  
-  .stat-title {
-    font-size: 1rem;
-  }
-  
-  .stat-value {
-    font-size: 1.75rem;
-  }
-  
-  .user-avatar {
-    width: 3rem;
-    height: 3rem;
-    font-size: 1rem;
-  }
-  
-  .greeting-text h2 {
-    font-size: 1.125rem;
-  }
-  
-  .section-title {
-    font-size: 1.25rem;
-  }
-  
-  .date-inputs {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .date-separator {
-    margin: 0.25rem 0;
+/* 3. Tables adaptatives : overflow et taille de police réduite si besoin */
+@media (max-width: 768px) {
+  .table-stats th,
+  .table-stats td {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
   }
 }
+
+/* 4. Pour les ngx-charts : garantir 100% de largeur de leur container */
+.chart-box ngx-charts-line-chart,
+.chart-box ngx-charts-bar-vertical,
+.chart-box ngx-charts-pie-chart {
+  width: 100% !important;
+}
+
+/* 5. Ajuster le formulaire de filtres sur mobile */
+@media (max-width: 768px) {
+  .filters {
+    display: block;
+  }
+  .filters label {
+    display: block;
+    margin-bottom: 1rem;
+  }
+  .filters button {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+
+
+
+

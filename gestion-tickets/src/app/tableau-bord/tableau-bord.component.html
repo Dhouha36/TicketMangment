@@ -172,14 +172,14 @@
     <div class="charts-grid">
       <!-- Ligne 1 -->
       <div class="chart-box">
-        <ngx-charts-line-chart [view]="[500,300]" [scheme]="colorScheme" [results]="userSeries" [legend]="false"
+        <ngx-charts-line-chart [view]="view" [scheme]="colorScheme" [results]="userSeries" [legend]="false"
           [xAxis]="true" [yAxis]="true" [showGridLines]="true" [autoScale]="true" [curve]="curve"
           [showXAxisLabel]="true" [xAxisLabel]="'Période'" [showYAxisLabel]="true" [yAxisLabel]="'Nombre de tickets'"
           [animations]="true"></ngx-charts-line-chart>
       </div>
 
       <div class="chart-box">
-        <ngx-charts-bar-vertical [view]="[500,300]" [scheme]="colorScheme" [results]="statusSeries" [legend]="false"
+        <ngx-charts-bar-vertical [view]="view" [scheme]="colorScheme" [results]="statusSeries" [legend]="false"
           [xAxis]="true" [yAxis]="true" [showXAxisLabel]="true" [xAxisLabel]="'Statut'" [showYAxisLabel]="true"
           [yAxisLabel]="'Nombre de tickets'">
         </ngx-charts-bar-vertical>
@@ -187,7 +187,7 @@
 
       <!-- Ligne 2 -->
       <div class="chart-box">
-        <ngx-charts-pie-chart [view]="[500,300]" [scheme]=" isPieNoData() ? noDataScheme : colorScheme "
+        <ngx-charts-pie-chart [view]="view" [scheme]=" isPieNoData() ? noDataScheme : colorScheme "
           [results]="ticketCounts" [legend]="true" [legendPosition]="LegendPosition.Below" [legendTitle]="'Légende'"
           [explodeSlices]="false" [labels]="true">
         </ngx-charts-pie-chart>
