@@ -23,13 +23,13 @@ public class CommentService : ICommentService
     IMapper mapper,
     EmailService emailService,
     IUserService userService,
-    NotificationService notifService)    // ← ajouté
+    NotificationService notifService) 
   {
     _context = context;
     _mapper = mapper;
     _emailService = emailService;
     _userService = userService;
-    _notifService = notifService;            // ← ajouté
+    _notifService = notifService;           
   }
 
   public async Task<CommentDto> CreateCommentAsync(CommentCreateDto commentCreateDto, int userId)

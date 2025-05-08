@@ -26,7 +26,7 @@
           <label for="paysId">Pays <span class="required">*</span></label>
           <select id="paysId" formControlName="paysId" class="form-control"
                   [class.is-invalid]="societeGroup.get('paysId')?.touched && societeGroup.get('paysId')?.invalid">
-            <option value="" disabled>-- Sélectionnez --</option>
+            <option value="" disabled> Sélectionnez </option>
             <option *ngFor="let p of paysList" [value]="p.idPays">{{ p.nom }}</option>
           </select>
         </div>
@@ -87,7 +87,7 @@
           <label for="chefProjetId">Chef de projet <span class="required">*</span></label>
           <select id="chefProjetId" formControlName="chefProjetId" class="form-control"
                   [class.is-invalid]="projetGroup.get('chefProjetId')?.touched && projetGroup.get('chefProjetId')?.invalid">
-            <option value="null" disabled>-- Sélectionnez --</option>
+            <option value= null disabled> Sélectionnez </option>
             <option *ngFor="let chef of chefsList" [value]="chef.id">{{ chef.firstName }} {{ chef.lastName }}</option>
           </select>
         </div>
