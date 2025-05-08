@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
 import { ContractDialogComponent } from '../../contract-dialog/contract-dialog.component';
@@ -16,6 +16,7 @@ import { Role } from '../../_models/role.model';
 import { LoaderService } from '../../_services/loader.service';
 import { ConfirmModalComponent } from '../../confirm-modal/confirm-modal.component';
 import { OverlayModalService } from '../../_services/overlay-modal.service';
+import { User } from 'src/app/_models/user';
 
 @Component({
   selector: 'app-ajouter-utilisateur',
@@ -24,6 +25,9 @@ import { OverlayModalService } from '../../_services/overlay-modal.service';
   styleUrls: ['./ajouter-utilisateur.component.scss']
 })
 export class AjouterUtilisateurComponent implements OnInit {
+  @Input() societeId!: number;
+  @Input() fixedRole!: string;
+  @Output() userCreated = new EventEmitter<User>();
   registerForm: FormGroup;
   roles: Role[] = [];
   paysList: Pays[] = [];

@@ -7,6 +7,8 @@ import { RoleGuard } from '../_guards/role.guard';
 import { ListeSocietesComponent } from './liste-societes/liste-societes.component';
 import { AjouterSocieteComponent } from './ajouter-societe/ajouter-societe.component';
 import { ModifierSocieteComponent } from './modifier-societe/modifier-societe.component';
+import { AjouterSocieteWizardComponent } from './ajouter-societe-wizard/ajouter-societe-wizard.component';
+import { PendingChangesGuard } from '../_guards/pending-changes.guard';
 
 const routes: Routes = [
   {
@@ -15,7 +17,7 @@ const routes: Routes = [
     data: { roles: ['Super Admin'] },
     children: [
       { path: '', component: ListeSocietesComponent },
-      { path: 'ajouterSociete', component: AjouterSocieteComponent },
+      { path: 'ajouterSociete', component: AjouterSocieteWizardComponent, canDeactivate: [PendingChangesGuard] },
       { path: 'modifierSociete/:id', component: ModifierSocieteComponent }
     ]
   }

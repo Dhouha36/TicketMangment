@@ -1,4 +1,4 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnInit, Output } from '@angular/core';
 import { Pays } from '../../_models/pays';
 import { Societe } from '../../_models/societe';
 import { ProjetService } from '../../_services/projet.service';
@@ -16,6 +16,7 @@ import { DropdownService } from './../../_services/dropdown.service';
 import { ToastrService } from 'ngx-toastr';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { LoaderService } from '../../_services/loader.service';
+import { ProjetCreate } from 'src/app/DTOs/projet-create.model';
 
 @Component({
   selector: 'app-ajouter-projet',
@@ -24,6 +25,8 @@ import { LoaderService } from '../../_services/loader.service';
   styleUrls: ['./ajouter-projet.component.css']
 })
 export class AjouterProjetComponent implements OnInit {
+  @Input() societeId!: number;
+  @Output() projetCreated = new EventEmitter<Projet>();
   projetForm!: FormGroup;
 
   projet: Projet = {
@@ -136,16 +139,17 @@ export class AjouterProjetComponent implements OnInit {
       return;
     }
   
-    const formValue = this.projetForm.value;
-    this.projet.nom = formValue.nom;
-    this.projet.description = formValue.description;
-    this.projet.societeId = formValue.societeId;
-    this.projet.idPays = +formValue.idPays;
-    this.projet.chefProjetId = formValue.chefProjetId;
+    const fv = this.projetForm.value;
+    const dto: ProjetCreate = {
+      nom:          fv.nom,
+      description:  fv.description,
+      chefProjetId: fv.chefProjetId,   // toujours un number ici
+      societeId:    fv.societeId       // toujours un number ici
+    };
   
     // Active le loader avant l'appel
     this.loaderService.showLoader();
-    this.projetService.addProjet(this.projet).subscribe({
+    this.projetService.addProjet(dto).subscribe({
       next: (projetCree) => {
         this.toastr.success('Projet créé avec succès');
         this.router.navigate(['/home/Projets']);

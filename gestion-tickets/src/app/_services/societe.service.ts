@@ -5,6 +5,7 @@ import { Societe } from '../_models/societe';
 import { PaginatedResult, Pagination } from '../_models/pagination';
 import { User } from '../_models/user';
 import { environment } from '../../environments/environment';
+import { SocieteCreate } from '../_models/societe-create.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,7 @@ export class SocieteService {
   getSocieteById(societeId: number) {
     throw new Error('Method not implemented.');
   }
-  private apiUrl = environment.apiUrl+"societe";
+  public apiUrl = environment.apiUrl+"societe";
   paginatedResult: PaginatedResult<Societe[]> | null = null;
 
   constructor(private http: HttpClient) { }
@@ -59,10 +60,9 @@ export class SocieteService {
     return this.http.get<Societe>(`${this.apiUrl}/details/${id}`);
   }
 
-  addSociete(societe: Societe): Observable<Societe> {
-    return this.http.post<Societe>(this.apiUrl, societe);
+  addSociete(societeDto: SocieteCreate): Observable<Societe> {
+    return this.http.post<Societe>(this.apiUrl, societeDto);
   }
-
   updateSociete(id: number, societe: Societe): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, societe);
   }

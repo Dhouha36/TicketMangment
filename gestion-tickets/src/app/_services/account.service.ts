@@ -7,6 +7,7 @@ import { Pays } from '../_models/pays';
 import { Projet } from '../_models/Projet';
 import { Ticket } from '../_models/ticket';
 import { environment } from '../../environments/environment';
+import { ClientCreate } from '../DTOs/client-create.model';
 
 @Injectable({
   providedIn: 'root'
@@ -38,8 +39,8 @@ export class AccountService {
     this.currentUser.set(null);
   }
 
-  register(model: any) {
-    return this.http.post<User>(this.baseUrl + 'account/register', model).pipe(
+  register(dto: ClientCreate): Observable<User> {
+    return this.http.post<User>(this.baseUrl + 'account/register', dto).pipe(
       map(user => user)
     );
   }

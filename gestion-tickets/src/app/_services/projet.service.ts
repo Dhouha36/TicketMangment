@@ -5,6 +5,7 @@ import { Projet } from '../_models/Projet';
 import { ProjetMember } from '../_models/projet-member';
 import { PaginatedResult, Pagination } from '../_models/pagination';
 import { environment } from '../../environments/environment';
+import { ProjetCreate } from '../DTOs/projet-create.model';
 
 @Injectable({
   providedIn: 'root'
@@ -53,8 +54,8 @@ export class ProjetService {
   }
 
   // Ajouter un nouveau projet
-  addProjet(projet: Projet): Observable<Projet> {
-    return this.http.post<Projet>(`${this.baseUrl}/ajouterProjet`, projet);
+  addProjet(payload: ProjetCreate): Observable<Projet> {
+    return this.http.post<Projet>(`${this.baseUrl}/ajouterProjet`, payload);
   }
 
   // Mettre à jour un projet

@@ -1,185 +1,201 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { SocieteService } from '../../_services/societe.service';
 import { PaysService } from '../../_services/pays.service';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { CommonModule } from '@angular/common';
-import { ContractDialogComponent } from '../../contract-dialog/contract-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
 import { LoaderService } from '../../_services/loader.service';
-import { Pays } from 'src/app/_models/pays';
+import { MatStepper, MatStepperModule } from '@angular/material/stepper';
+import { MatButtonModule } from '@angular/material/button';
+import { MatInputModule } from '@angular/material/input';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { AjouterProjetComponent } from 'src/app/Projets/ajouter-projet/ajouter-projet.component';
+import { AjouterUtilisateurComponent } from 'src/app/utilisateurs/ajouter-utilisateur/ajouter-utilisateur.component';
+import { ContractDialogComponent } from 'src/app/contract-dialog/contract-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { Projet } from 'src/app/_models/Projet';
+import { User } from 'src/app/_models/user';
+import { Societe } from 'src/app/_models/societe';
+import { ContractCreate, SocieteCreate } from 'src/app/_models/societe-create.model';
 
 @Component({
     selector: 'app-ajouter-societe',
-    imports: [ReactiveFormsModule, CommonModule],
+    imports: [ReactiveFormsModule, CommonModule,
+      MatStepperModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatButtonModule,
+    AjouterProjetComponent,
+    AjouterUtilisateurComponent
+    ],
     templateUrl: './ajouter-societe.component.html',
     styleUrls: ['./ajouter-societe.component.css']
 })
 export class AjouterSocieteComponent implements OnInit {
   societeForm!: FormGroup;
-  paysList: any[] = []; // Liste des pays
-  societesList: any[] = []; // Liste des sociétés
-  isLoading: boolean = false;
-  selectedCountry?: Pays;
+  paysList: any[] = [];
+  selectedCountry?: any;
+  isLoading = false;
+
+  step = 1;
+  createdSocieteId!: number;
 
   constructor(
     private fb: FormBuilder,
     private societeService: SocieteService,
     private paysService: PaysService,
-    private router: Router,
+    private loaderService: LoaderService,
     private toastr: ToastrService,
-    private dialog: MatDialog,
-    private loaderService: LoaderService
+    private router: Router,
+    private dialog: MatDialog
   ) {
-    this.loaderService.isLoading$.subscribe((loading) => {
-      this.isLoading = loading;
-    });
+    this.loaderService.isLoading$.subscribe(loading => this.isLoading = loading);
   }
 
   ngOnInit(): void {
-    // Création du formulaire incluant le groupe pour le contrat (optionnel)
-    this.societeForm = this.fb.group({
-      nom: ['', Validators.required],
-      adresse: ['', Validators.required],
-      telephone: ['', [Validators.required, Validators.pattern('^[+0-9\\-\\s]+$')]],
-      paysId: ['', Validators.required],
-      contrat: [false],  // Checkbox pour activer l'ajout du contrat
-      // Groupe pour les informations du contrat (initialisé sans validateurs)
-      contract: this.fb.group({
-        dateDebut: [''],
-        dateFin: [''],
-        type: ['Standard']
-      })
-    });
-
-    // Charger la liste des pays et des sociétés
+    this.initForm();
     this.loadPays();
-    this.loadSocietes();
 
-    // Au démarrage, si la case "contrat" est désactivée, on s'assure que le groupe de contrat n'impose aucun validateur
-    if (!this.societeForm.get('contrat')?.value) {
-      this.clearContractValidators();
-    }
+    // Met à jour le préfixe téléphonique
+    this.societeForm.get('paysId')!.valueChanges
+      .subscribe(id => {
+        this.selectedCountry = this.paysList.find(p => p.idPays === +id);
+      });
 
-    // Mise à jour des validateurs en fonction de la case "contrat"
-    this.societeForm.get('contrat')?.valueChanges.subscribe(checked => {
+    // Dynamique des validateurs sur le groupe contract
+    this.societeForm.get('contrat')!.valueChanges.subscribe(checked => {
       if (checked) {
-        // Ajout des validateurs si la case est cochée
-        this.societeForm.get('contract.dateDebut')?.setValidators(Validators.required);
-        this.societeForm.get('contract.dateFin')?.setValidators(Validators.required);
-        this.societeForm.get('contract.type')?.setValidators(Validators.required);
+        this.addContractValidators();
       } else {
-        // Suppression des validateurs si la case n'est pas cochée
         this.clearContractValidators();
       }
-      // Mise à jour de la validité des champs du groupe contract
-      this.societeForm.get('contract.dateDebut')?.updateValueAndValidity();
-      this.societeForm.get('contract.dateFin')?.updateValueAndValidity();
-      this.societeForm.get('contract.type')?.updateValueAndValidity();
     });
-
-    this.societeForm.get('paysId')!.valueChanges
-      .subscribe((id: number) => {
-        this.selectedCountry = this.paysList.find(p => p.idPays === +id)!;
-      });
   }
 
-  clearContractValidators(): void {
-    this.societeForm.get('contract.dateDebut')?.clearValidators();
-    this.societeForm.get('contract.dateFin')?.clearValidators();
-    this.societeForm.get('contract.type')?.clearValidators();
+  private initForm(): void {
+    this.societeForm = this.fb.group({
+      nom:       ['', Validators.required],
+      adresse:   ['', Validators.required],
+      telephone: ['', [Validators.required, Validators.pattern('^[0-9\\s]+$')]],
+      paysId:    ['', Validators.required],
+      contrat:   [false],
+      contract: this.fb.group({
+        dateDebut: [''],
+        dateFin:   [''],
+        type:      ['Standard']
+      })
+    });
   }
 
-  loadPays(): void {
+  private loadPays(): void {
     this.paysService.getPays().subscribe({
-      next: (data) => { this.paysList = data; },
-      error: (err) => { console.error('Erreur lors du chargement des pays', err); }
+      next: data => this.paysList = data,
+      error: ()   => this.toastr.error('Erreur lors du chargement des pays')
     });
   }
 
-  loadSocietes(): void {
-    this.societeService.getSocietes().subscribe({
-      next: (data) => { this.societesList = data; },
-      error: (err) => { console.error('Erreur lors du chargement des sociétés', err); }
-    });
-  }
-
-  onSubmit(): void {
-    if (this.societeForm.valid) {
-      const formValue = this.societeForm.value;
-      const societeForAdd: any = {
-        nom: formValue.nom,
-        adresse: formValue.adresse,
-        telephone: formValue.telephone,
-        paysId: +formValue.paysId
-      };
-  
-      if (formValue.contrat) {
-        societeForAdd.contract = {
-          dateDebut: formValue.contract.dateDebut,
-          dateFin: formValue.contract.dateFin,
-          type: formValue.contract.type
-        };
-      } else {
-        societeForAdd.contract = null;
-      }
-  
-      // Active le loader avant l'appel au service
-      this.loaderService.showLoader();
-      this.societeService.addSociete(societeForAdd).subscribe({
-        next: () => {
-          this.toastr.success("Ajouté avec succès");
-          this.router.navigate(['/home/Societes']);
-          this.loaderService.hideLoader();
-        },
-        error: (error) => {
-          console.error('Erreur ajout société', error);
-          let errMsg = "Erreur lors de l'ajout de la société.";
-          if (Array.isArray(error)) {
-            errMsg = error.join(' ');
-          } else if (typeof error === 'string') {
-            errMsg = error;
-          } else if (error.error) {
-            if (Array.isArray(error.error)) {
-              errMsg = error.error.join(' ');
-            } else if (typeof error.error === 'string') {
-              errMsg = error.error;
-            } else if (typeof error.error === 'object') {
-              errMsg = error.error.message || JSON.stringify(error.error);
-            }
-          } else if (error.message) {
-            errMsg = error.message;
-          }
-          this.toastr.error(errMsg);
-          this.loaderService.hideLoader();
-        }
-      });
-    }
-  }
-  
+  /** Lorsque l'utilisateur coche la case Contrat, on ouvre la modale */
   onContractChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (input.checked) {
+    const checked = (event.target as HTMLInputElement).checked;
+    if (checked) {
       this.openContractDialog();
     }
+    // Les validateurs sur contract sont gérés par le subscribe valueChanges
   }
 
-  openContractDialog(): void {
+  private openContractDialog(): void {
     const dialogRef = this.dialog.open(ContractDialogComponent, {
-      data: { 
-        contractForm: this.societeForm.get('contract')
-      }
+      width: '400px',
+      data: { contractForm: this.societeForm.get('contract') }
     });
-  
+
     dialogRef.afterClosed().subscribe(result => {
       if (!result) {
-        this.societeForm.get('contrat')?.setValue(false);
+        // Annulé dans la modale → on décoche et on retire validateurs
+        this.societeForm.get('contrat')!.setValue(false, { emitEvent: false });
+        this.clearContractValidators();
       }
     });
   }
+
+  private addContractValidators(): void {
+    const cg = this.societeForm.get('contract') as FormGroup;
+    cg.get('dateDebut')!.setValidators(Validators.required);
+    cg.get('dateFin')!.setValidators(Validators.required);
+    cg.get('type')!.setValidators(Validators.required);
+    cg.get('dateDebut')!.updateValueAndValidity();
+    cg.get('dateFin')!.updateValueAndValidity();
+    cg.get('type')!.updateValueAndValidity();
+  }
+
+  private clearContractValidators(): void {
+    const cg = this.societeForm.get('contract') as FormGroup;
+    cg.get('dateDebut')!.clearValidators();
+    cg.get('dateFin')!.clearValidators();
+    cg.get('type')!.clearValidators();
+    cg.get('dateDebut')!.updateValueAndValidity();
+    cg.get('dateFin')!.updateValueAndValidity();
+    cg.get('type')!.updateValueAndValidity();
+    cg.reset({ dateDebut: '', dateFin: '', type: 'Standard' }, { emitEvent: false });
+  }
+
+  /** Soumission étape 1 : création de la société */
+  submitSociete(): void {
+    if (this.societeForm.invalid) { return; }
   
-  onCancel(): void {
+    const fv = this.societeForm.value as any;
+    let contractPayload: ContractCreate | null = null;
+  
+    if (fv.contrat) {
+      const toIso = (d: any) => (d instanceof Date ? d : new Date(d)).toISOString();
+      contractPayload = {
+        dateDebut: toIso(fv.contract.dateDebut),
+        dateFin:   toIso(fv.contract.dateFin),
+        type:      fv.contract.type
+      };
+    }
+  
+    // Construire le DTO de création
+    const societeDto: SocieteCreate = {
+      nom:       fv.nom,
+      adresse:   fv.adresse,
+      telephone: fv.telephone,
+      paysId:    +fv.paysId,
+      contract:  contractPayload
+    };
+  
+    this.loaderService.showLoader();
+    this.societeService.addSociete(societeDto).subscribe({
+      next: (resp: Societe) => {
+        this.toastr.success('Société créée avec succès');
+        this.createdSocieteId = resp.id;
+        this.step = 2;
+        this.loaderService.hideLoader();
+      },
+      error: () => {
+        this.toastr.error('Erreur lors de la création de la société');
+        this.loaderService.hideLoader();
+      }
+    });
+  }
+
+  /** Retour à l'étape précédente */
+  prevStep(): void {
+    this.step = Math.max(this.step - 1, 1);
+  }
+
+  /** Handler émis par le composant AjouterProjetComponent */
+  onProjetCreated(projet: Projet): void {
+    this.toastr.success('Projet créé');
+    this.step = 3;
+  }
+
+  /** Handler émis par le composant AjouterUtilisateurComponent */
+  onUserCreated(user: User): void {
+    this.toastr.success('Client ajouté');
     this.router.navigate(['/home/Societes']);
   }
 }

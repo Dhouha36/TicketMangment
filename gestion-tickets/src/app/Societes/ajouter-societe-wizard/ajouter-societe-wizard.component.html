@@ -1,0 +1,163 @@
+<div class="wizard-container">
+
+  <ul class="wizard-steps">
+    <li [class.active]="step === 1">1. Société</li>
+    <li [class.active]="step === 2">2. Projet</li>
+    <li [class.active]="step === 3">3. Client</li>
+  </ul>
+
+  <!-- Étape 1 : Société -->
+  <div *ngIf="step === 1" class="step-content">
+    <form [formGroup]="societeGroup" (ngSubmit)="submitSociete()">
+      <h2>Ajouter une Société</h2>
+
+      <div class="fields-grid">
+        <div class="form-row">
+          <label for="nom">Nom <span class="required">*</span></label>
+          <input id="nom" type="text" formControlName="nom" class="form-control"
+                 [class.is-invalid]="societeGroup.get('nom')?.touched && societeGroup.get('nom')?.invalid" />
+        </div>
+        <div class="form-row">
+          <label for="adresse">Adresse <span class="required">*</span></label>
+          <input id="adresse" type="text" formControlName="adresse" class="form-control"
+                 [class.is-invalid]="societeGroup.get('adresse')?.touched && societeGroup.get('adresse')?.invalid" />
+        </div>
+        <div class="form-row">
+          <label for="paysId">Pays <span class="required">*</span></label>
+          <select id="paysId" formControlName="paysId" class="form-control"
+                  [class.is-invalid]="societeGroup.get('paysId')?.touched && societeGroup.get('paysId')?.invalid">
+            <option value="" disabled>-- Sélectionnez --</option>
+            <option *ngFor="let p of paysList" [value]="p.idPays">{{ p.nom }}</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="telephone">Téléphone <span class="required">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text">
+              <img *ngIf="selectedCountry?.photoUrl" [src]="selectedCountry.photoUrl"
+                   alt="{{selectedCountry.nom}}" style="width:24px; margin-right:5px" />
+              {{ selectedCountry?.codeTel || '+XX' }}
+            </span>
+            <input id="telephone" type="tel" formControlName="telephone" class="form-control"
+                   [class.is-invalid]="societeGroup.get('telephone')?.touched && societeGroup.get('telephone')?.invalid" />
+          </div>
+          <div *ngIf="societeGroup.get('telephone')?.hasError('required')" class="invalid-feedback">
+            Téléphone est obligatoire
+          </div>
+          <div *ngIf="societeGroup.get('telephone')?.hasError('pattern')" class="invalid-feedback">
+            Numéro invalide (ex : 54 567 589)
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group toggle-container">
+            <div class="toggle-row">
+              <div class="toggle-group">
+                <label for="contrat">Contrat</label>
+                <div class="toggle-switch">
+                  <input type="checkbox" id="contrat" formControlName="contrat" />
+                  <label for="contrat" class="toggle-label"></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+
+      <div class="button-group">
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading || societeGroup.invalid">
+          Suivant →
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Étape 2 : Projet -->
+  <div *ngIf="step === 2" class="step-content">
+    <form [formGroup]="projetGroup" (ngSubmit)="submitProjet()">
+      <h2>Ajouter un Projet</h2>
+
+      <div class="fields-grid">
+        <div class="form-row">
+          <label for="projetNom">Nom du projet <span class="required">*</span></label>
+          <input id="projetNom" type="text" formControlName="nom" class="form-control"
+                 [class.is-invalid]="projetGroup.get('nom')?.touched && projetGroup.get('nom')?.invalid" />
+        </div>
+        <div class="form-row">
+          <label for="chefProjetId">Chef de projet <span class="required">*</span></label>
+          <select id="chefProjetId" formControlName="chefProjetId" class="form-control"
+                  [class.is-invalid]="projetGroup.get('chefProjetId')?.touched && projetGroup.get('chefProjetId')?.invalid">
+            <option value="null" disabled>-- Sélectionnez --</option>
+            <option *ngFor="let chef of chefsList" [value]="chef.id">{{ chef.firstName }} {{ chef.lastName }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="btn btn-secondary" (click)="prevStep()">← Retour</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading || projetGroup.invalid">
+          Suivant →
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Étape 3 : Client -->
+  <div *ngIf="step === 3" class="step-content">
+    <form [formGroup]="clientGroup" (ngSubmit)="submitClient()">
+      <h2>Ajouter un Client</h2>
+
+      <div class="fields-grid">
+        <div class="form-row">
+          <label for="firstName">Prénom <span class="required">*</span></label>
+          <input id="firstName" type="text" formControlName="firstName" class="form-control"
+                 [class.is-invalid]="clientGroup.get('firstName')?.touched && clientGroup.get('firstName')?.invalid" />
+        </div>
+        <div class="form-row">
+          <label for="lastName">Nom <span class="required">*</span></label>
+          <input id="lastName" type="text" formControlName="lastName" class="form-control"
+                 [class.is-invalid]="clientGroup.get('lastName')?.touched && clientGroup.get('lastName')?.invalid" />
+        </div>
+        <div class="form-row">
+          <label for="email">Email <span class="required">*</span></label>
+          <input id="email" type="email" formControlName="email" class="form-control"
+                 [class.is-invalid]="clientGroup.get('email')?.touched && clientGroup.get('email')?.invalid" />
+        </div>
+        <div class="form-row">
+          <label for="paysClient">Pays <span class="required">*</span></label>
+          <select id="paysClient" formControlName="pays" class="form-control"
+                  [class.is-invalid]="clientGroup.get('pays')?.touched && clientGroup.get('pays')?.invalid">
+            <option value="" disabled>-- Sélectionnez --</option>
+            <option *ngFor="let p of paysList" [value]="p.idPays">{{ p.nom }}</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="numTelephone">Téléphone <span class="required">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text">
+              <img *ngIf="selectedCountry?.photoUrl" [src]="selectedCountry.photoUrl"
+                   alt="{{selectedCountry.nom}}" style="width:24px; margin-right:5px" />
+              {{ selectedCountry?.codeTel || '+XX' }}
+            </span>
+            <input id="numTelephone" type="tel" formControlName="numTelephone" class="form-control"
+                   [class.is-invalid]="clientGroup.get('numTelephone')?.touched && clientGroup.get('numTelephone')?.invalid" />
+          </div>
+          <div *ngIf="clientGroup.get('numTelephone')?.hasError('required')" class="invalid-feedback">
+            Téléphone est obligatoire
+          </div>
+          <div *ngIf="clientGroup.get('numTelephone')?.hasError('pattern')" class="invalid-feedback">
+            Numéro invalide (ex : 54 567 589)
+          </div>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="btn btn-secondary" (click)="prevStep()">← Retour</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading || clientGroup.invalid">
+          Terminer
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>

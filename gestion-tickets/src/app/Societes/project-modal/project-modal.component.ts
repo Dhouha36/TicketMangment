@@ -16,6 +16,7 @@ import { ToastrService } from 'ngx-toastr';
 import { forkJoin } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { LoaderService } from '../../_services/loader.service';
+import { ProjetCreate } from 'src/app/DTOs/projet-create.model';
 
 @Component({
   selector: 'app-project-modal',
@@ -134,28 +135,24 @@ export class ProjectModalComponent {
 
   ajouterProjet(): void {
     if (this.projetForm.invalid) {
-      // Forcer la mise à jour de la validation pour tous les contrôles
       this.projetForm.updateValueAndValidity();
       this.toastr.error("Veuillez remplir tous les champs obligatoires.");
       return;
     }
   
-    const formValue = this.projetForm.value;
-    this.projet.nom = formValue.nom;
-    this.projet.description = formValue.description;
-    this.projet.societeId = formValue.societeId;
-    this.projet.idPays = +formValue.idPays;
-    // Affectation du chef de projet
-    this.projet.chefProjetId = formValue.chefProjetId;
+    const fv = this.projetForm.value;
+    const projetDto: ProjetCreate = {
+      nom:           fv.nom,
+      description:   fv.description,
+      chefProjetId:  fv.chefProjetId,   // ici on est sûr que c'est un number
+      societeId:     fv.societeId       // idem
+    };
   
-    // Active le loader avant l'appel au service
     this.loaderService.showLoader();
-    this.projetService.addProjet(this.projet).subscribe({
-      next: (projetCree) => {
+    this.projetService.addProjet(projetDto).subscribe({
+      next: projetCree => {
         this.toastr.success('Projet créé avec succès');
-        // Par exemple, vous pouvez fermer le modal ici
         this.closeModal();
-        // Ou rediriger vers une autre page :
         this.router.navigate(['/home/Projets']);
         this.loaderService.hideLoader();
       },
