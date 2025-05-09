@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using AutoMapper;
 using GestionTicketsAPI.Data;
 using GestionTicketsAPI.DTOs;
@@ -17,27 +18,33 @@ public class CommentService : ICommentService
   private readonly NotificationService _notifService;
   private readonly IUserService _userService;
   private readonly IMapper _mapper;
+  private readonly IPhotoService _photoService;
+  private readonly IHttpContextAccessor _httpContextAccessor;
 
   public CommentService(
     DataContext context,
     IMapper mapper,
     EmailService emailService,
     IUserService userService,
-    NotificationService notifService) 
+    NotificationService notifService,
+    IPhotoService photoService,
+    IHttpContextAccessor httpContextAccessor)
   {
     _context = context;
     _mapper = mapper;
     _emailService = emailService;
     _userService = userService;
-    _notifService = notifService;           
+    _notifService = notifService;
+    _photoService = photoService;
+    _httpContextAccessor = httpContextAccessor;
   }
 
   public async Task<CommentDto> CreateCommentAsync(CommentCreateDto commentCreateDto, int userId)
   {
-    // 1) Création en base
+    // 1) Création de l’entité Commentaire (texte vide si null)
     var commentaire = new Commentaire
     {
-      Contenu = commentCreateDto.Contenu,
+      Contenu = commentCreateDto.Contenu ?? string.Empty,
       Date = DateTime.UtcNow,
       TicketId = commentCreateDto.TicketId,
       UtilisateurId = userId
@@ -47,7 +54,47 @@ public class CommentService : ICommentService
     if (await _context.SaveChangesAsync() <= 0)
       return null;
 
-    // 2) Chargement du ticket et ses relations utiles
+    // 2) Détermination du baseUrl pour construire les URLs absolues
+    var request = _httpContextAccessor.HttpContext.Request;
+    var baseUrl = $"{request.Scheme}://{request.Host.Value}";
+
+    // 3) Sauvegarde des fichiers joints et collecte des URLs
+    var photoUrls = new List<string>();
+    if (commentCreateDto.Files != null && commentCreateDto.Files.Any())
+    {
+      var uploadsRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "comments");
+      Directory.CreateDirectory(uploadsRoot);
+
+      foreach (var file in commentCreateDto.Files)
+      {
+        if (file.Length > 0)
+        {
+          var ext = Path.GetExtension(file.FileName);
+          var publicId = $"{Guid.NewGuid()}{ext}";
+          var fullPath = Path.Combine(uploadsRoot, publicId);
+
+          // Sauvegarde physique du fichier
+          using var stream = new FileStream(fullPath, FileMode.Create);
+          await file.CopyToAsync(stream);
+
+          // URL absolue pour l’e-mail
+          var absoluteUrl = $"{baseUrl}/comments/{publicId}";
+          photoUrls.Add(absoluteUrl);
+
+          // Entité Photo (URL relative pour le front)
+          _context.Photos.Add(new Photo
+          {
+            Url = $"/comments/{publicId}",
+            PublicId = publicId,
+            CommentaireId = commentaire.Id
+          });
+        }
+      }
+
+      await _context.SaveChangesAsync();
+    }
+
+    // 4) Chargement du ticket et de ses relations
     var ticket = await _context.Tickets
         .Include(t => t.Owner)
         .Include(t => t.Projet).ThenInclude(p => p.ChefProjet)
@@ -56,15 +103,14 @@ public class CommentService : ICommentService
     if (ticket == null)
       return null;
 
-    // 3) Récupération de l’auteur
+    // 5) Récupération de l’auteur et détermination des destinataires
     var sender = await _userService.GetUserByIdAsync(userId);
     if (sender == null)
       return null;
-    var senderRole = sender.Role?.ToLower();
-
-    // 4) Destinataires selon rôle
+    var role = sender.Role?.ToLower() ?? "";
     var recipients = new List<(int Id, string Name, string Email)>();
-    if (senderRole == "client")
+
+    if (role == "client")
     {
       if (ticket.Projet?.ChefProjet != null)
         recipients.Add((ticket.Projet.ChefProjet.Id,
@@ -75,7 +121,7 @@ public class CommentService : ICommentService
                         $"{ticket.Responsible.FirstName} {ticket.Responsible.LastName}",
                         ticket.Responsible.Email));
     }
-    else if (senderRole == "chef de projet")
+    else if (role == "chef de projet")
     {
       if (ticket.Owner != null)
         recipients.Add((ticket.Owner.Id,
@@ -86,7 +132,7 @@ public class CommentService : ICommentService
                         $"{ticket.Responsible.FirstName} {ticket.Responsible.LastName}",
                         ticket.Responsible.Email));
     }
-    else if (senderRole == "responsable")
+    else if (role == "responsable")
     {
       if (ticket.Owner != null)
         recipients.Add((ticket.Owner.Id,
@@ -97,7 +143,7 @@ public class CommentService : ICommentService
                         $"{ticket.Projet.ChefProjet.FirstName} {ticket.Projet.ChefProjet.LastName}",
                         ticket.Projet.ChefProjet.Email));
     }
-    else if (senderRole == "super admin")
+    else if (role == "super admin")
     {
       if (ticket.Owner != null)
         recipients.Add((ticket.Owner.Id,
@@ -113,31 +159,41 @@ public class CommentService : ICommentService
                         ticket.Responsible.Email));
     }
 
-    // Toujours notifier aussi les super-admins
+    // Toujours notifier les super-admins
     var superAdmins = await _userService.GetUsersByRoleAsync("super admin");
     recipients.AddRange(superAdmins.Select(sa =>
         (sa.Id, $"{sa.FirstName} {sa.LastName}", sa.Email)));
 
-    // 5) Sujet et corps de base
+    // 6) Préparation du sujet et du corps de l’e-mail
     var subject = $"Nouveau commentaire sur le ticket #{ticket.Id}";
-    var baseMessage = $"Un nouveau commentaire a été ajouté par {sender.FirstName} {sender.LastName} " +
-                      $"au ticket '{ticket.Title}' (n°{ticket.Id}).<br><br>" +
-                      $"Contenu : {commentaire.Contenu}";
+    var sb = new StringBuilder();
+    sb.Append($"Un nouveau commentaire a été ajouté par {sender.FirstName} {sender.LastName} " +
+              $"au ticket '<strong>{ticket.Title}</strong>' (n°{ticket.Id}).<br/><br>");
 
-    // 6) Envoi mail + notifications enrichies
-    foreach (var recipient in recipients
-             .Where(r => r.Id != userId)                 // exclut l’auteur
-             .GroupBy(r => r.Id).Select(g => g.First())) // unique par Id
+    if (!string.IsNullOrWhiteSpace(commentaire.Contenu))
+      sb.Append($"<strong>Contenu :</strong> {commentaire.Contenu}<br/>");
+
+    if (photoUrls.Any())
     {
-      // 6.a) Email
-      var personalized = $"Bonjour {recipient.Name},<br><br>{baseMessage}";
-      await _emailService.SendEmailAsync(
-          recipient.Name,
-          recipient.Email,
-          subject,
-          personalized);
+      sb.Append("<br/><strong>Fichiers joints :</strong><ul>");
+      foreach (var url in photoUrls)
+      {
+        var name = Path.GetFileName(url);
+        sb.AppendFormat("<li><a href=\"{0}\" target=\"_blank\">{1}</a></li>", url, name);
+      }
+      sb.Append("</ul>");
+    }
 
-      // 6.b) Préparer NotificationDto
+    var bodyHtml = sb.ToString();
+
+    // 7) Envoi des e-mails et notifications
+    foreach (var recipient in recipients
+             .Where(r => r.Id != userId)
+             .GroupBy(r => r.Id).Select(g => g.First()))
+    {
+      var personalized = $"Bonjour {recipient.Name},<br/><br>{bodyHtml}";
+      await _emailService.SendEmailAsync(recipient.Name, recipient.Email, subject, personalized);
+
       var notifDto = new NotificationDto
       {
         Message = $"Nouveau commentaire sur le ticket #{ticket.Id}.",
@@ -145,15 +201,11 @@ public class CommentService : ICommentService
         EntityType = "Tickets",
         EntityId = ticket.Id
       };
-
-      // 6.c) Notifications Hangfire
-      BackgroundJob.Enqueue(() =>
-          _notifService.NotifyRealtimeAsync(recipient.Id, notifDto));
-      BackgroundJob.Enqueue(() =>
-          _notifService.NotifyPushAsync(recipient.Id, notifDto));
+      BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(recipient.Id, notifDto));
+      BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(recipient.Id, notifDto));
     }
 
-    // 7) Retour du DTO
+    // 8) Retour du DTO
     return new CommentDto
     {
       Id = commentaire.Id,
@@ -163,6 +215,7 @@ public class CommentService : ICommentService
       TicketId = commentaire.TicketId
     };
   }
+
 
 
   public async Task<CommentDto> GetCommentByIdAsync(int id)
@@ -186,6 +239,7 @@ public class CommentService : ICommentService
     var comments = await _context.Commentaires
         .Include(c => c.Utilisateur)
           .ThenInclude(p => p.Role)
+        .Include(c => c.Photos)
         .Where(c => c.TicketId == ticketId)
         .OrderByDescending(c => c.Date)
         .ToListAsync();

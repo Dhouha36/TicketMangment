@@ -1,16 +1,11 @@
 <body>
 
-  <!-- En-tête du ticket : titre à gauche, bouton à droite -->
+  <!-- En-tête du ticket -->
   <div class="ticket-header">
     <h1>{{ ticket?.title }}</h1>
-    <!-- Groupe de boutons -->
-    <div>
-      <button *ngIf="canValidateTicket()" (click)="openValidationModal()">
-        Valider
-      </button>
-      <button *ngIf="canFinishTicket()" (click)="openCompletionModal()">
-        Terminer
-      </button>
+    <div class="button-group">
+      <button *ngIf="canValidateTicket()" (click)="openValidationModal()">Valider</button>
+      <button *ngIf="canFinishTicket()" (click)="openCompletionModal()">Terminer</button>
       <button *ngIf="canUpdateResponsible()" (click)="updateResponsible()" [disabled]="isLoading">
         <ng-container *ngIf="!isLoading; else loadingResponsibleTpl">
           Enregistrer
@@ -18,16 +13,15 @@
         <ng-template #loadingResponsibleTpl>
           <span class="spinner"></span> Enregistrer
         </ng-template>
-      </button>      
+      </button>
     </div>
   </div>
 
-  <!-- Contenu principal du ticket -->
+  <!-- Détails du ticket -->
   <div class="ticket-details-container" *ngIf="ticket">
-    <!-- Partie gauche : formulaire / informations principales -->
     <div class="left-section">
       <div class="form-grid">
-        <!-- Ligne 1 : Qualification / Projet -->
+        <!-- Qualification / Projet -->
         <div>
           <label>Qualification <span class="required">*</span></label>
           <input type="text" [value]="ticket.qualification?.name" disabled />
@@ -36,8 +30,7 @@
           <label>Projet <span class="required">*</span></label>
           <input type="text" [value]="ticket.projet?.nom" disabled />
         </div>
-
-        <!-- Ligne 2 : Catégorie / Priorité -->
+        <!-- Catégorie / Priorité -->
         <div>
           <label>Catégorie de problème <span class="required">*</span></label>
           <input type="text" [value]="ticket.problemCategory?.nom" disabled />
@@ -46,51 +39,40 @@
           <label>Priorité <span class="required">*</span></label>
           <input type="text" [value]="ticket.priority?.name" disabled />
         </div>
-
-        <!-- Ligne 3 : Titre (colonne complète) -->
+        <!-- Titre -->
         <div class="full-width">
           <label>Titre <span class="required">*</span></label>
           <input type="text" [value]="ticket.title" disabled />
         </div>
-
-        <!-- Ligne 4 : Description (colonne complète) -->
+        <!-- Description -->
         <div class="full-width">
           <label>Description <span class="required">*</span></label>
           <textarea disabled>{{ ticket.description }}</textarea>
         </div>
-
-        <!-- Ligne 5 : Attachement (colonne complète) -->
-        <div *ngIf="ticket?.attachments; else noAttachment" class="full-width">
+        <!-- Attachement du ticket (optionnel) -->
+        <div class="full-width">
           <label>Attachement</label>
-          <a [href]="ticket.attachments" target="_blank">Voir le fichier</a>
-        </div>
-        <ng-template #noAttachment>
-          <div class="full-width">
-            <label>Attachement</label>
+          <ng-container *ngIf="ticket.attachments; else noAttachment">
+            <a [href]="ticket.attachments" target="_blank">Voir le fichier</a>
+          </ng-container>
+          <ng-template #noAttachment>
             <input type="file" disabled />
-          </div>
-        </ng-template>
-
-        <!-- Ligne 6 : Validé le / Résolu à -->
+          </ng-template>
+        </div>
+        <!-- Dates validation / résolution -->
         <div>
           <label>Validé le</label>
-          <p>
-            {{ ticket.approvedAt ? (ticket.approvedAt | date:'short') : 'Non validé' }}
-          </p>
+          <p>{{ ticket.approvedAt ? (ticket.approvedAt | date:'short') : 'Non validé' }}</p>
         </div>
         <div>
           <label>Résolu le</label>
-          <p>
-            {{ ticket.solvedAt ? (ticket.solvedAt | date:'short') : '_' }}
-          </p>
+          <p>{{ ticket.solvedAt ? (ticket.solvedAt | date:'short') : '_' }}</p>
         </div>
       </div>
     </div>
 
-    <!-- Partie droite : panneau latéral (statut, responsable, dates, etc.) -->
     <div class="right-section">
       <div class="sidebar-card">
-
         <div class="sidebar-item">
           <label>Statut</label>
           <p>{{ ticket.statut?.name }}</p>
@@ -98,17 +80,16 @@
 
         <div *ngIf="currentUser?.role?.toLowerCase() === 'client'; else selectableResponsible">
           <label>Responsable</label>
-          <!-- Si le ticket possède déjà un responsable, affichez-le, sinon affichez le nom du client -->
           <input type="text"
-            [value]="ticket.responsible ? (ticket.responsible.firstName + ' ' + ticket.responsible.lastName)  : 'Aucun responsable'"
+            [value]="ticket.responsible
+                      ? (ticket.responsible.firstName + ' ' + ticket.responsible.lastName)
+                      : 'Aucun responsable'"
             disabled />
         </div>
         <ng-template #selectableResponsible>
           <label>Responsable</label>
-          <select [(ngModel)]="selectedResponsibleId" [disabled]="ticket.statut?.name === '-' ||
-                              ticket.statut?.name === 'Résolu' ||
-                              ticket.statut?.name === 'Non Résolu' ||
-                              ticket.statut?.name === 'Refusé'">
+          <select [(ngModel)]="selectedResponsibleId"
+                  [disabled]="!canUpdateResponsible()">
             <option [ngValue]="null" disabled>Sélectionner un responsable</option>
             <option *ngFor="let dev of developers" [ngValue]="dev.id">
               {{ dev.firstName }} {{ dev.lastName }} - {{ dev.role }}
@@ -117,8 +98,8 @@
         </ng-template>
 
         <div class="sidebar-item">
-          <p><strong>Créé le :</strong> {{ ticket.createdAt ? (ticket.createdAt| date:'short') : 'N/A' }}</p>
-          <p><strong>Mise à jour :</strong> {{ ticket.updatedAt ? (ticket.updatedAt | date:'short') : '-' }}</p>
+          <p><strong>Créé le :</strong> {{ ticket.createdAt | date:'short' }}</p>
+          <p><strong>Mise à jour :</strong> {{ ticket.updatedAt | date:'short' }}</p>
         </div>
       </div>
     </div>
@@ -126,54 +107,93 @@
 
   <!-- Section Commentaires -->
   <div class="comments-container">
-    <!-- Titre de la section commentaires -->
     <h2>Commentaires</h2>
 
-    <!-- Liste des commentaires -->
-    <div class="comments-list" *ngIf="comments && comments.length > 0; else noCommentsTemplate">
+    <div class="comments-list" *ngIf="comments.length > 0; else noCommentsTemplate">
       <div class="comment" *ngFor="let comment of comments">
         <div class="comment-header">
-          <!-- Partie gauche : icône et nom -->
           <div class="left-part">
-            <div class="comment-icon" [ngClass]="{'my-comment-icon': comment.utilisateur?.id !== currentUser?.id}">
+            <div class="comment-icon"
+                 [ngClass]="{'my-comment-icon': comment.utilisateur?.id !== currentUser?.id}">
               {{ getInitials(comment.utilisateur?.firstName, comment.utilisateur?.lastName) }}
-            </div>            
+            </div>
             <div class="comment-info">
               <span class="comment-author">
-                {{ comment.utilisateur?.id === currentUser?.id 
-                    ? 'Moi' 
-                    : (comment.utilisateur?.firstName + ' ' + comment.utilisateur?.lastName + ' - ' + comment.utilisateur?.role) }}
-              </span>        
+                {{ comment.utilisateur?.id === currentUser?.id
+                   ? 'Moi'
+                   : (comment.utilisateur?.firstName + ' ' + comment.utilisateur?.lastName +
+                      ' - ' + comment.utilisateur?.role) }}
+              </span>
             </div>
           </div>
-          <!-- Partie droite : date -->
           <small class="comment-date">{{ comment.date | date:'short' }}</small>
         </div>
-        <!-- Contenu du commentaire en dessous -->
         <p class="comment-content" [innerHTML]="comment.contenu"></p>
+
+        <!-- Affichage des pièces jointes du commentaire -->
+        <div class="attachments" *ngIf="comment.photos?.length">
+          <ng-container *ngFor="let p of comment.photos">
+            <img *ngIf="isImage(p.url)"
+                 [src]="assetsUrl + p.url"
+                 class="thumb"
+                 (click)="openPhoto(assetsUrl + p.url)"  />
+            <a *ngIf="!isImage(p.url)" [href]="assetsUrl + p.url" target="_blank">
+              {{ p.url.split('/').pop() }}
+            </a>
+          </ng-container>
+        </div>
       </div>
     </div>
 
-    <!-- Message si aucune donnée -->
+
+
     <ng-template #noCommentsTemplate>
       <div class="no-content">
         <span class="icon">✕</span>
         <p>Aucun commentaire trouvé</p>
       </div>
     </ng-template>
-    
-    <!-- Champ de saisie pour nouveau commentaire -->
-    <div class="comment-input-container">
-      <textarea [(ngModel)]="newComment" placeholder="Écrire un commentaire..." class="comment-input" rows="1"></textarea>
-      <button class="send-button" (click)="onAddComment()" [disabled]="isLoading">
-        <ng-container *ngIf="!isLoading; else loadingCommentTpl">
-          <i class="fas fa-paper-plane"></i>
-        </ng-container>
-        <ng-template #loadingCommentTpl>
-          <span class="spinner"></span>
-        </ng-template>
-      </button>      
+
+    <div class="file-links-container" *ngIf="filesToUpload.length">
+      <div class="file-link-input" *ngFor="let item of filesToUpload">
+        <input
+          type="text"
+          [value]="item.file.name"
+          readonly
+          (click)="selectAllText($event)"
+        />
+        <button (click)="removeFile(item.file)">✕</button>
+      </div>      
     </div>
+    <!-- Zone d'édition rich text + upload -->
+    <div
+  class="comment-input-container"
+  (drop)="onDrop($event)"
+  (dragover)="onDragOver($event)"
+  (paste)="onPaste($event)"
+>
+  <div
+    #editor
+    contenteditable="true"
+    class="comment-editor"
+    (input)="onEditorInput($event)"
+  ></div>
+
+
+  <button
+    class="send-button"
+    (click)="onAddComment()"
+    [disabled]="isLoading || (!newComment.trim() && !filesToUpload.length)"
+  >
+    <ng-container *ngIf="!isLoading; else loadingTpl">
+      <i class="fas fa-paper-plane"></i>
+    </ng-container>
+    <ng-template #loadingTpl>
+      <span class="spinner"></span>
+    </ng-template>
+  </button>
+</div>
+
   </div>
 
 </body>

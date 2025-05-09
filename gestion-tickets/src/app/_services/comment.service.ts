@@ -20,4 +20,8 @@ export class CommentService {
   addComment(commentData: { contenu: string; ticketId: number }): Observable<Comment> {
     return this.http.post<Comment>(this.baseUrl, commentData);
   }
+  addCommentFormData(formData: FormData): Observable<Comment> {
+    return this.http.post<Comment>(`${this.baseUrl}`, formData);
+  }
+  
 }

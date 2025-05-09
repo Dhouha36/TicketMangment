@@ -5,7 +5,6 @@ import { RouterModule, Routes } from '@angular/router';
 import { RoleGuard } from '../_guards/role.guard';
 
 import { ListeSocietesComponent } from './liste-societes/liste-societes.component';
-import { AjouterSocieteComponent } from './ajouter-societe/ajouter-societe.component';
 import { ModifierSocieteComponent } from './modifier-societe/modifier-societe.component';
 import { AjouterSocieteWizardComponent } from './ajouter-societe-wizard/ajouter-societe-wizard.component';
 import { PendingChangesGuard } from '../_guards/pending-changes.guard';
@@ -28,7 +27,7 @@ const routes: Routes = [
     CommonModule,
     RouterModule.forChild(routes),
     ListeSocietesComponent,
-    AjouterSocieteComponent,
+    AjouterSocieteWizardComponent,
     ModifierSocieteComponent
   ]
 })

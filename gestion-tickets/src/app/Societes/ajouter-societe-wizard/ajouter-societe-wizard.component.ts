@@ -14,7 +14,6 @@ import { ProjetService } from 'src/app/_services/projet.service';
 import { SocieteService } from 'src/app/_services/societe.service';
 import { ContractDialogComponent } from 'src/app/contract-dialog/contract-dialog.component';
 import { ClientCreate } from 'src/app/DTOs/client-create.model';
-import { ProjetCreate } from 'src/app/DTOs/projet-create.model';
 
 @Component({
   selector: 'app-ajouter-societe-wizard',

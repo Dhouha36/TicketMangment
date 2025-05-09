@@ -3,6 +3,7 @@ using System;
 using GestionTicketsAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestionTicketsAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250508155056_commentPhotot")]
+    partial class commentPhotot
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,6 +53,7 @@ namespace GestionTicketsAPI.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Contenu")
+                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime>("Date")
@@ -607,7 +611,7 @@ namespace GestionTicketsAPI.Migrations
             modelBuilder.Entity("GestionTicketsAPI.Entities.Photo", b =>
                 {
                     b.HasOne("GestionTicketsAPI.Entities.Commentaire", "Commentaire")
-                        .WithMany("Photos")
+                        .WithMany()
                         .HasForeignKey("CommentaireId");
 
                     b.HasOne("GestionTicketsAPI.Entities.Pays", "Pays")
@@ -766,11 +770,6 @@ namespace GestionTicketsAPI.Migrations
                     b.Navigation("PaysNavigation");
 
                     b.Navigation("Role");
-                });
-
-            modelBuilder.Entity("GestionTicketsAPI.Entities.Commentaire", b =>
-                {
-                    b.Navigation("Photos");
                 });
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Pays", b =>

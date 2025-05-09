@@ -17,19 +17,28 @@ namespace GestionTicketsAPI.Controllers
     }
 
     [HttpPost]
-    public async Task<ActionResult<CommentDto>> CreateComment([FromBody] CommentCreateDto commentCreateDto)
+    [Consumes("multipart/form-data")]
+    public async Task<ActionResult<CommentDto>> CreateComment(
+        [FromForm] CommentCreateDto commentCreateDto)    // <-- [FromForm]
     {
-      // Récupération de l'ID de l'utilisateur connecté via les claims
-      var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
-      if (userIdClaim == null)
-        return Unauthorized("Utilisateur non authentifié.");
+        var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null) return Unauthorized("Utilisateur non authentifié.");
 
-      int userId = int.Parse(userIdClaim.Value);
-      var createdComment = await _commentService.CreateCommentAsync(commentCreateDto, userId);
-      if (createdComment == null)
-        return BadRequest("Erreur lors de la création du commentaire.");
+        int userId = int.Parse(userIdClaim.Value);
+        if (string.IsNullOrWhiteSpace(commentCreateDto.Contenu) 
+            && (commentCreateDto.Files == null || commentCreateDto.Files.Length == 0))
+        {
+            ModelState.AddModelError(nameof(commentCreateDto.Contenu),
+                "Vous devez fournir du texte ou au moins un fichier.");
+            return ValidationProblem(ModelState);
+        }
+        var createdComment = await _commentService.CreateCommentAsync(commentCreateDto, userId);
+        if (createdComment == null)
+            return BadRequest("Erreur lors de la création du commentaire.");
 
-      return CreatedAtAction(nameof(GetCommentById), new { id = createdComment.Id }, createdComment);
+        return CreatedAtAction(nameof(GetCommentById),
+                               new { id = createdComment.Id },
+                               createdComment);
     }
 
     [HttpGet("{id:int}")]

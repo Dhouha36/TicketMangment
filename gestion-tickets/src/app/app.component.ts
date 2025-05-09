@@ -1,28 +1,16 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { MatDialogModule } from '@angular/material/dialog';
 import { AccountService } from './_services/account.service';
-import { OverlayModule } from '@angular/cdk/overlay';
 import { AngularEditorModule } from '@kolkov/angular-editor';
-import { NgxEditorModule } from 'ngx-editor';
-import { CommonModule } from '@angular/common';
-import { LoaderService } from './_services/loader.service';
-import localeFr from '@angular/common/locales/fr';
 import { GlobalLoaderComponent } from './global-loader/global-loader.component';
 import { NotificationService } from './_services/notification.service';
 import { PushSubscriptionService } from './_services/push-subscription.service';
-import { NotificationsComponent } from "./notifications/notifications.component";
 
 @Component({
   selector: 'app-root',
   imports: [
     RouterOutlet,
-    MatDialogModule,
-    OverlayModule,
     AngularEditorModule,
-    NgxEditorModule,
-    CommonModule,
     GlobalLoaderComponent,
 ],
   templateUrl: './app.component.html',
