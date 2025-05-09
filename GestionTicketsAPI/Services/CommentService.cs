@@ -1,4 +1,4 @@
-service using System;
+using System;
 using System.Text;
 using AutoMapper;
 using GestionTicketsAPI.Data;
