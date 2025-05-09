@@ -9,7 +9,10 @@ public class Photo
   public required string Url { get; set; }
   public string? PublicId { get; set; }
 
-  public int PaysId { get; set; }
+  public int? PaysId { get; set; }
 
   public Pays? Pays { get; set; } = null;
-}
+
+  public int? CommentaireId { get; set; }
+  public Commentaire? Commentaire { get; set; }
+}  

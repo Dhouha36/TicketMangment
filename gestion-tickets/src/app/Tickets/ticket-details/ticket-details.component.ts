@@ -1,4 +1,5 @@
-import { Component, LOCALE_ID, OnInit, inject } from '@angular/core';
+
+import { Component, ElementRef, LOCALE_ID, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule } from '@angular/router';
@@ -18,6 +19,8 @@ import localeFr from '@angular/common/locales/fr';
 import { CommentService } from '../../_services/comment.service';
 import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
+import { environment } from 'src/environments/environment';
+import { ImagePreviewModalComponent } from '../image-preview-modal/image-preview-modal.component';
 registerLocaleData(localeFr);
 
 @Component({
@@ -31,7 +34,8 @@ registerLocaleData(localeFr);
   styleUrls: ['./ticket-details.component.scss']
 })
 export class TicketDetailsComponent implements OnInit {
-  
+  @ViewChild('editor') editor!: ElementRef<HTMLDivElement>;
+  public assetsUrl = environment.assetsUrl;
 
   ticket: Ticket | null = null;
   currentUser: User | null = null;
@@ -41,6 +45,7 @@ export class TicketDetailsComponent implements OnInit {
   // Pour la gestion des commentaires
   comments: TicketComment[] = [];
   newComment: string = '';
+  filesToUpload: { file: File; url: string }[] = [];
 
   // Propriété pour stocker le responsable sélectionné
   selectedResponsibleId: number | null = null;
@@ -125,24 +130,91 @@ export class TicketDetailsComponent implements OnInit {
   }
 
 
-
-  onAddComment(): void {
-    if (!this.newComment || this.newComment.trim() === '') return;
+  selectAllText(event: MouseEvent) {
+    const input = event.target as HTMLInputElement;
+    input.select();
+  }
+  
+  onAddComment() {
+    if (!this.newComment.trim() && !this.filesToUpload.length) return;
     this.loaderService.showLoader();
-    this.commentService.addComment({ contenu: this.newComment, ticketId: this.ticketId }).subscribe({
-      next: (comment) => {
+
+    const form = new FormData();
+    form.append('contenu', this.newComment);
+    form.append('ticketId', this.ticketId.toString());
+    this.filesToUpload.forEach(item => form.append('files', item.file, item.file.name));
+
+    this.commentService.addCommentFormData(form).subscribe({
+      next: comment => {
+        // rafraîchir liste des commentaires…
+        this.editor.nativeElement.innerText = '';
         this.newComment = '';
-        this.comments.push(comment);
+        this.filesToUpload = [];
+        this.loaderService.hideLoader();
         this.loadComments();
-        this.loaderService.hideLoader();
       },
-      error: (err) => {
-        console.error('Erreur lors de l\'ajout du commentaire', err);
-        const message = err.error || 'Erreur lors de l\'ajout du commentaire';
-        this.toastr.error(message, 'Erreur');
-        this.loaderService.hideLoader();
-      }
+      error: () => this.loaderService.hideLoader()
     });
+  }
+  
+
+  onFilesSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files) { return; }
+    const files = Array.from(input.files);
+    files.forEach(f => {
+      const url = URL.createObjectURL(f);
+      this.filesToUpload.push({ file: f, url });
+    });
+    // met à jour la variable newComment si vous en avez besoin
+    this.newComment = this.editor.nativeElement?.innerText ?? '';
+  }
+  
+  // Met à jour le texte tapé
+  onEditorInput(event: Event) {
+    this.newComment = (event.target as HTMLDivElement).innerText;
+  }
+
+  // Gère le dragover pour autoriser le drop
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+  }
+
+  // Drop de fichiers
+  onDrop(event: DragEvent) {
+    event.preventDefault();
+    if (event.dataTransfer?.files) {
+      this.addFiles(Array.from(event.dataTransfer.files));
+    }
+  }
+
+  // Ctrl+V / Cmd+V  
+  onPaste(event: ClipboardEvent) {
+    if (event.clipboardData?.files.length) {
+      event.preventDefault();
+      this.addFiles(Array.from(event.clipboardData.files));
+    }
+  }
+
+  private addFiles(files: File[]) {
+    files.forEach(f => {
+      const url = URL.createObjectURL(f);
+      this.filesToUpload.push({ file: f, url });
+    });
+    // (facultatif) on garde newComment à jour
+    this.newComment = this.editor.nativeElement.innerText;
+  }
+  
+
+
+  removeFile(fileToRemove: File) {
+    this.filesToUpload = this.filesToUpload.filter(item => item.file !== fileToRemove);
+  }  
+
+  openPhoto(url: string) {
+    const modal = this.overlayModalService.open(ImagePreviewModalComponent);
+    modal.url = url;                    // passe l'URL au composant
+    modal.close = () => this.overlayModalService.close();
   }
 
   // Logique pour afficher le bouton de validation
@@ -206,11 +278,11 @@ export class TicketDetailsComponent implements OnInit {
     modalInstance.finished.subscribe((finishData: FinishTicketDto) => {
       // Appel à la méthode qui gère la validation et les mises à jour
       this.updateTicketCompletion(finishData);
-      this.isLoading = !this.isLoading;
+      this.isLoading =!this.isLoading;
     });
     modalInstance.closed.subscribe(() => {
       this.overlayModalService.close();
-      this.isLoading = !this.isLoading;
+      this.isLoading =!this.isLoading;
     });
   }
   
@@ -271,5 +343,12 @@ export class TicketDetailsComponent implements OnInit {
   }
   
 
+  isImage(url: string): boolean {
+    return /\.(jpe?g|png|gif|bmp|svg)$/i.test(url);
+  }
 
 }
+
+
+ 
+

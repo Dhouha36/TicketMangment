@@ -25,6 +25,7 @@ namespace GestionTicketsAPI.Extensions
             );
 
             services.AddCors();
+            services.AddHttpContextAccessor();
             services.AddTransient<EmailService>();
             services.AddScoped<ExcelExportServiceClosedXML>();
             services.AddScoped<ITokenService, TokenService>();

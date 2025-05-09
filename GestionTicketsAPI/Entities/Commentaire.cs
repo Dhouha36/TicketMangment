@@ -8,8 +8,7 @@ public class Commentaire
     [Key]
     public int Id { get; set; }
 
-    [Required]
-    public string Contenu { get; set; } = string.Empty;
+    public string? Contenu { get; set; } = string.Empty;
 
     [Required]
     public DateTime Date { get; set; } = DateTime.UtcNow;
@@ -23,4 +22,5 @@ public class Commentaire
     public int TicketId { get; set; }
 
     public Ticket? Ticket { get; set; }
+    public ICollection<Photo> Photos { get; set; } = new List<Photo>();
 }

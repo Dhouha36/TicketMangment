@@ -1,5 +1,5 @@
-/* Style général */
-body {
+ /* Style général */
+ body {
   font-family: Arial, sans-serif;
   background-color: #f0f0f0;
   margin: 0;
@@ -297,7 +297,7 @@ select:focus {
   margin-top: 1rem;
 }
 
-.comment-input {
+.comment-editor {
   flex: 1;
   border: 1px solid #ccc;
   border-radius: 20px;
@@ -306,11 +306,119 @@ select:focus {
   font-family: inherit;
   font-size: 1rem;
   transition: border-color 0.2s;
+  /* pour que le div s’étende en hauteur si nécessaire */
+  min-height: 2.5rem;
 }
 
-.comment-input:focus {
+.comment-editor:focus {
   border-color: #e67e22;
 }
+
+.file-links-container {
+  margin: 15px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.file-link-input {
+  display: flex;
+  align-items: center;
+  width: calc(50% - 10px); /* Deux colonnes avec gap de 10px */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.file-link-input:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-link-input input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px 0 0 8px;
+  background-color: #f9f9f9;
+  font-size: 0.95rem;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.file-link-input input:focus {
+  outline: none;
+  border-color: #ec9141;
+  background-color: #fff;
+}
+
+.file-link-input input::selection {
+  background-color: #ffd8b5;
+}
+
+.file-link-input button {
+  margin-left: 0;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  color: #777;
+  height: 100%;
+  width: 40px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.file-link-input button:hover {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.attachments img.thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.attachments img.thumb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.attachments a {
+  display: inline-block;
+  padding: 6px 10px;
+  background-color: #edf2f7;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #2d3748;
+  text-decoration: none;
+  transition: background-color 0.1s;
+}
+
+.attachments a:hover {
+  background-color: #e2e8f0;
+}
+
+
 
 /* Bouton d'envoi */
 .send-button {
@@ -323,15 +431,19 @@ select:focus {
   cursor: pointer;
   font-size: 1rem;
   transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
 }
 
 .send-button i {
   font-size: 1.2rem;
+  margin-right: 0.25rem;
 }
 
 .send-button:hover {
   background-color: #e0700e;
 }
+
 
 .spinner {
   display: inline-block;
