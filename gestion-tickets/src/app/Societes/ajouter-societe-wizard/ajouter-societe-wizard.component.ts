@@ -25,6 +25,7 @@ export class AjouterSocieteWizardComponent implements OnInit {
   wizardForm!: FormGroup;
   step = 1;
   isLoading = false;
+  isCompleted = false; 
   paysList: any[] = [];
   chefsList: User[] = [];
   selectedCountry?: any;
@@ -148,118 +149,102 @@ export class AjouterSocieteWizardComponent implements OnInit {
     cg.reset({ dateDebut: '', dateFin: '', type: 'Standard' }, { emitEvent: false });
   }
 
-  // Étape 1 → création société
-  submitSociete(): void {
-    const socForm = this.societeGroup.value;
-    if (this.societeGroup.invalid) return;
 
-    // Prépare payload commun
-    const payload = {
-      nom: socForm.nom,
-      adresse: socForm.adresse,
-      telephone: `${this.selectedCountry?.codeTel || ''} ${socForm.telephone}`.trim(),
-      paysId: +socForm.paysId,
-      contract: socForm.contrat ? {
-        dateDebut: new Date(socForm.contract.dateDebut).toISOString(),
-        dateFin:   new Date(socForm.contract.dateFin).toISOString(),
-        type:      socForm.contract.type
+
+  submitAll(): void {
+    // 1) Vérification du dernier formulaire
+    if (this.clientGroup.invalid) {
+      this.toastr.error('Veuillez compléter tous les champs requis avant de continuer.');
+      return;
+    }
+  
+    this.loaderService.showLoader();
+  
+    // 2) Préparation et appel API pour la création de la société
+    const soc = this.societeGroup.value;
+    const socDto = {
+      nom: soc.nom,
+      adresse: soc.adresse,
+      telephone: `${this.selectedCountry?.codeTel || ''} ${soc.telephone}`.trim(),
+      paysId: +soc.paysId,
+      contract: soc.contrat ? {
+        dateDebut: new Date(soc.contract.dateDebut).toISOString(),
+        dateFin:   new Date(soc.contract.dateFin).toISOString(),
+        type:      soc.contract.type
       } : null
     };
-
-    this.isLoading = true;
-
-    if (this.createdSocieteId) {
-      // On récupère l'entité complète, on patch, puis on update
-      this.societeService.getSociete(this.createdSocieteId).subscribe(existing => {
-        const toUpdate: Societe = {
-          ...existing,
-          ...payload,
-          utilisateurs: existing.utilisateurs || [],
-          projets: existing.projets || []
+  
+    this.societeService.addSociete(socDto).subscribe({
+      next: socResp => {
+        const societeId = socResp.id;
+  
+        // 3) Préparation et appel API pour la création du projet
+        const p = this.projetGroup.value;
+        const projDto = {
+          nom: p.nom,
+          description: p.description,
+          chefProjetId: +p.chefProjetId,
+          societeId
         };
-        this.societeService.updateSociete(this.createdSocieteId!, toUpdate).subscribe({
-          next: () => console.log('Société mise à jour'),
-          complete: () => { this.isLoading = false; this.step = 2; }
+  
+        this.projetService.addProjet(projDto).subscribe({
+          next: projResp => {
+            const projetId = projResp.id;
+  
+            // 4) Préparation et appel API pour la création du client
+            const c = this.clientGroup.value;
+            const clientDto: ClientCreate = {
+              firstName: c.firstName,
+              lastName:  c.lastName,
+              email:     c.email,
+              pays:      +c.pays,
+              numTelephone: this.selectedCountry!.codeTel + ' ' + c.numTelephone,
+              role:      'Client',
+              societeId,
+              projetId   // Assurez-vous d’avoir ajouté `projetId` dans ClientCreate
+            };
+  
+            this.accountService.register(clientDto).subscribe({
+              next: () => {
+                this.toastr.success('Société, projet et client créés avec succès.');
+                this.router.navigate(['/home/Societes']);
+              },
+              error: () => {
+                this.toastr.error('Erreur lors de la création du client.');
+              },
+              complete: () => {
+                this.loaderService.hideLoader();
+                this.isCompleted = true;
+              }
+            });
+  
+          },
+          error: () => {
+            this.toastr.error('Erreur lors de la création du projet.');
+            this.loaderService.hideLoader();
+          }
         });
-      });
-    } else {
-      // Création
-      this.societeService.addSociete(payload).subscribe({
-        next: resp => { this.createdSocieteId = resp.id; this.step = 2; },
-        error: () => this.toastr.error('Erreur création société'),
-        complete: () => this.isLoading = false
-      });
-    }
-  }
-
-  /** Création ou mise à jour du projet */
-  submitProjet(): void {
-    const projForm = this.projetGroup.value;
-    if (this.projetGroup.invalid) return;
-
-    const payload = {
-      nom: projForm.nom,
-      description: projForm.description,
-      chefProjetId: +projForm.chefProjetId,
-      societeId: this.createdSocieteId!
-    };
-
-    this.isLoading = true;
-
-    if (this.createdProjetId) {
-      // patch existing project
-      this.projetService.getProjetById(this.createdProjetId).subscribe(existing => {
-        const toUpdate: Projet = {
-          ...existing,
-          ...payload
-        };
-        this.projetService.updateProjet(toUpdate).subscribe({
-          next: () => console.log('Projet mis à jour'),
-          complete: () => { this.isLoading = false; this.step = 3; }
-        });
-      });
-    } else {
-      // création
-      this.projetService.addProjet(payload).subscribe({
-        next: resp => { this.createdProjetId = resp.id; this.step = 3; },
-        error: () => this.toastr.error('Erreur création projet'),
-        complete: () => this.isLoading = false
-      });
-    }
-  }
-
-  // Étape 3 → création client
-  submitClient(): void {
-    if (this.wizardForm.get('client')!.invalid) return;
-
-    const f = this.wizardForm.get('client')!.value;
-    const clientDto: ClientCreate = {
-      firstName: f.firstName,
-      lastName: f.lastName,
-      email: f.email,
-      pays: +f.pays,
-      numTelephone: this.selectedCountry!.codeTel + ' ' + f.numTelephone,
-      role: 'Client',
-      societeId: this.createdSocieteId
-    };
-
-    this.loaderService.showLoader();
-    this.accountService.register(clientDto).subscribe({
-      next: () => {
-        this.toastr.success('Ajout terminé avec succès');
-        this.router.navigate(['/home/Societes']);
-        this.loaderService.hideLoader();
+  
       },
       error: () => {
-        this.toastr.error('Erreur création client');
+        this.toastr.error('Erreur lors de la création de la société.');
         this.loaderService.hideLoader();
       }
     });
   }
-
+  
   prevStep(): void {
     this.step = Math.max(this.step - 1, 1);
   }
+  nextStep(): void {
+    // n’avance que si le formulaire courant est valide
+    if (
+      (this.step === 1 && this.societeGroup.invalid) ||
+      (this.step === 2 && this.projetGroup.invalid)
+    ) { return; }
+    this.step++;
+  }
+  
 
   get societeGroup(): FormGroup {
     return this.wizardForm.get('societe') as FormGroup;
@@ -272,6 +257,7 @@ export class AjouterSocieteWizardComponent implements OnInit {
   }
 
   public cleanupOnExit(): void {
+    if (this.isCompleted) return;
     // Rien à faire si on est toujours à l'étape 1
     if (this.step === 1 || !this.createdSocieteId) {
       return;

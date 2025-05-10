@@ -11,7 +11,7 @@ import { ProjetCreate } from '../DTOs/projet-create.model';
   providedIn: 'root'
 })
 export class ProjetService {
-  private baseUrl = environment.apiUrl+"projets"; 
+  public baseUrl = environment.apiUrl+"projets"; 
 
   paginatedResult: PaginatedResult<Projet[]> | null = null;
   constructor(private http: HttpClient) { }

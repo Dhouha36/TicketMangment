@@ -7,6 +7,7 @@ import { RoleGuard } from '../_guards/role.guard';
 import { ListeProjetsComponent } from './liste-projets/liste-projets.component';
 import { AjouterProjetComponent } from './ajouter-projet/ajouter-projet.component';
 import { DetailsProjetComponent } from './details-projet/details-projet.component';
+import { PendingChangesGuard } from '../_guards/pending-changes.guard';
 
 const routes: Routes = [
   {
@@ -15,7 +16,7 @@ const routes: Routes = [
     data: { roles: ['Super Admin', 'Chef de Projet', 'Collaborateur'] },
     children: [
       { path: '', component: ListeProjetsComponent },
-      { path: 'ajouterProjet', component: AjouterProjetComponent },
+      { path: 'ajouterProjet', component: AjouterProjetComponent, canDeactivate: [PendingChangesGuard] },
       { path: 'details/:id', component: DetailsProjetComponent }
     ]
   }

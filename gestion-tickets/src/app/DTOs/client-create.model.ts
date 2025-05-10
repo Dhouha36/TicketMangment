@@ -6,4 +6,5 @@ export interface ClientCreate {
   numTelephone: string;
   role:        'Client';
   societeId:   number;
+  projetId?: number;
 }

@@ -1,122 +1,176 @@
-<div class="update-form">
-  <h2>Ajouter un Projet</h2>
-  <form [formGroup]="projetForm" (ngSubmit)="ajouterProjet()">
-    <!-- Ligne 1 : Nom du projet et sélection de société -->
-    <div class="form-row">
-      <div class="form-group">
-        <label for="nom">Nom du projet <span class="required">*</span></label>
-        <input id="nom" type="text" formControlName="nom" class="form-control"
-               [class.is-invalid]="projetForm.get('nom')?.touched && projetForm.get('nom')?.invalid" />
-        <div *ngIf="projetForm.get('nom')?.hasError('required')" class="invalid-feedback text-start">
-          Le nom du projet est obligatoire
+<div class="wizard-container">
+  <ul class="wizard-steps">
+    <li [class.active]="step === 1">1. Projet</li>
+    <li [class.active]="step === 2">2. Client</li>
+  </ul>
+
+  <!-- Étape 1 : Projet -->
+  <div *ngIf="step === 1" class="step-content">
+    <form [formGroup]="projetGroup" (ngSubmit)="nextStep()">
+      <h2>Ajouter un Projet</h2>
+      <div class="fields-grid">
+        <div class="form-row">
+          <label for="projetNom">Nom du projet <span class="required">*</span></label>
+          <input
+            id="projetNom"
+            type="text"
+            formControlName="nom"
+            class="form-control"
+            [class.is-invalid]="projetGroup.get('nom')?.touched && projetGroup.get('nom')?.invalid"
+          />
+          <div *ngIf="projetGroup.get('nom')?.hasError('required')" class="invalid-feedback">
+            Le nom du projet est obligatoire
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="societeId">Société <span class="required">*</span></label>
+          <select
+            id="societeId"
+            formControlName="societeId"
+            class="form-control"
+            [class.is-invalid]="projetGroup.get('societeId')?.touched && projetGroup.get('societeId')?.invalid"
+          >
+            <option [value]="null" disabled>Sélectionnez</option>
+            <option *ngFor="let s of societes" [value]="s.id">{{ s.nom }}</option>
+          </select>
+          <div *ngIf="projetGroup.get('societeId')?.hasError('required')" class="invalid-feedback">
+            La société est obligatoire
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="chefProjetId">Chef de projet <span class="required">*</span></label>
+          <select
+            id="chefProjetId"
+            formControlName="chefProjetId"
+            class="form-control"
+            [class.is-invalid]="projetGroup.get('chefProjetId')?.touched && projetGroup.get('chefProjetId')?.invalid"
+          >
+            <option [value]="null" disabled>Sélectionnez</option>
+            <option *ngFor="let c of chefsProjet" [value]="c.id">{{ c.firstName }} {{ c.lastName }}</option>
+          </select>
+          <div *ngIf="projetGroup.get('chefProjetId')?.hasError('required')" class="invalid-feedback">
+            Le chef de projet est obligatoire
+          </div>
         </div>
       </div>
 
-      <!-- Sélection de société -->
-      <div class="form-group">
-        <label for="societe-select">Société <span class="required">*</span></label>
-        <div id="societe-select"
-             class="custom-select"
-             role="combobox"
-             aria-haspopup="listbox"
-             [attr.aria-expanded]="isSocieteDropdownOpen"
-             tabindex="0"
-             (click)="toggleDropdown('societe')">
-          <div class="select-box">
-            <div class="selected-item">
-              {{ getSocieteName(projetForm.get('societeId')?.value) || 'Sélectionner une société' }}
-            </div>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="dropdown-content" [class.show]="isSocieteDropdownOpen">
-            <div class="search-box">
-              <input type="text"
-                     placeholder="Rechercher une société..."
-                     [(ngModel)]="searchSociete"
-                     [ngModelOptions]="{standalone: true}"
-                     (input)="filterItems('societe')"
-                     (click)="$event.stopPropagation()" />
-            </div>
-            <div class="option-list">
-              <div *ngFor="let societe of filteredSocietes" class="option-item"
-                   role="option"
-                   (click)="selectItem(societe, 'societe'); $event.stopPropagation()">
-                {{ societe.nom }}
-              </div>
-              <div class="no-result" *ngIf="filteredSocietes.length === 0">
-                <span class="no-results-icon">🔍</span>
-                Aucune société trouvée.
-              </div>
-            </div>
-          </div>
-        </div>
-        <div *ngIf="projetForm.get('societeId')?.touched && projetForm.get('societeId')?.invalid"
-             class="invalid-feedback text-start">
-          Société est obligatoire
-        </div>
-      </div>
-    </div>
-
-    <!-- Ligne 2 : Chef de projet -->
-    <div class="form-row">
-      <div class="form-group">
-        <label for="chef-select">Chef de projet <span class="required">*</span></label>
-        <div id="chef-select"
-             class="custom-select"
-             role="combobox"
-             aria-haspopup="listbox"
-             [attr.aria-expanded]="isChefDropdownOpen"
-             tabindex="0"
-             (click)="toggleDropdown('chef')">
-          <div class="select-box">
-            <div class="selected-item">
-              {{ getChefName(projetForm.get('chefProjetId')?.value) || 'Sélectionner un chef de projet' }}
-            </div>
-            <span class="arrow">▼</span>
-          </div>
-          <div class="dropdown-content" [class.show]="isChefDropdownOpen">
-            <div class="search-box">
-              <input type="text"
-                     placeholder="Rechercher un chef..."
-                     [(ngModel)]="searchChef"
-                     [ngModelOptions]="{standalone: true}"
-                     (input)="filterItems('chef')"
-                     (click)="$event.stopPropagation()" />
-            </div>
-            <div class="option-list">
-              <div *ngFor="let chef of filteredChefs" class="option-item"
-                   role="option"
-                   (click)="selectItem(chef, 'chef'); $event.stopPropagation()">
-                {{ chef.firstName }} {{ chef.lastName }}
-              </div>
-              <div class="no-result" *ngIf="filteredChefs.length === 0">
-                <span class="no-results-icon">🔍</span>
-                Aucun utilisateur trouvé.
-              </div>
-            </div>
-          </div>
-        </div>
-        <div *ngIf="projetForm.get('chefProjetId')?.touched && projetForm.get('chefProjetId')?.invalid"
-             class="invalid-feedback text-start">
-          Le chef de projet est obligatoire
-        </div>
-      </div>
-      <div class="form-group"></div>
-    </div>
-
-    <!-- Boutons -->
-    <div class="button-group">
       <div class="button-group">
-        <button type="submit" class="btn btn-primary" [disabled]="projetForm.invalid || isLoading">
-          <ng-container *ngIf="!isLoading; else loadingTpl">
-            Ajouter
-          </ng-container>
-          <ng-template #loadingTpl>
-            <span class="spinner"></span> Ajouter
-          </ng-template>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading || projetGroup.invalid">
+          Suivant →
         </button>
-        <button type="button" class="btn btn-secondary" routerLink="/home/Projets">Annuler</button>
       </div>
-    </div>
-  </form>
+    </form>
+  </div>
+
+  <!-- Étape 2 : Client -->
+  <div *ngIf="step === 2" class="step-content">
+    <form [formGroup]="clientGroup" (ngSubmit)="submitAll()">
+      <h2>Ajouter un Client</h2>
+      <div class="fields-grid">
+        <div class="form-row">
+          <label for="firstName">Prénom <span class="required">*</span></label>
+          <input
+            id="firstName"
+            type="text"
+            formControlName="firstName"
+            class="form-control"
+            [class.is-invalid]="clientGroup.get('firstName')?.touched && clientGroup.get('firstName')?.invalid"
+          />
+          <div *ngIf="clientGroup.get('firstName')?.hasError('required')" class="invalid-feedback">
+            Le prénom est obligatoire
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="lastName">Nom <span class="required">*</span></label>
+          <input
+            id="lastName"
+            type="text"
+            formControlName="lastName"
+            class="form-control"
+            [class.is-invalid]="clientGroup.get('lastName')?.touched && clientGroup.get('lastName')?.invalid"
+          />
+          <div *ngIf="clientGroup.get('lastName')?.hasError('required')" class="invalid-feedback">
+            Le nom est obligatoire
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="email">Email <span class="required">*</span></label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            class="form-control"
+            [class.is-invalid]="clientGroup.get('email')?.touched && clientGroup.get('email')?.invalid"
+          />
+          <div *ngIf="clientGroup.get('email')?.hasError('required')" class="invalid-feedback">
+            L’email est obligatoire
+          </div>
+          <div *ngIf="clientGroup.get('email')?.hasError('email')" class="invalid-feedback">
+            Merci d’entrer une adresse email valide
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="pays">Pays <span class="required">*</span></label>
+          <select
+            id="pays"
+            formControlName="pays"
+            class="form-control"
+            [class.is-invalid]="clientGroup.get('pays')?.touched && clientGroup.get('pays')?.invalid"
+          >
+            <option value="" disabled>Sélectionnez</option>
+            <option *ngFor="let p of paysList" [value]="p.idPays">{{ p.nom }}</option>
+          </select>
+          <div *ngIf="clientGroup.get('pays')?.hasError('required')" class="invalid-feedback">
+            Le pays est obligatoire
+          </div>
+        </div>
+
+        <div class="form-row">
+          <label for="numTelephone">Téléphone <span class="required">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text">
+              <img
+                *ngIf="selectedCountry?.photoUrl"
+                [src]="selectedCountry.photoUrl"
+                alt="{{ selectedCountry.nom }}"
+                style="width:24px; margin-right:5px"
+              />
+              {{ selectedCountry?.codeTel || '+XX' }}
+            </span>
+            <input
+              id="numTelephone"
+              type="tel"
+              formControlName="numTelephone"
+              class="form-control"
+              [class.is-invalid]="clientGroup.get('numTelephone')?.touched && clientGroup.get('numTelephone')?.invalid"
+            />
+          </div>
+          <div *ngIf="clientGroup.get('numTelephone')?.hasError('required')" class="invalid-feedback">
+            Le numéro de téléphone est obligatoire
+          </div>
+          <div *ngIf="clientGroup.get('numTelephone')?.hasError('pattern')" class="invalid-feedback">
+            Numéro invalide (ex : 54 567 589)
+          </div>
+          <div *ngIf="clientGroup.get('numTelephone')?.hasError('minlength')" class="invalid-feedback">
+            Le numéro doit contenir au moins 8 chiffres
+          </div>
+          <div *ngIf="clientGroup.get('numTelephone')?.hasError('maxlength')" class="invalid-feedback">
+            Le numéro ne peut pas dépasser 15 chiffres
+          </div>
+        </div>
+      </div>
+
+      <div class="button-group">
+        <button type="button" class="btn btn-secondary" (click)="prevStep()">← Retour</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading || clientGroup.invalid">
+          Terminer
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
