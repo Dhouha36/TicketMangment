@@ -1,23 +1,24 @@
 import { CommonModule, NgIf } from '@angular/common';
 import { Component, HostListener, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-import { Projet } from 'src/app/_models/Projet';
-import { Societe } from 'src/app/_models/societe';
+import { Pays } from 'src/app/_models/pays';
 import { User } from 'src/app/_models/user';
 import { AccountService } from 'src/app/_services/account.service';
 import { LoaderService } from 'src/app/_services/loader.service';
+import { OverlayModalService } from 'src/app/_services/overlay-modal.service';
 import { PaysService } from 'src/app/_services/pays.service';
 import { ProjetService } from 'src/app/_services/projet.service';
 import { SocieteService } from 'src/app/_services/societe.service';
 import { ContractDialogComponent } from 'src/app/contract-dialog/contract-dialog.component';
 import { ClientCreate } from 'src/app/DTOs/client-create.model';
+import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
 
 @Component({
   selector: 'app-ajouter-societe-wizard',
-  imports: [ReactiveFormsModule, CommonModule],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule],
   templateUrl: './ajouter-societe-wizard.component.html',
   styleUrl: './ajouter-societe-wizard.component.css'
 })
@@ -32,6 +33,10 @@ export class AjouterSocieteWizardComponent implements OnInit {
   createdSocieteId!: number;
   createdProjetId!: number;
 
+  filteredPays: Pays[] = [];
+  paysSearchTerm = '';
+  isPaysDropdownOpen = false;
+
   constructor(
     private fb: FormBuilder,
     private societeService: SocieteService,
@@ -39,6 +44,7 @@ export class AjouterSocieteWizardComponent implements OnInit {
     private accountService: AccountService,
     private paysService: PaysService,
     private loaderService: LoaderService,
+    private overlayModalService: OverlayModalService,
     private toastr: ToastrService,
     private router: Router,
     private dialog: MatDialog
@@ -50,6 +56,7 @@ export class AjouterSocieteWizardComponent implements OnInit {
     this.buildForm();
     this.loadPays();
     this.loadChefs();
+    this.filteredPays = this.paysList;
 
     // Met à jour le préfixe téléphonique en fonction du pays sélectionné
     this.wizardForm.get('societe.paysId')!.valueChanges
@@ -108,10 +115,14 @@ export class AjouterSocieteWizardComponent implements OnInit {
 
   private loadPays(): void {
     this.paysService.getPays().subscribe({
-      next: data => this.paysList = data,
+      next: data => {
+        this.paysList = data;
+        this.filteredPays = data;
+      },
       error: () => this.toastr.error('Erreur chargement pays')
     });
   }
+  
 
   private loadChefs(): void {
     this.accountService.getUsersByRole('Chef de Projet')
@@ -310,6 +321,47 @@ onUnload(): void {
     // const img2 = new Image(); img2.src = urlSoc;
   }
 }
+
+togglePaysDropdown(): void {
+  this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
+}
+
+/** Met à jour filteredPays selon le terme saisi */
+filterPays(): void {
+  const term = this.paysSearchTerm.toLowerCase();
+  this.filteredPays = this.paysList.filter(p =>
+    p.nom.toLowerCase().includes(term)
+  );
+}
+
+/** Renvoie le nom du pays pour l’ID en param */
+getPaysName(id?: number): string {
+  return this.paysList.find(p => p.idPays === id)?.nom || '';
+}
+
+/** Sélectionne un pays dans la liste */
+selectPays(idPays: number): void {
+  this.societeGroup.get('paysId')!.setValue(idPays);
+  this.isPaysDropdownOpen = false;
+  this.paysSearchTerm = '';
+  this.filteredPays = this.paysList;
+}
+openPaysModal(): void {
+  const modal = this.overlayModalService.open(PaysModalComponent);
+  // Quand un nouveau pays est ajouté, on recharge la liste
+  modal.added.subscribe(() => {
+    this.loadPays();          // recharge paysList & filteredPays
+    this.overlayModalService.close();
+  });
+}
+
+@HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.custom-select')) {
+      this.isPaysDropdownOpen = false;
+    }
+  }
 
 
 }

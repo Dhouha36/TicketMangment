@@ -44,23 +44,29 @@
             <span class="section-title-text">Données de Base</span>
             <mat-icon class="nav-icon">{{ isBaseDataOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
           </div>
-          <div *ngIf="isBaseDataOpen" class="submenu">
-            <a mat-list-item [routerLink]="['/home', 'Projets']" routerLinkActive="active-nav-item">
-              <div class="menu-item">
-                <mat-icon class="nav-icon">work</mat-icon>
-                <span class="nav-text">Projets</span>
-              </div>
-            </a>
+          <div *ngIf="isBaseDataOpen" class="submenu">            
             <a mat-list-item [routerLink]="['/home', 'Societes']" routerLinkActive="active-nav-item">
               <div class="menu-item">
                 <mat-icon class="nav-icon">apartment</mat-icon>
                 <span class="nav-text">Sociétés</span>
               </div>
             </a>
-            <a mat-list-item [routerLink]="['/home', 'utilisateurs']" routerLinkActive="active-nav-item">
+            <a mat-list-item [routerLink]="['/home', 'Projets']" routerLinkActive="active-nav-item">
               <div class="menu-item">
-                <mat-icon class="nav-icon">groups</mat-icon>
-                <span class="nav-text">Utilisateurs</span>
+                <mat-icon class="nav-icon">work</mat-icon>
+                <span class="nav-text">Projets</span>
+              </div>
+            </a>
+            <a mat-list-item [routerLink]="['/home/utilisateurs', 'clients']" routerLinkActive="active-nav-item">
+              <div class="menu-item">
+                <mat-icon class="nav-icon">person</mat-icon>
+                <span class="nav-text">Clients</span>
+              </div>
+            </a>
+            <a mat-list-item [routerLink]="['/home/utilisateurs', 'personnels']" routerLinkActive="active-nav-item">
+              <div class="menu-item">
+                <mat-icon class="nav-icon">badge</mat-icon>
+                <span class="nav-text">Personnels</span>
               </div>
             </a>
           </div>

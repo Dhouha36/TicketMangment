@@ -176,7 +176,7 @@ namespace GestionTicketsAPI.Repositories
 
       // Supprimer les commentaires de l'utilisateur
       var userComments = await _context.Commentaires
-          .Where(c => c.UtilisateurId == user.Id)
+          .Where(c => c.UserId == user.Id)
           .ToListAsync();
       if (userComments.Any())
       {

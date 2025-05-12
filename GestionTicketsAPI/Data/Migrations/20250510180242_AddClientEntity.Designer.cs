@@ -3,6 +3,7 @@ using System;
 using GestionTicketsAPI.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GestionTicketsAPI.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20250510180242_AddClientEntity")]
+    partial class AddClientEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,16 +103,13 @@ namespace GestionTicketsAPI.Migrations
 
                     b.HasIndex("SocieteId");
 
-                    b.ToTable("Client", (string)null);
+                    b.ToTable("Clients");
                 });
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Commentaire", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    b.Property<int?>("ClientId")
                         .HasColumnType("int");
 
                     b.Property<string>("Contenu")
@@ -121,16 +121,14 @@ namespace GestionTicketsAPI.Migrations
                     b.Property<int>("TicketId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("UserId")
+                    b.Property<int>("UtilisateurId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId");
-
                     b.HasIndex("TicketId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UtilisateurId");
 
                     b.ToTable("Commentaires");
                 });
@@ -173,9 +171,6 @@ namespace GestionTicketsAPI.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("DateEnvoi")
                         .HasColumnType("datetime(6)");
 
@@ -195,14 +190,12 @@ namespace GestionTicketsAPI.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int?>("UserId")
+                    b.Property<int>("UtilisateurId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("UtilisateurId");
 
                     b.ToTable("Notification");
                 });
@@ -313,7 +306,10 @@ namespace GestionTicketsAPI.Migrations
 
                     b.HasIndex("SocieteId");
 
-                    b.ToTable("Projets");
+                    b.ToTable("Projets", t =>
+                        {
+                            t.HasCheckConstraint("CK_Projet_Association", "((SocieteId IS NOT NULL AND ClientId IS NULL) OR (SocieteId IS NULL AND ClientId IS NOT NULL))");
+                        });
                 });
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.ProjetClient", b =>
@@ -660,27 +656,21 @@ namespace GestionTicketsAPI.Migrations
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Commentaire", b =>
                 {
-                    b.HasOne("GestionTicketsAPI.Entities.Client", "Client")
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("GestionTicketsAPI.Entities.Ticket", "Ticket")
                         .WithMany()
                         .HasForeignKey("TicketId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("GestionTicketsAPI.Entities.User", "User")
+                    b.HasOne("GestionTicketsAPI.Entities.User", "Utilisateur")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Client");
+                        .HasForeignKey("UtilisateurId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Ticket");
 
-                    b.Navigation("User");
+                    b.Navigation("Utilisateur");
                 });
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Contrat", b =>
@@ -702,19 +692,13 @@ namespace GestionTicketsAPI.Migrations
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Notification", b =>
                 {
-                    b.HasOne("GestionTicketsAPI.Entities.Client", "Client")
+                    b.HasOne("GestionTicketsAPI.Entities.User", "Utilisateur")
                         .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("UtilisateurId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("GestionTicketsAPI.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Client");
-
-                    b.Navigation("User");
+                    b.Navigation("Utilisateur");
                 });
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Photo", b =>
@@ -725,8 +709,7 @@ namespace GestionTicketsAPI.Migrations
 
                     b.HasOne("GestionTicketsAPI.Entities.Pays", "Pays")
                         .WithOne("paysPhoto")
-                        .HasForeignKey("GestionTicketsAPI.Entities.Photo", "PaysId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasForeignKey("GestionTicketsAPI.Entities.Photo", "PaysId");
 
                     b.Navigation("Commentaire");
 
@@ -742,7 +725,7 @@ namespace GestionTicketsAPI.Migrations
                     b.HasOne("GestionTicketsAPI.Entities.Pays", "Pays")
                         .WithMany()
                         .HasForeignKey("IdPays")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("GestionTicketsAPI.Entities.Societe", "Societe")
                         .WithMany("Projets")
@@ -826,7 +809,7 @@ namespace GestionTicketsAPI.Migrations
 
             modelBuilder.Entity("GestionTicketsAPI.Entities.Ticket", b =>
                 {
-                    b.HasOne("GestionTicketsAPI.Entities.Client", "Owner")
+                    b.HasOne("GestionTicketsAPI.Entities.User", "Owner")
                         .WithMany()
                         .HasForeignKey("OwnerId")
                         .OnDelete(DeleteBehavior.Cascade)

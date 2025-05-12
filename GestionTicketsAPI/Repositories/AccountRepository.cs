@@ -66,5 +66,26 @@ namespace GestionTicketsAPI.Repositories
       return await _context.Users.FirstOrDefaultAsync(u => u.PasswordResetToken == token);
     }
 
+    public async Task<bool> ClientExistsAsync(string email, string firstname, string lastname)
+        {
+            return await _context.Client.AnyAsync(c =>
+                c.Email.ToLower() == email.ToLower() ||
+                (c.FirstName.ToLower() == firstname.ToLower() && c.LastName.ToLower() == lastname.ToLower())
+            );
+        }
+
+        public async Task<Client?> GetClientByEmailAsync(string email)
+        {
+            return await _context.Client
+                .Include(c => c.Societe)
+                .Include(c => c.PaysNavigation)
+                .FirstOrDefaultAsync(c => c.Email.ToLower() == email.ToLower());
+        }
+
+        public async Task AddClientAsync(Client client)
+        {
+            await _context.Client.AddAsync(client);
+        }
+
   }
 }

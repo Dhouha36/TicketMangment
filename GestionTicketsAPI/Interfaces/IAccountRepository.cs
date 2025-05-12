@@ -22,6 +22,9 @@ public interface IAccountRepository
         Task<Pays?> GetPaysByIdAsync(int paysId);
         Task<int> GetRoleIdByNameAsync(string roleName);
         Task<User?> GetUserByResetTokenAsync(string token);
+        Task<bool> ClientExistsAsync(string email, string firstname, string lastname);
+        Task<Client?> GetClientByEmailAsync(string email);
+        Task AddClientAsync(Client client);
 
 
     }

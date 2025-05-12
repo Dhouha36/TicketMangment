@@ -39,12 +39,17 @@
                 (click)="updatePays(pays.idPays)">
                 {{ pays.nom || 'Aucun nom'}}
               </div>
-
+              <div class="option-item autre" (click)="openPaysModal()">
+                Autre…
+              </div>
             </ng-container>
             <ng-template #noPaysResults>
               <div class="no-results">
                 <span class="no-results-icon">🔍</span>
                 <p class="no-results-text">Aucun pays trouvé</p>
+                <div class="option-item autre" (click)="openPaysModal()">
+                  Autre…
+                </div>
               </div>
             </ng-template>
           </div>

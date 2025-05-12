@@ -13,7 +13,7 @@ public class Ticket
     public int ProjetId { get; set; }
     public Projet Projet { get; set; }
     public int OwnerId { get; set; }
-    public User Owner { get; set; }
+    public Client Owner { get; set; }
     public int QualificationId { get; set; }
     public Qualification Qualification { get; set; }
     public int ProblemCategoryId { get; set; }

@@ -23,6 +23,7 @@ import { ConfirmModalComponent } from '../../confirm-modal/confirm-modal.compone
 import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
 import { take } from 'rxjs';
+import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
 
 @Component({
     selector: 'app-modifier-societe',
@@ -504,24 +505,25 @@ export class ModifierSocieteComponent implements OnInit {
     return this.pays.find(p => p.idPays === idPays)?.nom || '';
   }  
 
-  loadPays(): void {
+  private loadPays(): void {
     this.paysService.getPays().subscribe({
-      next: (data: Pays[]) => {
-        this.pays = data;            // stocke la liste des pays
-        this.filteredPays = data;     // si vous en aviez besoin ailleurs
-        // Une fois les pays chargés, on, peut charger les détails
+      next: data => {
+        this.pays = data;
+        this.filteredPays = [...data];  // initialise filteredPays
         this.loadSocieteDetails();
       },
-      error: err => {
-        console.error('Erreur lors de la récupération des pays', err);
-        this.toastr.error('Impossible de charger la liste des pays.');
-      }
+      error: err => this.toastr.error('Impossible de charger la liste des pays.')
     });
   }
+  
 
   onPaysSearch(): void {
-    this.loadPays();
+    const term = this.paysSearchTerm.trim().toLowerCase();
+    this.filteredPays = term
+      ? this.pays.filter(p => p.nom.toLowerCase().includes(term))
+      : [...this.pays];
   }
+  
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -550,4 +552,13 @@ export class ModifierSocieteComponent implements OnInit {
       });
     }
   }
+  openPaysModal(): void {
+    const modal = this.overlayModalService.open(PaysModalComponent);
+    // Quand un nouveau pays est ajouté, on recharge la liste
+    modal.added.subscribe(() => {
+      this.loadPays();          // recharge paysList & filteredPays
+      this.overlayModalService.close();
+    });
+  }
+  
 }

@@ -11,7 +11,6 @@ namespace GestionTicketsAPI.Helpers
     {
       CreateMap<User, UserDto>()
           .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
-          .ForMember(dest => dest.SocieteId, opt => opt.MapFrom(src => src.SocieteUsers.Any() ? src.SocieteUsers.First().SocieteId : (int?)null))
           .ForMember(dest => dest.Societe, opt => opt.MapFrom(src => src.SocieteUsers.Any() ? src.SocieteUsers.First().Societe : null))
           .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.Contrats != null && src.Contrats.Any() ? src.Contrats.First() : null));
 
@@ -88,7 +87,7 @@ namespace GestionTicketsAPI.Helpers
            .ForMember(dest => dest.ResponsibleName, opt => opt.MapFrom(src => src.Responsible != null ? $"{src.Responsible.FirstName} {src.Responsible.LastName}" : string.Empty));
       CreateMap<Commentaire, CommentDto>()
           .ForMember(dest => dest.Date, opt => opt.MapFrom(src => src.Date.ToLocalTime()))
-          .ForMember(dest => dest.Utilisateur, opt => opt.MapFrom(src => src.Utilisateur));
+          .ForMember(dest => dest.Utilisateur, opt => opt.MapFrom(src => src.User));
 
       CreateMap<ProjetDto, ProjectExportDto>()
           .ForMember(dest => dest.ChefProjet, opt => opt.MapFrom(src => src.ChefProjet != null

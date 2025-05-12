@@ -109,33 +109,41 @@ namespace GestionTicketsAPI.Services
     }
 
 
-    public async Task<UserDto> LoginAsync(LoginDto loginDto)
+    public async Task<object> LoginAsync(LoginDto dto)
     {
-      // 1) Récupérer l'utilisateur par e-mail (avec Actif)
-      var user = await _accountRepository.GetUserByEmailAsync(loginDto.Email);
-      if (user == null)
-        throw new Exception("L'adresse e-mail est incorrecte.");
-
-      // 2) Vérifier que l'utilisateur est actif
-      if (!user.Actif)
-        throw new Exception("Votre compte n'est pas activé. Veuillez contacter un administrateur.");
-
-      // 3) Calcul du hash du mot de passe fourni
-      using var hmac = new HMACSHA512(user.PasswordSalt);
-      var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
-
-      // 4) Comparaison des hash
-      for (int i = 0; i < computedHash.Length; i++)
+      // 1) Try authenticate as User
+      var user = await _accountRepository.GetUserByEmailAsync(dto.Email);
+      if (user != null)
       {
-        if (computedHash[i] != user.PasswordHash[i])
-          throw new Exception("Le mot de passe est incorrect.");
+        if (!user.Actif)
+          throw new Exception("Compte utilisateur désactivé.");
+
+        using var hmac = new HMACSHA512(user.PasswordSalt);
+        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dto.Password));
+        for (int i = 0; i < hash.Length; i++)
+          if (hash[i] != user.PasswordHash[i])
+            throw new Exception("Email ou mot de passe incorrect.");
+
+        var userDto = _mapper.Map<UserDto>(user);
+        userDto.Token = _tokenService.CreateToken(user);
+        return userDto;
       }
 
-      // 5) Création du DTO et du token
-      var userDto = _mapper.Map<UserDto>(user);
-      userDto.Token = _tokenService.CreateToken(user);
+      // 2) Fallback: authenticate as Client
+      var client = await _accountRepository.GetClientByEmailAsync(dto.Email);
+      if (client == null || !client.Actif)
+        throw new Exception("Email ou mot de passe incorrect.");
 
-      return userDto;
+      using var hmacClient = new HMACSHA512(client.PasswordSalt);
+      var clientHash = hmacClient.ComputeHash(Encoding.UTF8.GetBytes(dto.Password));
+      for (int i = 0; i < clientHash.Length; i++)
+        if (clientHash[i] != client.PasswordHash[i])
+          throw new Exception("Email ou mot de passe incorrect.");
+
+      // Return ClientDto directly
+      var clientResult = _mapper.Map<ClientDto>(client);
+      clientResult.Token = _tokenService.CreateToken(client);
+      return clientResult;
     }
 
 
@@ -174,6 +182,45 @@ namespace GestionTicketsAPI.Services
 
       return sb.ToString();
     }
+
+    public async Task<ClientDto> RegisterClientAsync(RegisterClientDto dto)
+    {
+      if (await _accountRepository.ClientExistsAsync(dto.Email, dto.FirstName, dto.LastName))
+        throw new Exception("Le client existe déjà.");
+
+      var pays = await _accountRepository.GetPaysByIdAsync(dto.Pays);
+      if (pays == null)
+        throw new Exception("Pays introuvable.");
+
+      var societe = await _societeRepository.GetSocieteByIdAsync(dto.SocieteId);
+      if (societe == null)
+        throw new Exception("Société introuvable.");
+
+      using var hmac = new HMACSHA512();
+      var pwdBytes = Encoding.UTF8.GetBytes(dto.Password);
+      var client = new Client
+      {
+        Email = dto.Email,
+        FirstName = dto.FirstName,
+        LastName = dto.LastName,
+        NumTelephone = dto.NumTelephone,
+        Pays = dto.Pays,
+        PaysNavigation = pays,
+        SocieteId = dto.SocieteId,
+        Societe = societe,
+        PasswordHash = hmac.ComputeHash(pwdBytes),
+        PasswordSalt = hmac.Key
+      };
+
+      await _accountRepository.AddClientAsync(client);
+      if (!await _accountRepository.SaveAllAsync())
+        throw new Exception("Erreur lors de l'enregistrement du client.");
+
+      var clientDto = _mapper.Map<ClientDto>(client);
+      clientDto.Token = _tokenService.CreateToken(client);
+      return clientDto;
+    }
+
 
   }
 }

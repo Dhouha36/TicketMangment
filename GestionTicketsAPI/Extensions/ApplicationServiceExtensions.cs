@@ -31,6 +31,8 @@ namespace GestionTicketsAPI.Extensions
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IPhotoService, PhotoService>();
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IClientService, ClientService>();
+            services.AddScoped<IClientRepository, ClientRepository>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IAccountRepository, AccountRepository>();
             services.AddScoped<IAccountService, AccountService>();

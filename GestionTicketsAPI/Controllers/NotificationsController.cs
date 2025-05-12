@@ -81,7 +81,7 @@ namespace GestionTicketsAPI.Controllers
     public async Task<ActionResult<IEnumerable<NotificationDto>>> GetUserNotifications(int userId)
     {
       var entities = await _context.Notification
-          .Where(n => n.UtilisateurId == userId && !n.IsDeleted)
+          .Where(n => n.UserId == userId && !n.IsDeleted)
           .OrderByDescending(n => n.DateEnvoi)
           .ToListAsync();
 

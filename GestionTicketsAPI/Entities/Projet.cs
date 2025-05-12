@@ -44,5 +44,6 @@ namespace GestionTicketsAPI.Entities
     public DateTime? DeletedAt { get; set; }
     public ICollection<Ticket>? Tickets { get; set; }
     public ICollection<ProjetUser> ProjetUsers { get; set; } = new List<ProjetUser>();
+    public ICollection<ProjetClient> ProjetClients { get; set; } = new List<ProjetClient>();
   }
 }
