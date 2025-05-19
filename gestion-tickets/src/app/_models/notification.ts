@@ -3,6 +3,6 @@ export interface AppNotification {
   message: string;
   dateEnvoi: string; 
   isRead: boolean;
-  entityType: string;  // "projets" | "societes" | "tickets" | …
+  entityType: string; 
   entityId:   number;
 }

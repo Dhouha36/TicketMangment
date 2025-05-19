@@ -29,18 +29,20 @@ export class NotificationsComponent implements OnInit {
 
   ngOnInit(): void {
     const storedUser = localStorage.getItem('user');
-    if (!storedUser) return;
+    if (!storedUser) { return; }
     this.userId = JSON.parse(storedUser).id.toString();
-
-    // Chargement initial
+  
+    // Historique + fusion
     this.notifSvc.getNotifications(this.userId).subscribe({
-      next: notifs => this.notifications = notifs,
-      error: err => console.error(err)
+      error: err => console.error('Erreur chargement notifs', err)
     });
-
-    // Réceptions temps-réel
-    this.notifSvc.notification$.subscribe(dto => {
-      this.notifications.unshift(dto);
+  
+    // Lancement Live dès maintenant (sans écraser la liste)
+    this.notifSvc.startConnection(this.userId);
+  
+    // Affichage : on se met à jour quand la liste change
+    this.notifSvc.notifications$.subscribe(list => {
+      this.notifications = list;
     });
   }
 

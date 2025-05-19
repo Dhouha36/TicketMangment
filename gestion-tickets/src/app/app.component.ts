@@ -40,16 +40,15 @@ export class AppComponent implements OnInit {
     const user = JSON.parse(localStorage.getItem('user') || 'null');
     if (user && user.id) {
       const userIdStr = user.id.toString();
+      this.notificationService.startConnection(userIdStr);
 
       this.ensurePermission().then(granted => {
-        if (!granted) {
-          console.warn('Push notifications non autorisées par l’utilisateur');
-          return;
-        }
-        // ensuite : abonnement et SignalR…
+      if (granted) {
         this.pushSubService.subscribeToPush(userIdStr);
-        this.notificationService.startConnection(userIdStr);
-      });
+      } else {
+        console.warn('Push notifications non autorisées');
+      }
+    });
 
       // 4) Écouter les notifications entrantes
       this.notificationService.notification$.subscribe(msg => {
