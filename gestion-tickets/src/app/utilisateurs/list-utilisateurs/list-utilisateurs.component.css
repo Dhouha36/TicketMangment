@@ -63,7 +63,7 @@ th {
 }
 
 td {
-  padding: 10px 10px;
+  padding: 10px 0px;
   border-bottom: 1px solid #eee;
   color: #333;
 }
@@ -114,11 +114,11 @@ td {
 }
 
 .edit-btn {
-  color: #000000;
+  color: #fa9745;
 }
 
 .edit-btn:hover {
-  color: #393838;
+  color: #f38932;
   transform: scale(1.1);
 }
 .delete-btn:hover {
@@ -156,6 +156,7 @@ td {
 
 .search-input {
   width: 100%;
+  margin-left: 10px;
   padding: 12px 16px 12px 45px;
   font-size: 0.95rem;
   color: #374151;

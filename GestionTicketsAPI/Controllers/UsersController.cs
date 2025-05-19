@@ -56,36 +56,55 @@ namespace GestionTicketsAPI.Controllers
     [HttpGet("delete/{id:int}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
-            try
-            {
-                var result = await _userService.DeleteUserAsync(id);
-                Console.WriteLine(result);
-                 if (!result)
-                    return NotFound();
-                return NoContent();
+      try
+      {
+        var result = await _userService.DeleteUserAsync(id);
+        Console.WriteLine(result);
+        if (!result)
+          return NotFound();
+        return NoContent();
 
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { errors = new string[] { ex.Message } });
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(new { errors = new string[] { ex.Message } });
 
-            }
+      }
     }
 
     [HttpPost("{userId:int}/projects/paged")]
     public async Task<ActionResult<PagedList<ProjetDto>>> GetUserProjectsPaged(int userId, [FromBody] UserParams userParams)
     {
-      var projets = await _userService.GetUserProjectsPagedAsync(userId, userParams);
-      Response.AddPaginationHeader(projets);
-      return Ok(projets);
+      try
+      {
+        var projets = await _userService.GetUserProjectsPagedAsync(userId, userParams) ?? new PagedList<ProjetDto>(new List<ProjetDto>(), 0, userParams.PageNumber, userParams.PageSize);
+        Response.AddPaginationHeader(projets);
+        return Ok(projets);
+      }
+      catch
+      {
+        var empty = new PagedList<ProjetDto>(new List<ProjetDto>(), 0, userParams.PageNumber, userParams.PageSize);
+        Response.AddPaginationHeader(empty);
+        return Ok(empty);
+      }
     }
 
+    // Tickets paginés de l'utilisateur
     [HttpPost("{userId:int}/tickets/paged")]
     public async Task<ActionResult<PagedList<TicketDto>>> GetUserTicketsPaged(int userId, [FromBody] UserParams userParams)
     {
-      var tickets = await _userService.GetUserTicketsPagedAsync(userId, userParams);
-      Response.AddPaginationHeader(tickets);
-      return Ok(tickets);
+      try
+      {
+        var tickets = await _userService.GetUserTicketsPagedAsync(userId, userParams) ?? new PagedList<TicketDto>(new List<TicketDto>(), 0, userParams.PageNumber, userParams.PageSize);
+        Response.AddPaginationHeader(tickets);
+        return Ok(tickets);
+      }
+      catch
+      {
+        var empty = new PagedList<TicketDto>(new List<TicketDto>(), 0, userParams.PageNumber, userParams.PageSize);
+        Response.AddPaginationHeader(empty);
+        return Ok(empty);
+      }
     }
 
 

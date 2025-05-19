@@ -9,7 +9,10 @@ public class ClientUpdateDto
   public required string FirstName { get; set; }
   public required string LastName { get; set; }
   public required string NumTelephone { get; set; }
-  public required string Pays { get; set; }
+  public required int PaysId { get; set; } 
   public required bool Actif { get; set; }
   public int SocieteId { get; set; }
+
+  public string? NouveauPassword { get; set; }
+  public string? ConfirmNouveauPassword { get; set; }
 }

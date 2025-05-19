@@ -63,6 +63,11 @@ export class SocieteService {
   addSociete(societeDto: SocieteCreate): Observable<Societe> {
     return this.http.post<Societe>(this.apiUrl, societeDto);
   }
+
+  validateSociete(dto: SocieteCreate): Observable<void> {
+    return this.http
+      .post<void>(`${this.apiUrl}/validateSociete`, dto);
+  }
   updateSociete(id: number, societe: Societe): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, societe);
   }
@@ -114,9 +119,12 @@ export class SocieteService {
   }
 
 
-  detachUser(societeId: number, userId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/${societeId}/delete/users/${userId}`, { responseType: 'text' });
+  detachUser(societeId: number, userId: number): Observable<string> {
+    const url = `${this.apiUrl}/${societeId}/users/${userId}`;
+    return this.http
+      .delete(url, { responseType: 'text' });
   }
+  
 
   exportSocietes(searchTerm: string, extraFilters: any): Observable<Blob> {
     const body: any = { searchTerm };

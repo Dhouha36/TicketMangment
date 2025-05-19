@@ -1,0 +1,167 @@
+<div class="container">
+  <div class="header">
+    <h2>Liste des clients</h2>
+    <button class="add-user-btn" [routerLink]="['/home','clients','AjouterClient']">
+      <span class="material-icons">person_add</span> Ajouter
+    </button>
+  </div>
+  <table>
+    <thead>
+      <!-- Filtre / recherche -->
+      <tr class="filter-row">
+        <td class="checkbox-column"></td>
+        <td colspan="3">
+          <div class="search-wrapper">
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Rechercher un client..."
+              [(ngModel)]="clientsSearchTerm"
+              (ngModelChange)="onSearchChange()"
+            />
+            <span class="material-icons search-icon">search</span>
+          </div>
+        </td>
+        <td colspan="4" class="filter-actions">
+          <button class="export-btn" (click)="exportClients()" [disabled]="isExportLoading">
+            <ng-container *ngIf="!isExportLoading; else loadingTpl">
+              <span class="material-icons">download</span> Export Excel
+            </ng-container>
+            <ng-template #loadingTpl>
+              <span class="spinner"></span> Export Excel
+            </ng-template>
+          </button>
+          <button mat-icon-button [matMenuTriggerFor]="filterMenu">
+            <span class="material-icons">filter_list</span>
+          </button>
+          <mat-menu #filterMenu="matMenu" disableClose>
+            <!-- <app-client-filter (applyFilter)="onFilter($event)"></app-client-filter> -->
+          </mat-menu>
+        </td>
+      </tr>
+      <!-- Entête -->
+      <tr>
+        <th class="checkbox-column">
+          <div class="checkbox-wrapper">
+            <input
+              type="checkbox"
+              id="selectAll"
+              class="custom-checkbox"
+              (change)="selectAll($event)"
+            />
+            <label for="selectAll" class="checkbox-label"></label>
+          </div>
+        </th>
+        <th>Nom</th>
+        <th>Email</th>
+        <th>Téléphone</th>
+        <th>Société</th>
+        <th>Projets</th>
+        <th>Actif</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let client of paginatedResult?.items || []; let i = index" [ngClass]="{ 'new-client-highlight': newClientId === client.id }">
+        <td class="checkbox-column">
+          <div class="checkbox-wrapper">
+            <input
+              type="checkbox"
+              [id]="'client'+i"
+              class="custom-checkbox"
+              [checked]="isSelected(client)"
+              (change)="toggleSelection(client)"
+            />
+            <label [for]="'client'+i" class="checkbox-label"></label>
+          </div>
+        </td>
+        <td>{{ client.firstName }} {{ client.lastName }}</td>
+        <td>{{ client.email }}</td>
+        <td>{{ client.numTelephone }}</td>
+        <td>{{ client.societe.nom}}</td>
+        <td>
+          <mat-form-field appearance="fill" class="projects-field">
+            <mat-select
+              #projectsSelect
+              placeholder="Voir les projets…"
+              (selectionChange)="onProjectSelect($event.value)"
+            >
+              <mat-option *ngFor="let p of client.projets" [value]="p.id">
+                {{ p.nom }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>                    
+        </td>        
+        <td>
+          <span *ngIf="client.actif" class="status active">✔</span>
+          <span *ngIf="!client.actif" class="status inactive">✘</span>
+        </td>
+        <td class="actions">
+          <button class="edit-btn"
+                  [routerLink]="['/home/clients/details', client.id]"
+                  [queryParams]="{ mode: 'edit' }">
+            <span class="material-icons">edit</span>
+          </button>
+          <!-- Bouton Visualiser : passe en mode 'view' -->
+          <button class="view-btn"
+                  [routerLink]="['/home/clients/details', client.id]"
+                  [queryParams]="{ mode: 'view' }">
+            <span class="material-icons">visibility</span>
+          </button>
+          <button class="delete-btn" (click)="deleteClient(client)" [disabled]="isDeleteLoading">
+            <ng-container *ngIf="!isDeleteLoading; else loadingDeleteTpl">
+              <span class="material-icons">delete</span>
+            </ng-container>
+            <ng-template #loadingDeleteTpl>
+              <span class="spinner"></span>
+            </ng-template>
+          </button>
+        </td>
+      </tr>
+      <!-- Si vide -->
+      <tr *ngIf="(paginatedResult?.items || []).length === 0">
+        <td colspan="7">
+          <div class="no-content">
+            <span class="icon">✕</span>
+            <p>Aucun client trouvé</p>
+          </div>
+        </td>
+      </tr>
+      <!-- Pagination -->
+      <tr>
+        <td colspan="7">
+          <div class="pagination-container">
+            <div class="pagination-info">
+              Affichage de {{ ((pageNumber - 1) * pageSize) + 1 }}
+              à
+              {{ pageNumber * pageSize > (paginatedResult?.pagination?.totalItems || 0)
+                ? paginatedResult?.pagination?.totalItems || 0
+                : pageNumber * pageSize
+              }}
+              sur {{ paginatedResult?.pagination?.totalItems || 0 }} résultats
+            </div>
+            <div class="per-page-selector">
+              <select [(ngModel)]="pageSize" (change)="onPageChange(1)">
+                <option *ngFor="let size of range(1, 10)" [value]="size">{{ size }}</option>
+              </select>
+              <label>par page</label>
+            </div>
+            <div class="pagination-controls">
+              <button (click)="onPageChange(pageNumber - 1)" [disabled]="pageNumber <= 1">&laquo;</button>
+              <input
+                type="number"
+                [(ngModel)]="jumpPage"
+                (keyup.enter)="jumpToPage()"
+                [max]="paginatedResult?.pagination?.totalPages || 1"
+                min="1"
+                class="page-input"
+              />
+              <span class="total-pages">/ {{ paginatedResult?.pagination?.totalPages || 1 }}</span>
+              <button (click)="onPageChange(pageNumber + 1)" [disabled]="pageNumber >= (paginatedResult?.pagination?.totalPages || 1)">&raquo;</button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

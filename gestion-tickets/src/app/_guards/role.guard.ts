@@ -2,26 +2,36 @@ import { Injectable } from '@angular/core';
 import { CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { AccountService } from '../_services/account.service';
 import { User } from '../_models/user';
+import { ClientDto } from '../DTOs/ClientDto';
 
 @Injectable({
   providedIn: 'root'
 })
 export class RoleGuard implements CanActivate {
-  constructor(private accountService: AccountService, private router: Router) {}
+  constructor(
+    private accountService: AccountService,
+    private router: Router
+  ) {}
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
-    // Récupère la liste des rôles autorisés pour cette route
     const allowedRoles = route.data['roles'] as string[];
-    // Récupère l'utilisateur courant via le signal en appelant la fonction
-    const user: User | null = this.accountService.currentUser();
-    
-    // Si l'utilisateur est connecté et que son rôle figure dans la liste autorisée, on autorise l'accès
-    if (user && allowedRoles.map(r => r.toLowerCase()).includes(user.role.toLowerCase())) {
-      return true;
-    }    
+    const cu = this.accountService.currentUser();
 
-    // Sinon, redirige vers une page d'erreur ou de non-autorisation (ici, on redirige vers 'not-found')
+    // Type-guard : s'assure que c'est un User (pas un ClientDto)
+    if (this.isUser(cu)) {
+      const userRole = cu.role.toLowerCase().trim();
+      if (allowedRoles.map(r => r.toLowerCase()).includes(userRole)) {
+        return true;
+      }
+    }
+
+    // Non autorisé ou pas un User -> redirection
     this.router.navigate(['/not-found']);
     return false;
+  }
+
+  /** Type-guard pour distinguer User vs ClientDto */
+  private isUser(u: User | ClientDto | null): u is User {
+    return !!u && (u as User).role !== undefined;
   }
 }

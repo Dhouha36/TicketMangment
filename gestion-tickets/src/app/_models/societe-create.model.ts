@@ -9,5 +9,6 @@ export interface SocieteCreate {
   adresse:   string;
   telephone: string;
   paysId:    number;
-  contract?: ContractCreate | null;
+  ville:     string;
+  codePostal:string;
 }

@@ -1,7 +1,7 @@
 <div class="container"> 
   <div class="header">
     <h2>Liste des tickets</h2>
-    <button class="add-ticket-btn" *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'client'" routerLink="/home/Tickets/ajouterTicket">
+    <button class="add-ticket-btn" *ngIf="isClient()" routerLink="/home/Tickets/ajouterTicket">
       <span class="material-icons">add</span> Ajouter
     </button>
   </div>
@@ -51,7 +51,7 @@
         <th>Qualification</th>
         <th>Projet</th>
         <th>Société</th>
-        <th *ngIf="(currentUser?.role?.toLowerCase() !== 'client')">Client</th>
+        <th *ngIf="isNotClient()">Client</th>
         <th>Catégorie</th>
         <th>Priorité</th>
         <th>Statut</th>
@@ -72,7 +72,7 @@
         <td>{{ getQualificationLabel(ticket.qualificationId) }}</td>
         <td>{{ ticket.projet?.nom || 'Non défini' }}</td>
         <td>{{ ticket.projet?.nomSociete || 'Non défini' }}</td>
-        <td *ngIf="(currentUser?.role?.toLowerCase() !== 'client')">
+        <td *ngIf="isNotClient()">
           {{ ticket.owner?.firstName }} {{ ticket.owner?.lastName || '' }}
         </td>
         <td>{{ ticket.problemCategory?.nom || 'Non défini' }}</td>

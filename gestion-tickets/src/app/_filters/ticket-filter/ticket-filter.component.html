@@ -38,6 +38,7 @@
           </div>
           <span class="arrow">▼</span>
         </div>
+        <input type="hidden" formControlName="clientId" />
         <div class="dropdown-content" [class.show]="isClientDropdownOpen">
           <div class="search-box">
             <input type="text" placeholder="Rechercher un client..." [(ngModel)]="clientSearchTerm"

@@ -40,34 +40,22 @@
       <div class="section-divider"></div>
       <ng-container *ngIf="isSuperAdmin()">
         <div class="menu-section">
-          <div class="section-title" (click)="toggleBaseData()">
-            <span class="section-title-text">Données de Base</span>
-            <mat-icon class="nav-icon">{{ isBaseDataOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
-          </div>
-          <div *ngIf="isBaseDataOpen" class="submenu">            
-            <a mat-list-item [routerLink]="['/home', 'Societes']" routerLinkActive="active-nav-item">
-              <div class="menu-item">
-                <mat-icon class="nav-icon">apartment</mat-icon>
-                <span class="nav-text">Sociétés</span>
-              </div>
+          <div class="submenu">
+            <a mat-list-item [routerLink]="['/home','Societes']" routerLinkActive="active-nav-item">
+              <mat-icon class="nav-icon">apartment</mat-icon>
+              <span class="nav-text">Sociétés</span>
             </a>
-            <a mat-list-item [routerLink]="['/home', 'Projets']" routerLinkActive="active-nav-item">
-              <div class="menu-item">
-                <mat-icon class="nav-icon">work</mat-icon>
-                <span class="nav-text">Projets</span>
-              </div>
+            <a mat-list-item [routerLink]="['/home','Projets']" routerLinkActive="active-nav-item">
+              <mat-icon class="nav-icon">work</mat-icon>
+              <span class="nav-text">Projets</span>
             </a>
-            <a mat-list-item [routerLink]="['/home/utilisateurs', 'clients']" routerLinkActive="active-nav-item">
-              <div class="menu-item">
-                <mat-icon class="nav-icon">person</mat-icon>
-                <span class="nav-text">Clients</span>
-              </div>
+            <a mat-list-item [routerLink]="['/home','clients']" routerLinkActive="active-nav-item">
+              <mat-icon class="nav-icon">person</mat-icon>
+              <span class="nav-text">Clients</span>
             </a>
-            <a mat-list-item [routerLink]="['/home/utilisateurs', 'personnels']" routerLinkActive="active-nav-item">
-              <div class="menu-item">
-                <mat-icon class="nav-icon">badge</mat-icon>
-                <span class="nav-text">Personnels</span>
-              </div>
+            <a mat-list-item [routerLink]="['/home','utilisateurs']" routerLinkActive="active-nav-item">
+              <mat-icon class="nav-icon">badge</mat-icon>
+              <span class="nav-text">Personnels</span>
             </a>
           </div>
         </div>
@@ -75,33 +63,23 @@
       <!-- Pour Chef de Projet et Collaborateur -->
       <ng-container *ngIf="isChefDeProjet() || isCollaborateur()">
         <div class="menu-section">
-          <div class="section-title" (click)="toggleBaseData()">
-            <span class="section-title-text">Mes Projets</span>
-            <mat-icon class="nav-icon">{{ isBaseDataOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
-          </div>
-          <div *ngIf="isBaseDataOpen" class="submenu">
-            <a mat-list-item [routerLink]="['/home', 'Projets']" routerLinkActive="active-nav-item">
-              <div class="menu-item">
+          <div class="menu-section">
+            <div class="submenu">
+              <a mat-list-item [routerLink]="['/home','Projets']" routerLinkActive="active-nav-item">
                 <mat-icon class="nav-icon">work</mat-icon>
-                <span class="nav-text">Projets</span>
-              </div>
-            </a>
+                <span class="nav-text">Mes Projets</span>
+              </a>
+            </div>
           </div>
         </div>
       </ng-container>
       <!-- Section Compte -->
       <div *ngIf="isChefDeProjet() || isCollaborateur() || isSuperAdmin()" class="section-divider"></div>
       <div class="menu-section">
-        <div class="section-title" (click)="toggleAccount()">
-          <span class="section-title-text">Compte</span>
-          <mat-icon class="nav-icon">{{ isAccountOpen ? 'expand_less' : 'expand_more' }}</mat-icon>
-        </div>
-        <div *ngIf="isAccountOpen" class="submenu">
-          <a mat-list-item [routerLink]="['/home', 'profile']" routerLinkActive="active-nav-item">
-            <div class="menu-item">
-              <mat-icon class="nav-icon">person</mat-icon>
-              <span class="nav-text">Profil</span>
-            </div>
+        <div class="submenu">
+          <a mat-list-item [routerLink]="['/home','profile']" routerLinkActive="active-nav-item">
+            <mat-icon class="nav-icon">person</mat-icon>
+            <span class="nav-text">Profil</span>
           </a>
         </div>
       </div>

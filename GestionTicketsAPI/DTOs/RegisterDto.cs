@@ -25,9 +25,6 @@ namespace GestionTicketsAPI.DTOs
         
         public bool Actif { get; set; } = true;
         
-        // L'utilisateur peut appartenir à une société (optionnel)
-        public int? SocieteId { get; set; }
-        
         // Informations du contrat (optionnel)
         public ContractRegistrationDto? Contract { get; set; }
     }

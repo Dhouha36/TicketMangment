@@ -22,8 +22,8 @@ namespace GestionTicketsAPI.Services
 
     public async Task<IEnumerable<SocieteDto>> GetAllSocietesAsync(string? searchTerm = null, string? pays = null)
     {
-        var societes = await _societeRepository.GetAllSocietesAsync(searchTerm, pays);
-        return _mapper.Map<IEnumerable<SocieteDto>>(societes);
+      var societes = await _societeRepository.GetAllSocietesAsync(searchTerm, pays);
+      return _mapper.Map<IEnumerable<SocieteDto>>(societes);
     }
 
     public async Task<PagedList<SocieteDto>> GetSocietesPagedAsync(UserParams userParams)
@@ -54,31 +54,17 @@ namespace GestionTicketsAPI.Services
 
     public async Task<SocieteDto> AddSocieteAsync(SocieteDto societeDto)
     {
-      // Création de la société partenaire
+      // 1) Projection du DTO vers l'entité Societe
       var societe = _mapper.Map<Societe>(societeDto);
+
+      // 2) Ajout de la société
       await _societeRepository.AddSocieteAsync(societe);
-      await _societeRepository.SaveAllAsync(); // À ce stade, societe.Id est généré
+      await _societeRepository.SaveAllAsync(); // Génère societe.Id
 
-      // Création optionnelle d'un contrat avec la société partenaire
-      if (societeDto.Contract != null)
-      {
-        var contrat = new Contrat
-        {
-          DateDebut = societeDto.Contract.DateDebut,
-          DateFin = societeDto.Contract.DateFin,
-          // Vous pouvez définir le TypeContrat selon votre logique,
-          // par exemple "Societe-Societe" pour un contrat avec une société partenaire
-          TypeContrat = "Societe-Societe",
-          // Affectation automatique de l'ID de la société partenaire créée
-          SocietePartenaireId = societe.Id
-        };
-
-        await _accountRepository.AddContractAsync(contrat);
-        await _societeRepository.SaveAllAsync();
-      }
-
+      // 3) Retourner le DTO mis à jour
       return _mapper.Map<SocieteDto>(societe);
     }
+
 
 
     public async Task<bool> UpdateSocieteAsync(int id, SocieteDto societeDto)

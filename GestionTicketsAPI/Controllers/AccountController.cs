@@ -15,17 +15,20 @@ public class AccountController : BaseApiController
 {
   private readonly IAccountService _accountService;
   private readonly IAccountRepository _accountRepository;
+  private readonly IClientService _clientService;
   private readonly IUserService _userService;
   private readonly EmailService _emailService; // Injection du service email
 
   public AccountController(
       IAccountRepository accountRepository,
       IAccountService accountService,
+      IClientService clientService,
       IUserService userService,
       EmailService emailService)
   {
     _accountService = accountService;
     _accountRepository = accountRepository;
+    _clientService = clientService;
     _userService = userService;
     _emailService = emailService;
   }
@@ -87,17 +90,23 @@ public class AccountController : BaseApiController
   [HttpGet("validate")]
   public async Task<ActionResult> Validate()
   {
+    // 1. Récupérer l'ID dans le claim
     var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    if (userIdClaim == null || !int.TryParse(userIdClaim, out int userId))
-    {
-      return Unauthorized();
-    }
-
-    var user = await _userService.GetUserByIdAsync(userId);
-    if (user == null)
+    if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var id))
       return Unauthorized();
 
-    return Ok();
+    // 2. Chercher un utilisateur interne
+    var user = await _userService.GetUserByIdAsync(id);
+    if (user != null)
+      return Ok();
+
+    // 3. Si pas trouvé, chercher un client
+    var client = await _clientService.GetClientByIdAsync(id);
+    if (client != null)
+      return Ok();
+
+    // 4. Aucun des deux → non autorisé
+    return Unauthorized();
   }
 
   [HttpPost("forgot-password")]

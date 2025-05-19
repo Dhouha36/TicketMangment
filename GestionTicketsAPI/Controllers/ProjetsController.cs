@@ -107,6 +107,14 @@ namespace GestionTicketsAPI.Controllers
       return CreatedAtAction(nameof(GetProjet), new { id = createdProjetDto.Id }, createdProjetDto);
     }
 
+    [HttpPost("validateProjet")]
+    public async Task<IActionResult> ValidateProjetAsync([FromBody] ProjetDto projetDto)
+    {
+      if (await _projetService.ProjetExists(projetDto.Nom))
+        return BadRequest("Le projet existe déjà");
+      return Ok();
+    }
+
 
     // Mettre à jour un projet
     [HttpPut("modifierProjet/{id}")]
@@ -320,6 +328,18 @@ namespace GestionTicketsAPI.Controllers
       return File(content,
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
           $"ProjectsExport_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+    }
+
+    [HttpGet("{projetId}/clients")]
+    public async Task<ActionResult<IEnumerable<ClientDto>>> GetClientsByProjet(int projetId)
+    {
+        // Vérifier que le projet existe (optionnel)
+        var projetExists = await _projetService.GetProjetByIdAsync(projetId);
+        if (projetExists == null)
+            return NotFound($"Projet {projetId} non trouvé.");
+
+        var clients = await _projetService.GetClientsByProjetIdAsync(projetId);
+        return Ok(clients);
     }
 
   }

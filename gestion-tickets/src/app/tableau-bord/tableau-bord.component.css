@@ -27,7 +27,7 @@
 .stats-container {
   margin-bottom: 2rem;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
   gap: 1.25rem;
 }
 
@@ -333,7 +333,7 @@
   /* passe en inline-flex pour ne prendre que la place nécessaire */
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 1rem;
+  gap: 1.4rem;
   align-items: center;
 
   /* largeur s’adapte au contenu visible */

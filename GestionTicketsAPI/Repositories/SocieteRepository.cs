@@ -79,7 +79,6 @@ namespace GestionTicketsAPI.Repositories
       return await _context.Societes
         .Include(s => s.SocieteUsers)
             .ThenInclude(su => su.User)
-        .Include(s => s.ContratsPartenaire)
         .Include(s => s.Projets!)
             .ThenInclude(p => p.Pays)
         .FirstOrDefaultAsync(s => s.Id == id);
@@ -112,7 +111,6 @@ namespace GestionTicketsAPI.Repositories
       var societe = await _context.Societes
           .Include(s => s.SocieteUsers)
               .ThenInclude(su => su.User)
-          .Include(s => s.ContratsPartenaire)
           .Include(s => s.Projets)
               .ThenInclude(p => p.Pays)
           .FirstOrDefaultAsync(s => s.Id == id);
@@ -132,12 +130,6 @@ namespace GestionTicketsAPI.Repositories
       if (societe.SocieteUsers?.Any() == true)
       {
         _context.RemoveRange(societe.SocieteUsers);
-      }
-
-      // Suppression optionnelle des contrats partenaires
-      if (societe.ContratsPartenaire?.Any() == true)
-      {
-        _context.Contrats.RemoveRange(societe.ContratsPartenaire);
       }
 
       // Ne pas supprimer les projets ici, car la présence d'au moins un projet empêche la suppression de la société.

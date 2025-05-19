@@ -36,10 +36,9 @@ namespace GestionTicketsAPI.Entities
         // Société **obligatoire** pour un client
         [Required, ForeignKey(nameof(Societe))]
         public int SocieteId { get; set; }
-
         public Societe Societe { get; set; } = null!;
         public ICollection<ProjetClient> ProjetClients { get; set; } = new List<ProjetClient>();
-        
+        public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
 
         // Dates de suivi
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

@@ -88,6 +88,14 @@ namespace GestionTicketsAPI.Controllers
       return CreatedAtAction(nameof(GetSociete), new { id = newSociete.Id }, newSociete);
     }
 
+    [HttpPost("validateSociete")]
+    public async Task<IActionResult> ValidateSocieteAsync([FromBody] SocieteDto societeDto)
+    {
+      if (await _societeService.SocieteExists(societeDto.Nom))
+        return BadRequest("La société existe déjà");
+      return Ok();
+    }
+
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateSociete(int id, SocieteDto societeDto)
     {

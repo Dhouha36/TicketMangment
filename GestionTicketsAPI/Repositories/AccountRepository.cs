@@ -68,7 +68,7 @@ namespace GestionTicketsAPI.Repositories
 
     public async Task<bool> ClientExistsAsync(string email, string firstname, string lastname)
         {
-            return await _context.Client.AnyAsync(c =>
+            return await _context.Clients.AnyAsync(c =>
                 c.Email.ToLower() == email.ToLower() ||
                 (c.FirstName.ToLower() == firstname.ToLower() && c.LastName.ToLower() == lastname.ToLower())
             );
@@ -76,7 +76,7 @@ namespace GestionTicketsAPI.Repositories
 
         public async Task<Client?> GetClientByEmailAsync(string email)
         {
-            return await _context.Client
+            return await _context.Clients
                 .Include(c => c.Societe)
                 .Include(c => c.PaysNavigation)
                 .FirstOrDefaultAsync(c => c.Email.ToLower() == email.ToLower());
@@ -84,7 +84,7 @@ namespace GestionTicketsAPI.Repositories
 
         public async Task AddClientAsync(Client client)
         {
-            await _context.Client.AddAsync(client);
+            await _context.Clients.AddAsync(client);
         }
 
   }

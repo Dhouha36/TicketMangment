@@ -26,7 +26,7 @@
             <ng-template #loadingTpl>
               <span class="spinner"></span> Export Excel
             </ng-template>
-          </button>          
+          </button>
           <button mat-icon-button [matMenuTriggerFor]="filterMenu">
             <span class="material-icons">filter_list</span>
           </button>
@@ -35,7 +35,7 @@
             <div>
               <app-user-filter (applyFilter)="onFilter($event)"></app-user-filter>
             </div>
-          </mat-menu>    
+          </mat-menu>
         </td>
       </tr>
       <!-- En-tête des colonnes -->
@@ -95,7 +95,13 @@
           </ng-container>
         </td>
         <td class="actions">
-          <button class="edit-btn" [routerLink]="['/home/utilisateurs/details', user.id]">
+          <button class="edit-btn" [routerLink]="['/home/utilisateurs/details', user.id]"
+            [queryParams]="{ mode: 'edit' }">
+            <span class="material-icons">edit</span>
+          </button>
+          <!-- Mode "visualiser" -->
+          <button class="view-btn" [routerLink]="['/home/utilisateurs/details', user.id]"
+            [queryParams]="{ mode: 'view' }">
             <span class="material-icons">visibility</span>
           </button>
           <!-- Bouton de suppression individuel avec loader spécifique -->

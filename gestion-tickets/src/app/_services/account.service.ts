@@ -8,6 +8,8 @@ import { Projet } from '../_models/Projet';
 import { Ticket } from '../_models/ticket';
 import { environment } from '../../environments/environment';
 import { ClientCreate } from '../DTOs/client-create.model';
+import { ClientDto } from '../DTOs/ClientDto';
+import { RegisterUserDto } from '../DTOs/RegisterUserDto';
 
 @Injectable({
   providedIn: 'root'
@@ -15,12 +17,12 @@ import { ClientCreate } from '../DTOs/client-create.model';
 export class AccountService {
   private http = inject(HttpClient);
   baseUrl = environment.apiUrl;
-  currentUser = signal<User | null>(this.getUserFromLocalStorage());
+  currentUser = signal<User | ClientDto | null>( this.getUserFromLocalStorage() );
   paginatedResult = signal<PaginatedResult<User[]> | null>(null);
 
-  private getUserFromLocalStorage(): User | null {
-    const user = localStorage.getItem('user');
-    return user ? JSON.parse(user) : null;
+  private getUserFromLocalStorage(): User | ClientDto | null {
+    const json = localStorage.getItem('user');
+    return json ? JSON.parse(json) : null;
   }
 
   login(model: any) {
@@ -39,9 +41,10 @@ export class AccountService {
     this.currentUser.set(null);
   }
 
-  register(dto: ClientCreate): Observable<User> {
-    return this.http.post<User>(this.baseUrl + 'account/register', dto).pipe(
-      map(user => user)
+  register(dto: RegisterUserDto): Observable<User> {
+    return this.http.post<User>(
+      `${this.baseUrl}account/register`,
+      dto
     );
   }
 
@@ -49,10 +52,12 @@ export class AccountService {
     return this.http.get<Pays[]>(this.baseUrl + 'users/pays');
   }
 
-  setCurrentUser(user: User) {
+  setCurrentUser(user: User | ClientDto) {
     localStorage.setItem('user', JSON.stringify(user));
     this.currentUser.set(user);
   }
+
+  
 
   getAllUsers(): Observable<User[]> {
     return this.http.get<User[]>(this.baseUrl + 'users');

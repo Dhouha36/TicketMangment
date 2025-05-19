@@ -89,25 +89,6 @@
             </div>
 
             <div class="form-group">
-              <label for="societe">Société</label>
-              <select
-                id="societe"
-                formControlName="societe"
-                class="form-control"
-                [class.is-invalid]="registerForm.get('societe')?.touched && registerForm.get('societe')?.invalid"
-              >
-                <option value="">Sélectionnez une société</option>
-                <option *ngFor="let s of societesList" [value]="s.id">{{ s.nom }}</option>
-              </select>
-              <div *ngIf="registerForm.get('societe')?.hasError('required')" class="invalid-feedback text-start">
-                Société est obligatoire
-              </div>
-            </div>
-          </div>
-
-          <div class="form-row">
-
-            <div class="form-group">
               <label for="numTelephone">Numéro de Téléphone <span class="required">*</span></label>
               <div class="input-group">
                 <!-- Préfixe téléphonique affiché automatiquement, si disponible -->
@@ -139,6 +120,11 @@
                 Numéro de téléphone invalide
               </div>
             </div>
+          </div>
+
+          <div class="form-row">
+
+
 
             <div class="form-group toggle-container">
               <div class="toggle-row">

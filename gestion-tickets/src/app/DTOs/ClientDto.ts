@@ -1,3 +1,5 @@
+import { ProjetMini } from "./ProjetMini";
+
 export interface ClientDto {
   id: number;
   email: string;
@@ -5,11 +7,9 @@ export interface ClientDto {
   lastName: string;
   numTelephone: string;
   actif: boolean;
-  pays: number;
-  paysNavigation: {
-    id: number;
-    nom: string;
-  };
+  initialPassword: string;
+  paysId: number;
+  pays: string; 
   societeId: number;
   societe: {
     id: number;
@@ -19,4 +19,5 @@ export interface ClientDto {
   updatedAt: string;
   deletedAt?: string;
   token?: string;
+  projets: ProjetMini[];
 }

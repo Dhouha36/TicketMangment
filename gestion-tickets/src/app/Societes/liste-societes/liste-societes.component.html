@@ -90,9 +90,15 @@
           <td>{{ societe.adresse }}</td>
           <td>{{ societe.telephone }}</td>
           <td class="actions">
-            <button class="edit-btn" [routerLink]="['/home', 'Societes', 'modifierSociete', societe.id]">
+            <button class="edit-btn" [routerLink]="['/home', 'Societes', 'modifierSociete', societe.id]"
+              [queryParams]="{ mode: 'edit' }">
               <span class="material-icons">edit</span>
             </button>
+            <button class="view-btn"
+                     [routerLink]="['/home','Societes','modifierSociete', societe.id]"
+                     [queryParams]="{ mode: 'view' }">
+               <span class="material-icons">visibility</span>
+             </button>
             <!-- Bouton de suppression individuel avec variable de chargement spécifique -->
             <button class="delete-btn" (click)="deleteSociete(societe.id)" [disabled]="isDeleteLoading">
               <ng-container *ngIf="!isDeleteLoading; else loadingDeleteTpl">

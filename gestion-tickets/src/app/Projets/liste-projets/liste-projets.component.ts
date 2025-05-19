@@ -66,11 +66,13 @@ export class ListeProjetsComponent implements OnInit {
   }
 
   getProjets(): void {
-    const filters = { 
-      ...this.currentFilters, 
+    const cu = this.accountService.currentUser();
+    // Appliquer les guards pour éviter l'accès direct à .role ou .id sur ClientDto
+    const filters = {
+      ...this.currentFilters,
       searchTerm: this.projetsSearchTerm,
-      role: this.accountService.currentUser()?.role,
-      userId: this.accountService.currentUser()?.id
+      role: this.isUser(cu) ? cu.role : undefined,
+      userId: this.isUser(cu) ? cu.id : undefined
     };
 
     this.projetsService.getPaginatedProjets(this.pageNumber, this.pageSize, filters.searchTerm, filters)
@@ -215,5 +217,30 @@ export class ListeProjetsComponent implements OnInit {
         this.isExportLoading = false;
       }
     });
+  }
+
+  /** Type-guard: vérifie que currentUser est un User */
+  private isUser(u: any): u is { role: string } {
+    return !!u && typeof u.role === 'string';
+  }
+
+  /** Raccourci vers currentUser */
+  private get currentUser() {
+    return this.accountService.currentUser();
+  }
+
+  isSuperAdmin(): boolean {
+    const cu = this.currentUser;
+    return this.isUser(cu) && cu.role.toLowerCase().trim() === 'super admin';
+  }
+
+  isChefDeProjet(): boolean {
+    const cu = this.currentUser;
+    return this.isUser(cu) && cu.role.toLowerCase().trim() === 'chef de projet';
+  }
+
+  /** Uniquement les deux précédents rôles ont accès */
+  canManage(): boolean {
+    return this.isSuperAdmin() || this.isChefDeProjet();
   }
 }

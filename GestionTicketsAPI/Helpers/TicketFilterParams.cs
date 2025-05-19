@@ -8,6 +8,7 @@ namespace GestionTicketsAPI.Helpers
         public string? Id { get; set; }
         public string? Titre { get; set; }
         public string? Client { get; set; }
+         public int? ClientId { get; set; }
         public string? Categorie { get; set; }
         public string? Priorite { get; set; }
         public string? Statut { get; set; }

@@ -223,3 +223,11 @@
   }
 }
 
+.option-item .role {
+  opacity: 1;
+  transition: opacity 0.2s;
+}
+.option-item .role:empty {
+  /* conserve l’espace de la balise, mais la rend invisible */
+  opacity: 0;
+}

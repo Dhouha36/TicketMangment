@@ -22,6 +22,7 @@ public class ProjetRepository : IProjetRepository
         .Include(p => p.Societe)
             .ThenInclude(s => s.Pays)
         .Include(p => p.ProjetUsers)
+        .Include(p => p.Contrats)
         .ToListAsync();
   }
 
@@ -32,6 +33,7 @@ public class ProjetRepository : IProjetRepository
         .Include(p => p.Societe)
             .ThenInclude(s => s.Pays)
         .Include(p => p.ProjetUsers)
+        .Include(p => p.Contrats)
         .OrderByDescending(p => p.CreatedAt)
         .AsQueryable();
 
@@ -95,6 +97,7 @@ public class ProjetRepository : IProjetRepository
         .Include(p => p.Societe)
             .ThenInclude(s => s.Pays)
         .Include(p => p.ProjetUsers)
+        .Include(p => p.Contrats)
         .OrderByDescending(p => p.CreatedAt)
         .AsQueryable();
 
@@ -146,9 +149,6 @@ public class ProjetRepository : IProjetRepository
     return await query.ToListAsync();
   }
 
-
-
-
   public async Task<Projet?> GetProjetByIdAsync(int id)
   {
     return await _context.Projets
@@ -156,6 +156,7 @@ public class ProjetRepository : IProjetRepository
         .Include(p => p.Societe)
             .ThenInclude(s => s.Pays)
         .Include(p => p.ProjetUsers)
+        .Include(p => p.Contrats)
         .AsNoTracking()
         .FirstOrDefaultAsync(p => p.Id == id);
   }
@@ -228,6 +229,7 @@ public class ProjetRepository : IProjetRepository
       .Include(p => p.ChefProjet)  // Inclusion du chef de projet
       .Include(p => p.Societe)       // Inclusion de la société
           .ThenInclude(s => s.Pays)  // Inclusion du pays de la société
+      .Include(p => p.Contrats)
       .Where(p => p.ProjetUsers.Any(pu => pu.UserId == userId))
       .ToListAsync();
   }
@@ -244,5 +246,14 @@ public class ProjetRepository : IProjetRepository
                          .Where(p => p.SocieteId == societeId)
                          .ToListAsync();
   }
+  public async Task<IEnumerable<Client>> GetClientsByProjetIdAsync(int projetId)
+    {
+        return await _context.ProjetClients
+            .Where(pc => pc.ProjetId == projetId)
+            .Include(pc => pc.Client)              // inclut l’entité Client
+                .ThenInclude(c => c.Societe)      // si besoin d’infos société
+            .Select(pc => pc.Client)
+            .ToListAsync();
+    }
 
 }

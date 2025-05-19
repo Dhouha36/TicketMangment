@@ -56,7 +56,6 @@ export class AjouterUtilisateurComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       pays: ['', Validators.required],
       role: ['', Validators.required],
-      societe: [{ value: '', disabled: true }],
       numTelephone: ['', [
         Validators.required,
         Validators.pattern(/^[0-9\s]+$/),
@@ -68,7 +67,7 @@ export class AjouterUtilisateurComponent implements OnInit {
       contract: this.fb.group({
         dateDebut: ['', Validators.required],
         dateFin: ['', Validators.required],
-        type: ['Standard', Validators.required]
+        type: [null, Validators.required]
       })
     });
   }
@@ -83,19 +82,6 @@ export class AjouterUtilisateurComponent implements OnInit {
       this.selectedCountry = this.paysList.find(p => p.idPays === +value);
     });
 
-    // Activer/désactiver le champ société selon le rôle
-    this.registerForm.get('role')?.valueChanges.subscribe(role => {
-      const societeControl = this.registerForm.get('societe');
-      if (role && role.toLowerCase() === 'client') {
-        societeControl?.enable();
-        societeControl?.setValidators(Validators.required);
-      } else {
-        societeControl?.disable();
-        societeControl?.clearValidators();
-        societeControl?.setValue('');
-      }
-      societeControl?.updateValueAndValidity();
-    });
 
     // Initialisation du groupe 'contract' selon la case 'contrat'
     const contratControl = this.registerForm.get('contrat');
@@ -108,12 +94,6 @@ export class AjouterUtilisateurComponent implements OnInit {
       contractGroup?.get('type')?.clearValidators();
       contractGroup?.updateValueAndValidity();
     }
-
-    // Désactivation conditionnelle supprimée : la case contrat reste activée, quelle que soit la valeur du champ société.
-    this.registerForm.get('societe')?.valueChanges.subscribe(() => {
-      // On laisse la case 'contrat' active
-      this.registerForm.get('contrat')?.enable();
-    });
 
     // Surveillance de la case 'contrat'
     contratControl?.valueChanges.subscribe(isChecked => {
@@ -176,21 +156,23 @@ export class AjouterUtilisateurComponent implements OnInit {
 
   openContractDialog(): void {
     const dialogRef = this.dialog.open(ContractDialogComponent, {
-      data: { contractForm: this.registerForm.get('contract') }
+      data: {
+        contractForm: this.registerForm.get('contract'),
+        isProject: false
+      }
     });
-
+  
     dialogRef.afterClosed().subscribe(result => {
       if (!result) {
-        // Si annulé, décocher la case
         this.registerForm.get('contrat')?.setValue(false);
       }
     });
   }
+  
 
   register(): void {
     if (this.registerForm.valid) {
       const formValue = this.registerForm.value;
-      const hasSociete = formValue.societe && formValue.societe !== '';
 
       const phoneNumber = formValue.numTelephone;
       const fullPhoneNumber = this.selectedCountry
@@ -204,9 +186,7 @@ export class AjouterUtilisateurComponent implements OnInit {
         lastname: formValue.lastName,
         numtelephone: fullPhoneNumber,
         pays: +formValue.pays,
-        actif: formValue.actif,
-        societeId: hasSociete ? +formValue.societe : null,
-        contract: null
+        actif: formValue.actif
       };
 
       if (formValue.contrat) {

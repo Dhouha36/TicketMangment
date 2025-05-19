@@ -51,7 +51,8 @@
         *ngFor="let user of filteredUsers"
         (click)="selectUser(user)"
       >
-          {{ user.firstName }} {{ user.lastName }} – {{ user.role }}
+          {{ user.firstName }} {{ user.lastName }}<span *ngIf="user.role">– {{ user.role }}</span>
+
       </div>
       <div class="no-result" *ngIf="filteredUsers.length === 0">
         <span class="no-results-icon">🔍</span>

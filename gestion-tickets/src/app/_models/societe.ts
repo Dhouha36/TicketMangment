@@ -8,9 +8,10 @@ export interface Societe {
   adresse: string;
   telephone: string;
   paysId: number;
+  ville: string;
+  codePostal: string;
   selected?: boolean;
   utilisateurs: User[];
   projets: Projet[]; 
-  contrat?: any
   pays?: Pays; 
 }

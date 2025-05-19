@@ -1,0 +1,620 @@
+
+
+/* Container styles */
+.container {
+  padding: 50px 50px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.add-user-btn {
+  background-color: #fa9745;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  margin-bottom: 30px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.add-user-btn:hover {
+  background-color: #f38932;
+}
+
+.material-icons {
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+h2 {
+  color: #333;
+  font-size: 1.7rem;
+  margin-bottom: 40px;
+  font-weight: 500;
+}
+
+/* Table styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+thead {
+  background-color: #f8f9fa;
+}
+
+th {
+  text-align: left;
+  padding: 1px 15px;
+  color: #666;
+  font-weight: 500;
+  border-bottom: 1px solid #eee;
+}
+
+td {
+  padding: 10px 0px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+/* Role badges */
+.role {
+  padding: 4px 8px;
+  font-weight: 500;
+  font-size: 0.9em;
+  background-color: #fce0c4;
+  color: #704b30;
+  border-radius: 14px;
+}
+
+
+
+
+
+/* Status indicators */
+.status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.status.active {
+  color: #4caf50;
+}
+
+.status.inactive {
+  color: #f44336;
+}
+
+/* Action buttons */
+.edit-btn, .delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.delete-btn {
+  color: red;
+}
+
+.edit-btn {
+  color: #fa9745;
+}
+
+.edit-btn:hover {
+  color: #f38932;
+  transform: scale(1.1);
+}
+.delete-btn:hover {
+  color: rgb(232, 3, 3);
+  transform: scale(1.1);
+}
+
+.material-icons {
+  vertical-align: middle;
+  font-size: 20px;
+}
+
+/* Contract icon */
+.contract-icon {
+  color: #666;
+  font-size: 1.1em;
+}
+
+/* Styles pour la barre de recherche */
+.search-wrapper {
+  position: relative;
+  width: 300px;
+  margin-left: -40px;
+}
+
+.search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  font-size: 20px !important;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 16px 12px 45px;
+  font-size: 0.95rem;
+  color: #374151;
+  background-color: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 3px rgba(245, 124, 0, 0.1);
+}
+
+.search-input::placeholder {
+  color: #9ca3af;
+}
+
+
+/* Style pour l’état “aucun projet trouvé” */
+.no-content {
+  text-align: center;
+  padding: 0.5rem 0.5rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+}
+
+.no-content .icon {
+  display: block;
+  font-size: 40px;
+  margin-bottom: 1rem;
+  color: #f97316;
+}
+
+
+.no-content p {
+  color: #696f7a;
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+
+
+
+.checkbox-column {
+  width: 40px;
+  text-align: center;
+  padding: 20px 25px !important;
+}
+
+/* Custom checkbox styles */
+.checkbox-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.custom-checkbox {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+.checkbox-label {
+  position: relative;
+  display: inline-block;
+  height: 18px;
+  width: 18px;
+  border: 2px solid #ddd;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.custom-checkbox:checked + .checkbox-label {
+  background-color: #f57c00;
+  border-color: #f57c00;
+}
+
+.custom-checkbox:checked + .checkbox-label::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 2px;
+  width: 4px;
+  height: 9px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-label:hover {
+  border-color: #f57c00;
+}
+
+.filter-row {
+  background-color: #ffffff;
+  border-bottom: 1px solid #eee;
+}
+
+.filter-actions {
+  text-align: right;
+  padding: 8px 15px;
+}
+
+.filter-btn, .view-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-left: 8px;
+  border-radius: 4px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover, .view-btn:hover {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.view-btn.active {
+  background-color: #f5f5f5;
+  color: #f57c00;
+}
+
+.export-btn, 
+button[mat-icon-button] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 10px;
+}
+
+/* Style spécifique pour le bouton d'exportation Excel */
+.export-btn {
+  background-color: #f9e2cc;
+  color: #f57c00;
+  border: 1px solid #fbc997;
+}
+
+.export-btn:hover {
+  background-color: #fde1c8;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.export-btn:active {
+  transform: translateY(1px);
+}
+
+.export-btn .material-icons {
+  font-size: 18px;
+  margin-right: 6px;
+}
+
+/* Style spécifique pour le bouton de filtre */
+button[mat-icon-button] {
+  background-color: #f5f5f5;
+  color: #666;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid #e0e0e0;
+}
+
+button[mat-icon-button]:hover {
+  background-color: #e0e0e0;
+  color: #f57c00;
+}
+
+button[mat-icon-button] .material-icons {
+  margin-right: 0;
+  font-size: 20px;
+}
+
+/* État actif pour le bouton de filtre lorsque le menu est ouvert */
+button[mat-icon-button].mat-menu-trigger-active {
+  background-color: #fff3e0;
+  color: #f57c00;
+  border-color: #ffcc80;
+}
+
+
+.material-icons {
+  font-size: 25px;
+  vertical-align: middle;
+}
+
+/* Additional responsive tweaks */
+.checkbox-column {
+  width: auto;
+  text-align: center;
+  padding: 10px !important;
+}
+
+/* Ensure input fields are responsive */
+input, select, button {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: #fff;
+}
+
+.pagination-info {
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+.per-page-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.per-page-selector select {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background-color: white;
+  color: #374151;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.per-page-selector select:hover,
+.per-page-selector select:focus {
+  border-color: #f59e0b;
+  outline: none;
+}
+
+.per-page-selector label {
+  color: #4b5563;
+  font-size: 0.875rem;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pagination-controls button,
+.page-number {
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  background: white;
+  color: #374151;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease-in-out;
+}
+
+.pagination-controls button:not(:disabled):hover,
+.page-number:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  background-color: #fff7ed;
+}
+
+.pagination-controls button:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+  border-color: #e5e7eb;
+}
+
+.page-input {
+  width: 3rem;
+  height: 2rem;
+  padding: 0.375rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  text-align: center;
+  font-size: 0.875rem;
+  transition: all 0.15s ease-in-out;
+}
+
+.page-input:focus {
+  border-color: #f59e0b;
+  outline: none;
+  box-shadow: 0 0 0 1px #f59e0b;
+}
+
+.total-pages {
+  color: #4b5563;
+  font-size: 0.875rem;
+  padding: 0 0.5rem;
+}
+
+.new-user-highlight {
+  background-color: #ececec; /* Une couleur légèrement plus foncée */
+  transition: background-color 0.2s ease;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 5px;
+  margin-top: 5px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+
+
+
+
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .container {
+    padding: 30px 15px;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  th, td {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 992px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .add-user-btn {
+    margin-top: 15px;
+    width: 100%;
+  }
+
+  .search-container input {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  table {
+    font-size: 0.85rem;
+  }
+
+  th, td {
+    padding: 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 15px 10px;
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  table {
+    font-size: 0.8rem;
+  }
+
+  th, td {
+    padding: 6px;
+  }
+
+  .role {
+    padding: 2px 6px;
+    font-size: 0.7em;
+  }
+
+  .edit-btn, .delete-btn {
+    font-size: 1em;
+    padding: 2px 4px;
+  }
+
+  .pagination-container {
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px 10px;
+  }
+
+  .pagination-info {
+    text-align: center;
+  }
+
+  .per-page-selector {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-container, .add-user-btn {
+    width: 100%;
+    margin-bottom: 15px;
+  }
+
+  table {
+    font-size: 0.75rem;
+  }
+
+  th, td {
+    padding: 4px;
+  }
+
+  .status {
+    width: 20px;
+    height: 20px;
+  }
+
+  .material-icons {
+    font-size: 20px;
+  }
+
+  .pagination-controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .pagination-controls button,
+  .pagination-controls span {
+    padding: 8px 12px;
+  }
+}
+
+
+

@@ -20,6 +20,7 @@ import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
 import { environment } from 'src/environments/environment';
 import { ImagePreviewModalComponent } from '../image-preview-modal/image-preview-modal.component';
+import { ClientDto } from 'src/app/DTOs/ClientDto';
 registerLocaleData(localeFr);
 
 @Component({
@@ -37,7 +38,7 @@ export class TicketDetailsComponent implements OnInit {
   public assetsUrl = environment.assetsUrl;
 
   ticket: Ticket | null = null;
-  currentUser: User | null = null;
+  currentUser: User | ClientDto | null = null;
   ticketId!: number;
   developers: User[] = [];
 
@@ -137,24 +138,38 @@ export class TicketDetailsComponent implements OnInit {
   onAddComment() {
     if (!this.newComment.trim() && !this.filesToUpload.length) return;
     this.loaderService.showLoader();
-
+  
     const form = new FormData();
     form.append('contenu', this.newComment);
     form.append('ticketId', this.ticketId.toString());
-    this.filesToUpload.forEach(item => form.append('files', item.file, item.file.name));
+  
+    // Si l'utilisateur courant est un client, on ajoute son clientId
+    if (this.isClient()) {
+      const client = this.currentUser as ClientDto;
+      form.append('clientId', this.currentUser!.id.toString());
+    }
+  
+    // Ajout des fichiers (images ou documents)
+    this.filesToUpload.forEach(item =>
+      form.append('files', item.file, item.file.name)
+    );
 
+  
     this.commentService.addCommentFormData(form).subscribe({
       next: comment => {
-        // rafraîchir liste des commentaires…
+        // Réinitialisation de l'éditeur et rafraîchissement de la liste
         this.editor.nativeElement.innerText = '';
         this.newComment = '';
         this.filesToUpload = [];
         this.loaderService.hideLoader();
         this.loadComments();
       },
-      error: () => this.loaderService.hideLoader()
+      error: () => {
+        this.loaderService.hideLoader();
+      }
     });
   }
+  
   
 
   onFilesSelected(event: Event) {
@@ -218,18 +233,17 @@ export class TicketDetailsComponent implements OnInit {
 
   // Logique pour afficher le bouton de validation
   canValidateTicket(): boolean {
-    if (!this.ticket || !this.currentUser) return false;
-    const userRole = this.currentUser.role?.toLowerCase() || '';
-    const statusIsDefault = (this.ticket.statut?.name === "—");
-    return statusIsDefault && (userRole === 'chef de projet' || userRole === 'super admin');
+    if (!this.ticket || !this.isUser(this.currentUser)) return false;
+    const role = this.currentUser.role.toLowerCase();
+    const isDefaultStatus = this.ticket.statut?.name === '—';
+    return isDefaultStatus && (role === 'chef de projet' || role === 'super admin');
   }
 
   // Méthode pour déterminer si l'utilisateur peut terminer ou modifier le responsable
   canFinishTicket(): boolean {
-    if (!this.ticket || !this.currentUser) return false;
-
-    // Les clients ne peuvent pas terminer ni modifier le responsable
-    if (this.currentUser.role.toLowerCase() === 'client') return false;
+    if (!this.ticket || !this.isUser(this.currentUser)) return false;
+    const role = this.currentUser.role.toLowerCase();
+    if (role === 'client') return false;
 
     // La mise à jour du responsable ne doit être possible que si le ticket a été validé (approvedAt renseigné)
     if (!this.ticket.approvedAt) return false;
@@ -345,5 +359,20 @@ export class TicketDetailsComponent implements OnInit {
   isImage(url: string): boolean {
     return /\.(jpe?g|png|gif|bmp|svg)$/i.test(url);
   }
+
+  private isUser(u: User | ClientDto | null): u is User {
+    return !!u && (u as User).role !== undefined;
+  }
+
+  /** Type‑guard : vrai client si paysId existe */
+  private isClientDto(u: User | ClientDto | null): u is ClientDto {
+    return !!u && (u as ClientDto).paysId !== undefined;
+  }
+
+  /** Exposé au template : est‑ce un client ? */
+  isClient(): boolean {
+    return this.isClientDto(this.currentUser);
+  }
+  
 
 }

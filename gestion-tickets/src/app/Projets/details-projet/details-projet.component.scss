@@ -208,7 +208,7 @@ h1::after {
 }
 
 .search-input {
-  width: 100%;
+  width: 96%;
   padding: 12px 16px 12px 45px;
   font-size: 0.95rem;
   color: #374151;
@@ -448,23 +448,113 @@ td.checkbox-column {
   }
 }
 
-/* Pagination */
+/* Navigation tabs styling */
+.tabs-nav {
+  margin: 10px auto; /* Centre la barre d'onglets */
+  padding: 0;
+  background-color: #d9d9d9;
+  border-radius: 10px;
+  width: fit-content; /* Ajuste la largeur au contenu */
+}
+
+.tabs-nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tabs-nav li {
+  position: relative;
+  margin-bottom: -1px;
+  width: 80px; /* Largeur fixe pour chaque onglet */
+}
+
+.tabs-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+  color: #6b7280;
+  text-decoration: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  width: 100%; /* Prend toute la largeur du li parent */
+}
+
+.tabs-nav li.active {
+  border: 1px solid #e5e7eb;
+  border-bottom: none;
+  border-radius: 10px;
+  background-color: white;
+}
+
+.tabs-nav li.active a {
+  color: #f97316;
+  padding: 0.5rem 0;
+}
+
+/* Styles pour le tableau dans l'onglet projets */
+.tab-pane table {
+  width: 100%;
+
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.tab-pane thead {
+  background-color: #f8f9fa;
+}
+
+.tab-pane th {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  font-weight: 500;
+  color: #666;
+  padding: 10px 0px 10px 20px;
+}
+
+.tab-pane td {
+  padding: 12px 10px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+  vertical-align: middle; /* Ensures vertical centering */
+  line-height: 1.4; /* Improves text readability */
+  padding: 10px 0px 10px 20px;
+}
+
+.tab-pane td.actions {
+  align-items: center;   /* aligne verticalement */
+  justify-content: flex-end; /* colle les boutons à droite */
+  gap: 0.5rem;           /* espace uniforme entre les boutons */
+  padding-right: 20px;   /* selon votre layout existant */
+}
+
+
+/* Styles pour la pagination */
 .pagination-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1rem;
-  background: #fff;
+  background: white;
 }
+
 .pagination-info {
   color: #4b5563;
   font-size: 0.875rem;
 }
+
 .per-page-selector {
   display: flex;
   align-items: center;
   gap: 0.5rem;
 }
+
 .per-page-selector select {
   padding: 0.375rem 0.75rem;
   border: 1px solid #d1d5db;
@@ -474,22 +564,20 @@ td.checkbox-column {
   font-size: 0.875rem;
   transition: all 0.2s;
 }
-.per-page-selector select:hover,
-.per-page-selector select:focus {
-  border-color: #f59e0b;
-  outline: none;
-}
+
 .per-page-selector label {
   color: #4b5563;
   font-size: 0.875rem;
 }
+
 .pagination-controls {
   display: flex;
   align-items: center;
   gap: 0.25rem;
 }
+
 .pagination-controls button,
-.page-number {
+.page-input {
   min-width: 2rem;
   height: 2rem;
   padding: 0 0.5rem;
@@ -503,41 +591,232 @@ td.checkbox-column {
   justify-content: center;
   transition: all 0.15s ease-in-out;
 }
-.pagination-controls button:not(:disabled):hover,
-.page-number:hover {
-  border-color: #f59e0b;
-  color: #f59e0b;
-  background-color: #fff7ed;
-}
+
 .pagination-controls button:disabled {
   background-color: #f3f4f6;
   color: #9ca3af;
   cursor: not-allowed;
   border-color: #e5e7eb;
 }
+
 .page-input {
-  width: 3rem;
-  height: 2rem;
-  padding: 0.375rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
   text-align: center;
-  font-size: 0.875rem;
-  transition: all 0.15s ease-in-out;
 }
-.page-input:focus {
-  border-color: #f59e0b;
-  outline: none;
-  box-shadow: 0 0 0 1px #f59e0b;
-}
+
 .total-pages {
   color: #4b5563;
   font-size: 0.875rem;
   padding: 0 0.5rem;
 }
 
+/* Style pour l'état "aucun projet trouvé" */
+.no-content {
+  text-align: center;
+  padding: 0.5rem 0.5rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+}
+
+.no-content .icon {
+  display: block;
+  font-size: 40px;
+  margin-bottom: 1rem;
+  color: #f97316;
+}
+
+.no-content p {
+  color: #696f7a;
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+/* Styles pour le formulaire de contrat */
+.contract-form-container {
+  width: 90%;
+  max-width: 1300px;
+  margin: 1rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.contract-form-container:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.form-title {
+  color: #2d3748;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f57c00;
+  position: relative;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #2d3748;
+  background-color: #fff;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 3px rgba(245, 124, 0, 0.1);
+}
+/* Actions du formulaire */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.2rem;
+  padding-top: 0.2rem;
+}
+
+.form-actions button {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.form-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #a0aec0;
+}
+
+.form-actions button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.input-group-prepend {
+  display: flex;
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px 0 0 4px;
+  border-right: none;
+}
+
+.input-group .form-control {
+  position: relative;
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+} 
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-create {
+  background-color: #f4811e;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  
+}
 
 
+
+.btn-cancel {
+  background-color: #fc5203;
+  color: #ffffff;
+  border: 1px solid #fc5203;
+  padding: 0.75rem 2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  
+}
+
+/* Styles pour les états hover */
+.btn-create:hover {
+  background-color: #e67716;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel:hover {
+  background-color: #e74a01;
+  transition: all 0.2s ease;
+}
+
+
+.view-btn,
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0;            /* on annule tout padding par défaut */
+  color: #444;           /* couleur neutre */
+  transition: transform 0.2s, color 0.2s;
+}
+
+/* Specificité couleur et hover */
+.view-btn:hover {
+  color: #000;
+  transform: scale(1.1);
+}
+.delete-btn {
+  color: #e53e3e;
+}
+.delete-btn:hover {
+  color: #c53030;
+  transform: scale(1.1);
+}
 
 /* Responsive Media Queries */
 @media (min-width: 1921px) {

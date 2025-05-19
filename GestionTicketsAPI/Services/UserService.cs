@@ -101,24 +101,6 @@ namespace GestionTicketsAPI.Services
         userFromRepo.PasswordSalt = passwordSalt;
     }
 
-    // Gestion de la relation Société pour les clients
-    if (userFromRepo.Role != null &&
-        userFromRepo.Role.Name.Equals("Client", StringComparison.OrdinalIgnoreCase))
-    {
-        // Vider la collection existante
-        userFromRepo.SocieteUsers.Clear();
-
-        // Si une nouvelle société est renseignée, l'ajouter
-        if (userUpdateDto.SocieteId.HasValue)
-        {
-            userFromRepo.SocieteUsers.Add(new SocieteUser
-            {
-                SocieteId = userUpdateDto.SocieteId.Value,
-                UserId = userFromRepo.Id
-            });
-        }
-    }
-
     _userRepository.Update(userFromRepo);
     return await _userRepository.SaveAllAsync();
 }

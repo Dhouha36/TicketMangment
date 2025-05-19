@@ -19,7 +19,7 @@
     </div>
 
     <!-- Mes tickets : uniquement pour Chef de Projet -->
-    <div class="stat-box" *ngIf="isChefDeProjet()">
+    <div class="stat-box" *ngIf="isChefDeProjet()|| isCollaborateur()">
       <a [routerLink]="['/home', 'Tickets']" class="stat-content">
         <div class="stat-title">Mes tickets</div>
         <div class="stat-value">{{ myTicketsCount || 0 }}</div>

@@ -15,10 +15,10 @@ namespace GestionTicketsAPI.Entities
     public string? Description { get; set; }
 
     public int? ChefProjetId { get; set; }
-    public User? ChefProjet { get; set; } 
+    public User? ChefProjet { get; set; }
 
     public int? SocieteId { get; set; }
-    
+
     // Utilisation d'un champ privé pour la société
     private Societe? _societe;
     public Societe? Societe
@@ -36,7 +36,7 @@ namespace GestionTicketsAPI.Entities
     [ForeignKey("Pays")]
     [Column("id_pays")]
     public int? IdPays { get; set; }
-    
+
     public Pays? Pays { get; set; }
 
     public DateTime? CreatedAt { get; set; }
@@ -45,5 +45,6 @@ namespace GestionTicketsAPI.Entities
     public ICollection<Ticket>? Tickets { get; set; }
     public ICollection<ProjetUser> ProjetUsers { get; set; } = new List<ProjetUser>();
     public ICollection<ProjetClient> ProjetClients { get; set; } = new List<ProjetClient>();
+    public ICollection<Contrat> Contrats { get; set; } = new List<Contrat>();
   }
 }

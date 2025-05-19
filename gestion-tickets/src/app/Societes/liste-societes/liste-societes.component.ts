@@ -47,6 +47,7 @@ export class ListeSocietesComponent implements OnInit {
   isDeleteLoading: boolean = false;
   isDeleteMultipleLoading: boolean = false;
 
+
   constructor(
     private societeService: SocieteService,
     public route: ActivatedRoute,
@@ -203,4 +204,6 @@ export class ListeSocietesComponent implements OnInit {
         }
       });
   }
+
+  
 }

@@ -19,6 +19,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
+import { ClientDto } from 'src/app/DTOs/ClientDto';
 
 @Component({
   selector: 'app-list-tickets',
@@ -36,7 +37,7 @@ import { GlobalLoaderService } from '../../_services/global-loader.service';
   styleUrls: ['./list-tickets.component.css']
 })
 export class ListTicketsComponent implements OnInit {
-  currentUser: User | null = null;
+  currentUser: User | ClientDto | null = null;
   pageNumber: number = 1;
   pageSize: number = 9;
   paginatedResult: PaginatedResult<Ticket[]> | null = null;
@@ -133,10 +134,24 @@ export class ListTicketsComponent implements OnInit {
   }
 
   getTickets(): void {
-    const filters = {
-      ...this.currentFilters,
-      searchTerm: this.ticketsSearchTerm
-    };
+    const user = this.accountService.currentUser();
+    const userId = user?.id ?? null;
+    const role   = this.isUser(user) ? user.role : null;
+
+    const panelClientId = this.currentFilters.clientId;
+  const filters = {
+    ...this.currentFilters,
+    searchTerm: this.ticketsSearchTerm,
+    clientId: panelClientId,
+    userId,                               // name it userId so it maps to FilterParams.UserId
+    role,       // nouveau champ
+  };
+
+  console.log('Envoi HTTP /tickets/paged avec :', {
+    pageNumber: this.pageNumber,
+    pageSize: this.pageSize,
+    ...filters
+  });
     
     // Afficher le loader global avant le début de la requête
     this.globalLoaderService.showGlobalLoader();
@@ -266,6 +281,7 @@ export class ListTicketsComponent implements OnInit {
   }
 
   onApplyFilter(filterValues: any): void {
+    console.log('Filters reçus par ListTickets :', filterValues);
     this.currentFilters = filterValues;
     this.pageNumber = 1;
     this.getTickets();
@@ -298,4 +314,26 @@ export class ListTicketsComponent implements OnInit {
   range(start: number, end: number): number[] {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }
+
+  private isUser(u: User | ClientDto | null): u is User {
+    return !!u && (u as User).role !== undefined;
+  }
+
+  /** True si c’est un vrai client (ClientDto sans .role) */
+  private isClientDto(u: User | ClientDto | null): u is ClientDto {
+    return !!u && (u as ClientDto).paysId !== undefined;
+  }
+
+  /** Exposé au template : est‐ce un client ? */
+  isClient(): boolean {
+    return this.isClientDto(this.currentUser);
+  }
+
+  /** Exposé au template : est‐ce un non‐client ? */
+  isNotClient(): boolean {
+    return this.isUser(this.currentUser)
+       && this.currentUser.role.toLowerCase() !== 'client';
+  }
+
+  
 }

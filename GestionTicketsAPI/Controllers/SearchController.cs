@@ -144,15 +144,21 @@ namespace GestionTicketsAPI.Controllers
                 });
 
             var societesQuery = _context.Societes
-                .Where(s => s.Nom.Contains(query) || s.Adresse.Contains(query))
+                .Where(s =>
+                    s.Nom.Contains(query) ||
+                    s.Adresse.Contains(query) ||
+                    s.Ville.Contains(query) ||
+                    s.CodePostal.Contains(query)
+                )
                 .Select(s => new
                 {
-                    Id = s.Id,
-                    Type = "Societe",
+                     Id = s.Id,
+                     Type = "Societe",
                     Title = s.Nom,
-                    Description = s.Adresse,
-                    DateDebut = (DateTime?)null
-                });
+                    // On affiche l'adresse complète en description
+                    Description = $"{s.Adresse}, {s.CodePostal} {s.Ville}",
+                     DateDebut = (DateTime?)null
+                 });
 
             var paysQuery = _context.Set<Pays>()
                 .Where(p => p.Nom.Contains(query) || (p.CodeTel != null && p.CodeTel.Contains(query)))
@@ -264,30 +270,7 @@ namespace GestionTicketsAPI.Controllers
                       });
 
 
-            var contratSocietesQuery = from c in _context.Set<Contrat>()
-                                       join s in _context.Societes on c.SocietePartenaireId equals s.Id
-                                       where s.Nom.Contains(query) || c.TypeContrat.Contains(query)
-                                       select new
-                                       {
-                                           Id = s.Id,
-                                           Type = "ContratSociete",
-                                           Title = s.Nom,
-                                           Description = "Contrat : " + c.TypeContrat,
-                                           DateDebut = (DateTime?)c.DateDebut
-                                       };
-
-            var contratUsersQuery = from c in _context.Set<Contrat>()
-                                    join u in _context.Users on c.ClientId equals u.Id
-                                    where (u.FirstName.Contains(query) || u.LastName.Contains(query)) || c.TypeContrat.Contains(query)
-                                    select new
-                                    {
-                                        Id = u.Id,
-                                        Type = "ContratUser",
-                                        Title = u.FirstName + " " + u.LastName,
-                                        Description = "Contrat : " + c.TypeContrat,
-                                        DateDebut = (DateTime?)c.DateDebut
-                                    };
-
+            
             // Concaténation des requêtes.
             IQueryable<dynamic> unionQuery;
             if (userRole == "Super Admin")

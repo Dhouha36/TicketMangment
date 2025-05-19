@@ -9,9 +9,6 @@ public class RegisterClientDto
   public string Email { get; set; } = string.Empty;
 
   [Required]
-  public string Password { get; set; } = string.Empty;
-
-  [Required]
   public string FirstName { get; set; } = string.Empty;
 
   [Required]
@@ -26,4 +23,7 @@ public class RegisterClientDto
   // **Société obligatoire**
   [Required]
   public int SocieteId { get; set; }
+  [Required]
+  public bool Actif { get; set; } = true;
+  public List<int> ProjetIds { get; set; } = new List<int>();
 }

@@ -103,9 +103,7 @@
 
   <!-- Boutons d'édition / sauvegarde / annulation -->
   <div class="buttons">
-    <button
-      *ngIf="!editMode && (accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet')"
-      class="edit-btn" (click)="editMode = true">
+    <button *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())" class="edit-btn" (click)="editMode = true">
       Modifier
     </button>
     <button *ngIf="editMode" class="edit-btn" (click)="saveProjet()" [disabled]="isLoading">
@@ -116,130 +114,276 @@
         <span class="spinner"></span> Enregistrer
       </ng-template>
     </button>
-    <button *ngIf="editMode" class="delete-btn" (click)="cancelEdit()">Annuler</button>
+    <button *ngIf="editMode" class="btn-cancel" (click)="cancelEdit()">Annuler</button>
   </div>
 
-  <!-- Section Membres du Projet -->
-  <div class="section-header">
-    <h3>Membres du Projet</h3>
-  </div>
+  <nav class="tabs-nav">
+    <ul>
+      <li [class.active]="activeTab==='clients'"><a (click)="switchTab('clients')">Clients</a></li>
+      <li [class.active]="activeTab==='personnels'"><a (click)="switchTab('personnels')">Personnels</a></li>
+      <li [class.active]="activeTab==='contrat'"><a (click)="switchTab('contrat')">Contrat</a></li>
+    </ul>
+  </nav>
 
-  <!-- Tableau des membres -->
-  <table class="user-table">
-    <thead>
-      <!-- Ligne d'actions regroupées -->
-      <tr class="filter-row">
-        <td colspan="4">
-          <div class="header-actions">
-            <div class="left-actions">
-              <button class="add-user-btn"
-                *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet'"
-                (click)="openUserSelector()">
-                <span class="material-icons">person_add</span>
-              </button>
-            </div>
-            <div class="right-actions">
-              <div class="search-wrapper">
-                <input type="text" class="search-input" placeholder="Rechercher un utilisateur..."
-                  [(ngModel)]="userSearchTerm" (ngModelChange)="onUserSearch()" />
-                <span class="material-icons search-icon">search</span>
+  <div *ngIf="activeTab==='personnels'" >
+    <!-- Section Membres du Projet -->
+    <div class="section-header">
+      <h3>Membres du Projet</h3>
+    </div>
+
+    <!-- Tableau des membres -->
+    <table class="user-table">
+      <thead>
+        <!-- Ligne d'actions regroupées -->
+        <tr class="filter-row">
+          <td colspan="4">
+            <div class="header-actions">
+              <div class="left-actions">
+                <button class="add-user-btn" *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())"
+                  (click)="openUserSelector()">
+                  <span class="material-icons">person_add</span>
+                </button>
+              </div>
+              <div class="right-actions">
+                <div class="search-wrapper">
+                  <input type="text" class="search-input" placeholder="Rechercher un utilisateur..."
+                    [(ngModel)]="userSearchTerm" (ngModelChange)="onUserSearch()" />
+                  <span class="material-icons search-icon">search</span>
+                </div>
               </div>
             </div>
-          </div>
-        </td>
-      </tr>
-      <!-- En-tête des colonnes -->
-      <tr>
-        <th class="checkbox-column">
-          <div class="checkbox-wrapper">
-            <input type="checkbox" id="selectAll2" class="custom-checkbox" (change)="selectAll($event)" />
-            <label for="selectAll2" class="checkbox-label"></label>
-          </div>
-        </th>
-        <th>Nom</th>
-        <th>Rôle</th>
-        <th class="actions">
-          <button class="delet-btn"
-            *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet'"
-            (click)="deleteSelectedMembers()">
-            <span class="material-icons">delete</span>
-          </button>
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Itération sur les membres filtrés et paginés -->
-      <ng-container *ngIf="displayedMembres.length > 0; else noUsersTemplate">
-        <tr *ngFor="let membre of displayedMembres; let i = index">
-          <td class="checkbox-column">
-            <div class="checkbox-wrapper">
-              <input type="checkbox" [id]="'membre' + i" class="custom-checkbox" [(ngModel)]="membre.selected"
-                name="selectedMembre{{i}}" (change)="toggleSelection(membre)" />
-              <label [for]="'membre' + i" class="checkbox-label"></label>
-            </div>
-          </td>
-          <td>{{ membre.firstName }} {{ membre.lastName }}</td>
-          <td><span class="role">{{ membre.role }}</span></td>
-          <td class="actions">
-            <button class="delet-btn"
-              *ngIf="(accountService.currentUser()?.role?.toLowerCase() === 'super admin' || accountService.currentUser()?.role?.toLowerCase() === 'chef de projet')"
-              (click)="removeUser(membre.userId)" [disabled]="isLoading">
-              <ng-container *ngIf="!isLoading; else loadingDeleteTpl">
-                <span class="material-icons">delete</span>
-              </ng-container>
-              <ng-template #loadingDeleteTpl>
-                <span class="spinner"></span>
-              </ng-template>
-            </button>
           </td>
         </tr>
-      </ng-container>
-      <!-- Template en cas d'absence de membres -->
-      <ng-template #noUsersTemplate>
+        <!-- En-tête des colonnes -->
+        <tr>
+          <th class="checkbox-column">
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="selectAll2" class="custom-checkbox" (change)="selectAll($event)" />
+              <label for="selectAll2" class="checkbox-label"></label>
+            </div>
+          </th>
+          <th>Nom</th>
+          <th>Rôle</th>
+          <th class="actions">
+            <button class="delet-btn" *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())"
+              (click)="deleteSelectedMembers()">
+              <span class="material-icons">delete</span>
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Itération sur les membres filtrés et paginés -->
+        <ng-container *ngIf="displayedMembres.length > 0; else noUsersTemplate">
+          <tr *ngFor="let membre of displayedMembres; let i = index">
+            <td class="checkbox-column">
+              <div class="checkbox-wrapper">
+                <input type="checkbox" [id]="'membre' + i" class="custom-checkbox" [(ngModel)]="membre.selected"
+                  name="selectedMembre{{i}}" (change)="toggleSelection(membre)" />
+                <label [for]="'membre' + i" class="checkbox-label"></label>
+              </div>
+            </td>
+            <td>{{ membre.firstName }} {{ membre.lastName }}</td>
+            <td><span class="role">{{ membre.role }}</span></td>
+            <td class="actions">
+              <button class="delet-btn" *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())"
+                (click)="removeUser(membre.userId)" [disabled]="isLoading">
+                <ng-container *ngIf="!isLoading; else loadingDeleteTpl">
+                  <span class="material-icons">delete</span>
+                </ng-container>
+                <ng-template #loadingDeleteTpl>
+                  <span class="spinner"></span>
+                </ng-template>
+              </button>
+            </td>
+          </tr>
+        </ng-container>
+        <!-- Template en cas d'absence de membres -->
+        <ng-template #noUsersTemplate>
+          <tr>
+            <td colspan="4">
+              <div class="no-content">
+                <span class="icon">✕</span>
+                <p>Aucun utilisateur trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <!-- Rangée de pagination -->
         <tr>
           <td colspan="4">
-            <div class="no-content">
-              <span class="icon">✕</span>
-              <p>Aucun utilisateur trouvé</p>
+            <div class="pagination-container">
+              <div class="pagination-info">
+                Affichage de {{ ((pageNumber - 1) * pageSize) + 1 }} à {{
+                (pageNumber * pageSize) > membres.length ? membres.length : (pageNumber * pageSize)
+                }} sur {{ membres.length }} résultats
+              </div>
+              <div class="per-page-selector">
+                <select [(ngModel)]="pageSize" (change)="onPageChange(1)">
+                  <option *ngFor="let size of range(1, 10)" [value]="size">{{ size }}</option>
+                </select>
+                <label>par page</label>
+              </div>
+              <div class="pagination-controls">
+                <button (click)="onPageChange(pageNumber - 1)" [disabled]="pageNumber <= 1" title="Page précédente">
+                  &laquo;
+                </button>
+                <input type="number" [(ngModel)]="jumpPage" (keyup.enter)="jumpToPage()" [max]="totalPages" min="1"
+                  class="page-input" />
+                <span class="total-pages">/ {{ totalPages }}</span>
+                <button (click)="onPageChange(pageNumber + 1)" [disabled]="pageNumber >= totalPages"
+                  title="Page suivante">
+                  &raquo;
+                </button>
+              </div>
             </div>
           </td>
         </tr>
-      </ng-template>
-      <!-- Rangée de pagination -->
-      <tr>
-        <td colspan="4">
-          <div class="pagination-container">
-            <div class="pagination-info">
-              Affichage de {{ ((pageNumber - 1) * pageSize) + 1 }} à {{
-              (pageNumber * pageSize) > membres.length ? membres.length : (pageNumber * pageSize)
-              }} sur {{ membres.length }} résultats
-            </div>
-            <div class="per-page-selector">
-              <select [(ngModel)]="pageSize" (change)="onPageChange(1)">
-                <option *ngFor="let size of range(1, 10)" [value]="size">{{ size }}</option>
-              </select>
-              <label>par page</label>
-            </div>
-            <div class="pagination-controls">
-              <button (click)="onPageChange(pageNumber - 1)" [disabled]="pageNumber <= 1" title="Page précédente">
-                &laquo;
-              </button>
-              <input type="number" [(ngModel)]="jumpPage" (keyup.enter)="jumpToPage()" [max]="totalPages" min="1"
-                class="page-input" />
-              <span class="total-pages">/ {{ totalPages }}</span>
-              <button (click)="onPageChange(pageNumber + 1)" [disabled]="pageNumber >= totalPages"
-                title="Page suivante">
-                &raquo;
-              </button>
-            </div>
-          </div>
-        </td>
-      </tr>
-    </tbody>
-  </table>
+      </tbody>
+    </table>
+  </div>
 
-  <!-- Boutons de suppression du projet et de retour -->
-  <div class="buttons">
-    <button class="back-btn" (click)="goBack()">Retourner</button>
+  <div *ngIf="activeTab==='clients'" class="tab-pane">
+    <div class="section-header">
+      <h3>Clients du projet</h3>
+    </div>
+  
+    <!-- Tableau Clients avec barre d'actions et recherche intégrée -->
+    <table class="user-table">
+      <thead>
+        <!-- Ligne d'actions regroupées (add, delete, search) -->
+        <tr class="filter-row">
+          <td colspan="5">
+            <div class="header-actions">
+              <div class="left-actions">
+                <button class="add-user-btn" *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())" (click)="openClientSelector()">
+                  <span class="material-icons">person_add</span>
+                </button>
+              </div>
+              <div class="right-actions">
+                <div class="search-wrapper">
+                  <input type="text" class="search-input" placeholder="Rechercher un client..."
+                         [(ngModel)]="clientSearchTerm" (ngModelChange)="onClientSearch()" />
+                  <span class="material-icons search-icon">search</span>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <!-- En-tête des colonnes -->
+        <tr>
+          <th class="checkbox-column">
+            <div class="checkbox-wrapper">
+              <input type="checkbox" id="selectAllClients" class="custom-checkbox" (change)="selectAllClients($event)" />
+              <label for="selectAllClients" class="checkbox-label"></label>
+            </div>
+          </th>
+          <th>Nom</th>
+          <th>Email</th>
+          <th>Téléphone</th>
+          <th class="actions"><button class="delet-btn" *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())" (click)="deleteSelectedClients()">
+            <span class="material-icons">delete</span>
+          </button></th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngIf="displayedClients.length > 0; else noClientTemplate">
+          <tr *ngFor="let client of displayedClients; let i = index">
+            <td class="checkbox-column">
+              <div class="checkbox-wrapper">
+                <input type="checkbox" [id]="'client' + i" class="custom-checkbox"
+                       [(ngModel)]="client.selected" (change)="toggleClientSelection(client)" />
+                <label [for]="'client' + i" class="checkbox-label"></label>
+              </div>
+            </td>
+            <td>{{ client.firstName }} {{ client.lastName }}</td>
+            <td>{{ client.email }}</td>
+            <td>{{ client.numTelephone }}</td>
+            <td class="actions">
+              <button class="view-btn" [routerLink]="['/home/clients/details', client.id]" [queryParams]="{ mode: 'view' }">
+                <span class="material-icons">visibility</span>
+              </button>
+              <button class="delet-btn" *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())"
+                      (click)="confirmDetachClient(client.id)" [disabled]="isLoading">
+                <span class="material-icons">delete</span>
+              </button>
+            </td>
+          </tr>
+        </ng-container>
+        <ng-template #noClientTemplate>
+          <tr>
+            <td colspan="5">
+              <div class="no-content">
+                <span class="icon">✕</span>
+                <p>Aucun client trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+        <!-- Pagination -->
+        <tr>
+          <td colspan="5">
+            <div class="pagination-container">
+              <div class="pagination-info">
+                Affichage de {{ ((clientPageNumber - 1) * clientPageSize) + 1 }} à {{
+                  (clientPageNumber * clientPageSize) > projectClients.length ? projectClients.length : (clientPageNumber * clientPageSize)
+                }} sur {{ projectClients.length }} résultats
+              </div>
+              <div class="per-page-selector">
+                <select [(ngModel)]="clientPageSize" (change)="onClientPageChange(1)">
+                  <option *ngFor="let size of range(1, 10)" [value]="size">{{ size }}</option>
+                </select>
+                <label>par page</label>
+              </div>
+              <div class="pagination-controls">
+                <button (click)="onClientPageChange(clientPageNumber - 1)" [disabled]="clientPageNumber <= 1">&laquo;</button>
+                <input type="number" [(ngModel)]="clientJumpPage" (keyup.enter)="jumpToClientPage()" [max]="clientTotalPages" min="1" class="page-input" />
+                <span class="total-pages">/ {{ clientTotalPages }}</span>
+                <button (click)="onClientPageChange(clientPageNumber + 1)" [disabled]="clientPageNumber >= clientTotalPages">&raquo;</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Onglet Contrat -->
+  <div *ngIf="activeTab === 'contrat'" class="tab-pane">
+    <div class="contract-form-container">
+      <h3>Contrat</h3>
+      <form [formGroup]="contratForm" (ngSubmit)="onSubmitContrat()">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="dateDebut">Date de début</label>
+            <input id="dateDebut" type="date" formControlName="dateDebut" />
+          </div>
+          <div class="form-group">
+            <label for="dateFin">Date de fin</label>
+            <input id="dateFin" type="date" formControlName="dateFin" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn-create" [disabled]="contratForm.invalid || isLoading">
+            <ng-container *ngIf="!isLoading; else loadingContratTpl">
+              Enregistrer
+            </ng-container>
+            <ng-template #loadingContratTpl>
+              <span class="spinner"></span> Enregistrement...
+            </ng-template>
+          </button>
+          <button type="button" class="btn-cancel" (click)="cancelContrat()">Annuler</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Si aucun contrat n'existe -->
+    <ng-template #noContrat>
+      <div class="no-content">
+        <span class="icon">✕</span>
+        <p>Aucun contrat trouvé</p>
+        <button class="btn btn-primary" (click)="initializeContratForm()">Ajouter un contrat</button>
+      </div>
+    </ng-template>
   </div>
 </div>

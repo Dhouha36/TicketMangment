@@ -1,183 +1,149 @@
-<!-- Affichage du nom de l'utilisateur avec fallback via le pipe "default" -->
-<h1 *ngIf="userDetails;">
-  {{ userDetails.firstName ? userDetails.firstName : 'Aucun' }} {{ userDetails.lastName ? userDetails.lastName : '' }}
-</h1>
+<ng-container *ngIf="userDetails">
+  <!-- Affichage du nom de l'utilisateur avec fallback via le pipe "default" -->
+  <h1>
+    {{ userDetails.firstName || 'Aucun' }}
+    {{ userDetails.lastName || '' }}
+  </h1>
 
-
-<!-- Formulaire de modification des informations de l'utilisateur -->
-<div class="form-container">
-  <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
-    <!-- Ligne 1 : Nom et Prénom -->
-    <div class="form-row">
-      <div class="form-group">
-        <label for="lastName">Nom <span class="required">*</span></label>
-        <input id="lastName" type="text" formControlName="lastName" class="form-control"
-          [class.is-invalid]="userForm.controls['lastName'].touched && userForm.controls['lastName'].invalid" />
-        <div *ngIf="userForm.controls['lastName'].hasError('required')" class="invalid-feedback text-start">
-          Nom est obligatoire
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="firstName">Prénom <span class="required">*</span></label>
-        <input id="firstName" type="text" formControlName="firstName" class="form-control"
-          [class.is-invalid]="userForm.controls['firstName'].touched && userForm.controls['firstName'].invalid" />
-        <div *ngIf="userForm.controls['firstName'].hasError('required')" class="invalid-feedback text-start">
-          Prénom est obligatoire
-        </div>
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div class="form-group">
-        <label for="email">Email <span class="required">*</span></label>
-        <input id="email" type="email" formControlName="email" class="form-control"
-          [class.is-invalid]="userForm.controls['email'].touched && userForm.controls['email'].invalid" />
-        <div *ngIf="userForm.controls['email'].hasError('required')" class="invalid-feedback text-start">
-          Email est obligatoire
-        </div>
-        <div *ngIf="userForm.controls['email'].hasError('email')" class="invalid-feedback text-start">
-          Email invalide
-        </div>
-      </div>
-
-      <div class="form-group">
-        <label for="pays">Pays <span class="required">*</span></label>
-        <!-- Champ en lecture seule -->
-        <input id="pays" type="text" [value]="getPaysName(userDetails?.pays)" class="form-control" readonly />
-      </div>
-    </div>
-
-
-    <div class="form-row">
-      <div *ngIf="userDetails?.role!.toLowerCase() !== 'client'" class="form-group">
-        <label for="nouveauPassword">Mot de passe <span class="required">*</span></label>
-        <div class="password-container">
-          <input id="nouveauPassword" [type]="passwordVisible ? 'text' : 'password'" formControlName="nouveauPassword"
-            class="form-control"
-            [class.is-invalid]="userForm.controls['nouveauPassword'].touched && userForm.controls['nouveauPassword'].invalid" />
-          <i class="fa" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'"
-            (click)="togglePasswordVisibility()"></i>
-          <div *ngIf="userForm.controls['nouveauPassword'].hasError('required')" class="invalid-feedback text-start">
-            Mot de passe est obligatoire
-          </div>
-          <div *ngIf="userForm.controls['nouveauPassword'].hasError('minlength')" class="invalid-feedback text-start">
-            Mot de passe doit avoir au moins 8 caractères
-          </div>
-          <div *ngIf="userForm.controls['nouveauPassword'].hasError('maxlength')" class="invalid-feedback text-start">
-            Mot de passe ne doit pas dépasser 16 caractères
+  <!-- Formulaire de modification des informations de l'utilisateur -->
+  <div class="form-container">
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
+      <!-- Ligne 1 : Nom et Prénom -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lastName">Nom <span class="required">*</span></label>
+          <input id="lastName" type="text" formControlName="lastName" class="form-control" readonly
+            [class.is-invalid]="userForm.controls['lastName'].touched && userForm.controls['lastName'].invalid" />
+          <div *ngIf="userForm.controls['lastName'].hasError('required')" class="invalid-feedback text-start">
+            Nom est obligatoire
           </div>
         </div>
-      </div>
-      <div class="form-group">
-        <label for="role">Role <span class="required">*</span></label>
-        <!-- Champ en lecture seule -->
-        <input id="role" type="text" formControlName="role" class="form-control" readonly />
-      </div>
 
-      <div *ngIf="userDetails?.role!.toLowerCase() === 'client'" class="form-group">
-        <label for="societe">Société</label>
-        <!-- Champ en lecture seule -->
-        <input id="societe" type="text" formControlName="societe" class="form-control" readonly />
-      </div>
-    </div>
-
-    <div class="form-row">
-      <div *ngIf="userDetails?.role!.toLowerCase() === 'client'" class="form-group">
-        <label for="nouveauPassword">Mot de passe <span class="required">*</span></label>
-        <div class="password-container">
-          <input id="nouveauPassword" [type]="passwordVisible ? 'text' : 'password'" formControlName="nouveauPassword"
-            class="form-control"
-            [class.is-invalid]="userForm.controls['nouveauPassword'].touched && userForm.controls['nouveauPassword'].invalid" />
-          <i class="fa" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'"
-            (click)="togglePasswordVisibility()"></i>
-          <div *ngIf="userForm.controls['nouveauPassword'].hasError('required')" class="invalid-feedback text-start">
-            Mot de passe est obligatoire
-          </div>
-          <div *ngIf="userForm.controls['nouveauPassword'].hasError('minlength')" class="invalid-feedback text-start">
-            Mot de passe doit avoir au moins 8 caractères
-          </div>
-          <div *ngIf="userForm.controls['nouveauPassword'].hasError('maxlength')" class="invalid-feedback text-start">
-            Mot de passe ne doit pas dépasser 16 caractères
+        <div class="form-group">
+          <label for="firstName">Prénom <span class="required">*</span></label>
+          <input id="firstName" type="text" formControlName="firstName" class="form-control" readonly
+            [class.is-invalid]="userForm.controls['firstName'].touched && userForm.controls['firstName'].invalid" />
+          <div *ngIf="userForm.controls['firstName'].hasError('required')" class="invalid-feedback text-start">
+            Prénom est obligatoire
           </div>
         </div>
       </div>
 
-      <div *ngIf="userDetails?.role!.toLowerCase() !== 'client'" class="form-group">
-        <label for="confirmNouveauPassword">Confirmer le mot de passe <span class="required">*</span></label>
-        <div class="password-container">
-          <input id="confirmNouveauPassword" [type]="confirmPasswordVisible ? 'text' : 'password'"
-            formControlName="confirmNouveauPassword" class="form-control"
-            [class.is-invalid]="userForm.controls['confirmNouveauPassword'].touched && userForm.controls['confirmNouveauPassword'].invalid" />
-          <i class="fa" [ngClass]="confirmPasswordVisible ? 'fa-eye-slash' : 'fa-eye'"
-            (click)="toggleConfirmPasswordVisibility()"></i>
-          <div *ngIf="userForm.controls['confirmNouveauPassword'].hasError('required')"
-            class="invalid-feedback text-start">
-            Confirmation du mot de passe est obligatoire
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">Email <span class="required">*</span></label>
+          <input id="email" type="email" formControlName="email" class="form-control"
+            [class.is-invalid]="userForm.controls['email'].touched && userForm.controls['email'].invalid" />
+          <div *ngIf="userForm.controls['email'].hasError('required')" class="invalid-feedback text-start">
+            Email est obligatoire
           </div>
-          <div *ngIf="userForm.hasError('passwordMismatch') && userForm.controls['confirmNouveauPassword'].touched"
-            class="invalid-feedback text-start">
-            Les mots de passe ne sont pas identiques
+          <div *ngIf="userForm.controls['email'].hasError('email')" class="invalid-feedback text-start">
+            Email invalide
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="pays">Pays <span class="required">*</span></label>
+          <!-- Champ en lecture seule -->
+          <input id="pays" type="text" [value]="
+            isClient()
+              ? getPaysName(userDetails.paysId)
+              : getPaysName(userDetails.pays)
+          " class="form-control" readonly />
+
+        </div>
+      </div>
+
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nouveauPassword">Mot de passe <span class="required">*</span></label>
+          <div class="password-container">
+            <input id="nouveauPassword" [type]="passwordVisible ? 'text' : 'password'" formControlName="nouveauPassword"
+              class="form-control"
+              [class.is-invalid]="userForm.controls['nouveauPassword'].touched && userForm.controls['nouveauPassword'].invalid" />
+            <i class="fa" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'"
+              (click)="togglePasswordVisibility()"></i>
+            <div *ngIf="userForm.controls['nouveauPassword'].hasError('required')" class="invalid-feedback text-start">
+              Mot de passe est obligatoire
+            </div>
+            <div *ngIf="userForm.controls['nouveauPassword'].hasError('minlength')" class="invalid-feedback text-start">
+              Mot de passe doit avoir au moins 8 caractères
+            </div>
+            <div *ngIf="userForm.controls['nouveauPassword'].hasError('maxlength')" class="invalid-feedback text-start">
+              Mot de passe ne doit pas dépasser 16 caractères
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!isClient()" class="form-group">
+          <label for="role">Role <span class="required">*</span></label>
+          <!-- Champ en lecture seule -->
+          <input id="role" type="text" formControlName="role" class="form-control" readonly />
+        </div>
+
+        <div *ngIf="isClient()" class="form-group">
+          <label for="societe">Société</label>
+          <!-- Champ en lecture seule -->
+          <input id="societe" type="text" formControlName="societe" class="form-control" readonly />
+        </div>
+      </div>
+
+      <div class="form-row">
+
+        <div class="form-group">
+          <label for="confirmNouveauPassword">Confirmer le mot de passe <span class="required">*</span></label>
+          <div class="password-container">
+            <input id="confirmNouveauPassword" [type]="confirmPasswordVisible ? 'text' : 'password'"
+              formControlName="confirmNouveauPassword" class="form-control"
+              [class.is-invalid]="userForm.controls['confirmNouveauPassword'].touched && userForm.controls['confirmNouveauPassword'].invalid" />
+            <i class="fa" [class.fa-eye]="!passwordVisible" [class.fa-eye-slash]="passwordVisible"
+              (click)="togglePasswordVisibility()"></i>
+            <div *ngIf="userForm.controls['confirmNouveauPassword'].hasError('required')"
+              class="invalid-feedback text-start">
+              Confirmation du mot de passe est obligatoire
+            </div>
+            <div *ngIf="userForm.hasError('passwordMismatch') && userForm.controls['confirmNouveauPassword'].touched"
+              class="invalid-feedback text-start">
+              Les mots de passe ne sont pas identiques
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="numTelephone">Numéro de Téléphone <span class="required">*</span></label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <img *ngIf="selectedCountry?.photoUrl" [src]="selectedCountry?.photoUrl"
+                  alt="{{ selectedCountry?.nom }}" style="width: 24px; height: auto; margin-right: 5px;" />
+                {{ selectedCountry?.codeTel || '+XX' }}
+              </span>
+            </div>
+            <input id="numTelephone" type="tel" formControlName="numTelephone" class="form-control"
+              [class.is-invalid]="userForm.controls['numTelephone'].touched && userForm.controls['numTelephone'].invalid" />
+          </div>
+          <div *ngIf="userForm.controls['numTelephone'].hasError('required')" class="invalid-feedback text-start">
+            Numéro de téléphone est obligatoire
+          </div>
+          <div *ngIf="userForm.controls['numTelephone'].hasError('pattern')" class="invalid-feedback text-start">
+            Numéro de téléphone invalide (exemple : +216 54 567 589)
           </div>
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="numTelephone">Numéro de Téléphone <span class="required">*</span></label>
-        <div class="input-group">
-          <div class="input-group-prepend">
-            <span class="input-group-text">
-              <img *ngIf="selectedCountry?.photoUrl" [src]="selectedCountry?.photoUrl" alt="{{ selectedCountry?.nom }}"
-                style="width: 24px; height: auto; margin-right: 5px;" />
-              {{ selectedCountry?.codeTel || '+XX' }}
-            </span>
-          </div>
-          <input id="numTelephone" type="tel" formControlName="numTelephone" class="form-control"
-            [class.is-invalid]="userForm.controls['numTelephone'].touched && userForm.controls['numTelephone'].invalid" />
-        </div>
-        <div *ngIf="userForm.controls['numTelephone'].hasError('required')" class="invalid-feedback text-start">
-          Numéro de téléphone est obligatoire
-        </div>
-        <div *ngIf="userForm.controls['numTelephone'].hasError('pattern')" class="invalid-feedback text-start">
-          Numéro de téléphone invalide (exemple : +216 54 567 589)
-        </div>
+      <!-- Boutons -->
+      <div class="button-group">
+        <!-- Bouton Sauvegarder avec loader -->
+        <button type="submit" class="btn-create" [disabled]="userForm.invalid || isLoading">
+          <ng-container *ngIf="!isLoading; else loadingTpl">
+            Sauvegarder
+          </ng-container>
+          <ng-template #loadingTpl>
+            <span class="spinner"></span> Sauvegarder
+          </ng-template>
+        </button>
+        <button type="button" class="btn-cancel" (click)="onCancel()">Annuler</button>
       </div>
-    </div>
-
-    <div class="form-row">
-      <div *ngIf="userDetails?.role!.toLowerCase() === 'client'" class="form-group">
-        <label for="confirmNouveauPassword">Confirmer le mot de passe <span class="required">*</span></label>
-        <div class="password-container">
-          <input id="confirmNouveauPassword" [type]="confirmPasswordVisible ? 'text' : 'password'"
-            formControlName="confirmNouveauPassword" class="form-control"
-            [class.is-invalid]="userForm.controls['confirmNouveauPassword'].touched && userForm.controls['confirmNouveauPassword'].invalid" />
-          <i class="fa" [ngClass]="confirmPasswordVisible ? 'fa-eye-slash' : 'fa-eye'"
-            (click)="toggleConfirmPasswordVisibility()"></i>
-          <div *ngIf="userForm.controls['confirmNouveauPassword'].hasError('required')"
-            class="invalid-feedback text-start">
-            Confirmation du mot de passe est obligatoire
-          </div>
-          <div *ngIf="userForm.hasError('passwordMismatch') && userForm.controls['confirmNouveauPassword'].touched"
-            class="invalid-feedback text-start">
-            Les mots de passe ne sont pas identiques
-          </div>
-        </div>
-      </div>
-      <div *ngIf="userDetails?.role!.toLowerCase() === 'client'" class="form-group"></div>
-    </div>
-
-    <!-- Boutons -->
-    <div class="button-group">
-      <!-- Bouton Sauvegarder avec loader -->
-      <button type="submit" class="btn-create" [disabled]="userForm.invalid || isLoading">
-        <ng-container *ngIf="!isLoading; else loadingTpl">
-          Sauvegarder
-        </ng-container>
-        <ng-template #loadingTpl>
-          <span class="spinner"></span> Sauvegarder
-        </ng-template>
-      </button>
-      <button type="button" class="btn-cancel" (click)="onCancel()">Annuler</button>
-    </div>
-  </form>
-</div>
+    </form>
+  </div>
+</ng-container>

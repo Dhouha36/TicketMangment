@@ -5,6 +5,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { Pays } from 'src/app/_models/pays';
+import { SocieteCreate } from 'src/app/_models/societe-create.model';
 import { User } from 'src/app/_models/user';
 import { AccountService } from 'src/app/_services/account.service';
 import { LoaderService } from 'src/app/_services/loader.service';
@@ -15,10 +16,17 @@ import { SocieteService } from 'src/app/_services/societe.service';
 import { ContractDialogComponent } from 'src/app/contract-dialog/contract-dialog.component';
 import { ClientCreate } from 'src/app/DTOs/client-create.model';
 import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
+import { concatMap, map, tap, catchError } from 'rxjs/operators';
+import { of, throwError } from 'rxjs';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { MatSelectModule } from '@angular/material/select';
+import { ClientService } from 'src/app/_services/client.service';
+import { RegisterClientDto } from 'src/app/DTOs/RegisterClientDto';
+import { ProjetCreate } from 'src/app/DTOs/projet-create.model';
 
 @Component({
   selector: 'app-ajouter-societe-wizard',
-  imports: [ReactiveFormsModule, CommonModule, FormsModule],
+  imports: [ReactiveFormsModule, CommonModule, FormsModule, NgSelectModule, MatSelectModule],
   templateUrl: './ajouter-societe-wizard.component.html',
   styleUrl: './ajouter-societe-wizard.component.css'
 })
@@ -26,10 +34,11 @@ export class AjouterSocieteWizardComponent implements OnInit {
   wizardForm!: FormGroup;
   step = 1;
   isLoading = false;
-  isCompleted = false; 
+  isCompleted = false;
   paysList: any[] = [];
   chefsList: User[] = [];
   selectedCountry?: any;
+  selectedCountrySociete?: Pays;
   createdSocieteId!: number;
   createdProjetId!: number;
 
@@ -37,11 +46,22 @@ export class AjouterSocieteWizardComponent implements OnInit {
   paysSearchTerm = '';
   isPaysDropdownOpen = false;
 
+  societesList: any[] = [];
+  projetsList: any[] = [];
+
+  serverErrors = {
+    societe: '' as string,
+    projet: '' as string,
+    client: '' as string,
+  };
+  
+
   constructor(
     private fb: FormBuilder,
     private societeService: SocieteService,
     private projetService: ProjetService,
     private accountService: AccountService,
+    private clientService: ClientService,
     private paysService: PaysService,
     private loaderService: LoaderService,
     private overlayModalService: OverlayModalService,
@@ -56,25 +76,30 @@ export class AjouterSocieteWizardComponent implements OnInit {
     this.buildForm();
     this.loadPays();
     this.loadChefs();
+    this.loadSocietes();
+
     this.filteredPays = this.paysList;
 
-    // Met à jour le préfixe téléphonique en fonction du pays sélectionné
-    this.wizardForm.get('societe.paysId')!.valueChanges
-      .subscribe(id => {
-        this.selectedCountry = this.paysList.find(p => p.idPays === +id);
-      });
+    // update prefix on country change
+    this.clientGroup.get('pays')!.valueChanges.subscribe(id => {
+      this.selectedCountry = this.paysList.find(p => p.idPays === +id);
+      this.clientGroup.get('numTelephone')!.reset();
+    });
 
-    // Ouvre modale et pose validateurs quand on coche “contrat”
-    this.wizardForm.get('societe.contrat')!.valueChanges
-      .subscribe(checked => {
-        if (checked) {
-          this.openContractDialog();
-          this.addContractValidators();
-        } else {
-          this.clearContractValidators();
-        }
-      });
+    this.societeGroup.get('paysId')!.valueChanges.subscribe(id => {
+      // on récupère les infos du pays sélectionné
+      this.selectedCountrySociete = this.paysList.find(p => p.idPays === +id);
+      // on nettoie le champ téléphone pour forcer la saisie au bon format
+      this.societeGroup.get('telephone')!.reset();
+    });
+
+    this.clientGroup.get('societeId')!.valueChanges.subscribe(id => {
+      this.clientGroup.patchValue({ projetIds: [] });
+      this.projetsList = [];
+      if (id) this.loadProjetsBySociete(id);
+    });
   }
+
 
   private buildForm(): void {
     this.wizardForm = this.fb.group({
@@ -86,12 +111,8 @@ export class AjouterSocieteWizardComponent implements OnInit {
           Validators.pattern('^[0-9\\s]+$')
         ]],
         paysId: ['', Validators.required],
-        contrat: [false],
-        contract: this.fb.group({
-          dateDebut: [''],
-          dateFin: [''],
-          type: ['Standard']
-        })
+        ville: ['', Validators.required],
+        codePostal: ['', Validators.required]
       }),
       projet: this.fb.group({
         nom: ['', Validators.required],
@@ -102,13 +123,11 @@ export class AjouterSocieteWizardComponent implements OnInit {
         firstName: ['', Validators.required],
         lastName: ['', Validators.required],
         email: ['', [Validators.required, Validators.email]],
-        pays: [null, Validators.required],
-        numTelephone: ['', [
-          Validators.required,
-          Validators.pattern('^[0-9\\s]+$'),
-          Validators.minLength(8),
-          Validators.maxLength(15)
-        ]]
+        pays: ['', Validators.required],
+        numTelephone: ['', [Validators.required, Validators.pattern('^[0-9\\s]+$')]],
+        societeId: [''],
+        projetIds: [[]],
+        actif: [true]
       })
     });
   }
@@ -122,139 +141,139 @@ export class AjouterSocieteWizardComponent implements OnInit {
       error: () => this.toastr.error('Erreur chargement pays')
     });
   }
-  
+
 
   private loadChefs(): void {
     this.accountService.getUsersByRole('Chef de Projet')
       .subscribe({
         next: users => this.chefsList = users,
-        error: ()   => this.toastr.error('Erreur chargement chefs de projet')
+        error: () => this.toastr.error('Erreur chargement chefs de projet')
       });
   }
 
-  private openContractDialog(): void {
-    const dialogRef = this.dialog.open(ContractDialogComponent, {
-      data: { contractForm: this.wizardForm.get('societe.contract') }
-    });
-    dialogRef.afterClosed().subscribe(result => {
-      if (!result) {
-        this.wizardForm.get('societe.contrat')!.setValue(false, { emitEvent: false });
-        this.clearContractValidators();
-      }
-    });
-  }
-
-  private addContractValidators(): void {
-    const cg = this.wizardForm.get('societe.contract') as FormGroup;
-    cg.get('dateDebut')!.setValidators(Validators.required);
-    cg.get('dateFin')!.setValidators(Validators.required);
-    cg.get('type')!.setValidators(Validators.required);
-    cg.updateValueAndValidity();
-  }
-
-  private clearContractValidators(): void {
-    const cg = this.wizardForm.get('societe.contract') as FormGroup;
-    cg.get('dateDebut')!.clearValidators();
-    cg.get('dateFin')!.clearValidators();
-    cg.get('type')!.clearValidators();
-    cg.reset({ dateDebut: '', dateFin: '', type: 'Standard' }, { emitEvent: false });
-  }
-
-
 
   submitAll(): void {
-    // 1) Vérification du dernier formulaire
-    if (this.clientGroup.invalid) {
-      this.toastr.error('Veuillez compléter tous les champs requis avant de continuer.');
+    // 0) Réinitialisation de tous les messages d'erreur
+    this.serverErrors = { societe: '', projet: '', client: '' };
+  
+    // 1) Validation Angular du sous-formulaire client
+    const clientForm = this.clientGroup;
+    if (clientForm.invalid) {
+      clientForm.markAllAsTouched();
       return;
     }
   
-    this.loaderService.showLoader();
-  
-    // 2) Préparation et appel API pour la création de la société
-    const soc = this.societeGroup.value;
-    const socDto = {
-      nom: soc.nom,
-      adresse: soc.adresse,
-      telephone: `${this.selectedCountry?.codeTel || ''} ${soc.telephone}`.trim(),
-      paysId: +soc.paysId,
-      contract: soc.contrat ? {
-        dateDebut: new Date(soc.contract.dateDebut).toISOString(),
-        dateFin:   new Date(soc.contract.dateFin).toISOString(),
-        type:      soc.contract.type
-      } : null
+    // 2) Préparation du DTO Société
+    const s = this.societeGroup.value as any;
+    const socDto: SocieteCreate = {
+      nom: s.nom,
+      adresse: s.adresse,
+      telephone: s.telephone.trim(),
+      paysId: +s.paysId,
+      ville: s.ville,
+      codePostal: s.codePostal
     };
   
-    this.societeService.addSociete(socDto).subscribe({
-      next: socResp => {
-        const societeId = socResp.id;
-  
-        // 3) Préparation et appel API pour la création du projet
-        const p = this.projetGroup.value;
-        const projDto = {
+    // 3) Pipeline RxJS : addSociete → addProjet → register(client) avec rollback
+    this.societeService.addSociete(socDto).pipe(
+      // 3a) Création du projet lié
+      concatMap(socResp => {
+        this.createdSocieteId = socResp.id;
+        const p = this.projetGroup.value as any;
+        const projDto: ProjetCreate = {
           nom: p.nom,
           description: p.description,
           chefProjetId: +p.chefProjetId,
-          societeId
+          societeId: this.createdSocieteId
+        };
+        return this.projetService.addProjet(projDto);
+      }),
+      // 3b) Tentative d'enregistrement du client
+      concatMap(projResp => {
+        this.createdProjetId = projResp.id;
+        const c = clientForm.value as any;
+        const clientDto: RegisterClientDto = {
+          email: c.email,
+          firstName: c.firstName,
+          lastName: c.lastName,
+          numTelephone: c.numTelephone.trim(),
+          pays: +c.pays,
+          societeId: this.createdSocieteId,
+          actif: c.actif,
+          projetIds: [this.createdProjetId]
         };
   
-        this.projetService.addProjet(projDto).subscribe({
-          next: projResp => {
-            const projetId = projResp.id;
-  
-            // 4) Préparation et appel API pour la création du client
-            const c = this.clientGroup.value;
-            const clientDto: ClientCreate = {
-              firstName: c.firstName,
-              lastName:  c.lastName,
-              email:     c.email,
-              pays:      +c.pays,
-              numTelephone: this.selectedCountry!.codeTel + ' ' + c.numTelephone,
-              role:      'Client',
-              societeId,
-              projetId   // Assurez-vous d’avoir ajouté `projetId` dans ClientCreate
-            };
-  
-            this.accountService.register(clientDto).subscribe({
-              next: () => {
-                this.toastr.success('Société, projet et client créés avec succès.');
-                this.router.navigate(['/home/Societes']);
-              },
-              error: () => {
-                this.toastr.error('Erreur lors de la création du client.');
-              },
-              complete: () => {
-                this.loaderService.hideLoader();
-                this.isCompleted = true;
-              }
-            });
-  
-          },
-          error: () => {
-            this.toastr.error('Erreur lors de la création du projet.');
-            this.loaderService.hideLoader();
-          }
-        });
-  
+        return this.clientService.register(clientDto).pipe(
+          catchError(err => {
+            // 3c) Rollback : supprimer d'abord le projet, puis la société
+            return this.projetService.deleteProjet(this.createdProjetId).pipe(
+              concatMap(() => this.societeService.deleteSociete(this.createdSocieteId)),
+              concatMap(() => throwError(() => err))
+            );
+          })
+        );
+      })
+    )
+    .subscribe({
+      next: () => {
+        this.isCompleted = true;
+        this.toastr.success('Création réussie');
+        this.router.navigate(['/home/Societes']);
       },
-      error: () => {
-        this.toastr.error('Erreur lors de la création de la société.');
+      error: (err: any) => {
+        // 4) Affichage du message d'erreur métier ou générique
+        this.serverErrors.client = typeof err === 'string'
+          ? err
+          : err.error || err.message || 'Erreur inconnue';
         this.loaderService.hideLoader();
       }
     });
   }
   
+
   prevStep(): void {
     this.step = Math.max(this.step - 1, 1);
   }
   nextStep(): void {
-    // n’avance que si le formulaire courant est valide
-    if (
-      (this.step === 1 && this.societeGroup.invalid) ||
-      (this.step === 2 && this.projetGroup.invalid)
-    ) { return; }
-    this.step++;
+    if (this.step === 1) {
+      this.serverErrors.societe = '';
+      const sg = this.societeGroup;
+      if (sg.invalid) {
+        sg.markAllAsTouched();
+        return;
+      }
+      this.societeService.validateSociete(sg.value).subscribe({
+        next: () => this.step++,
+        error: (err: any) => {
+          this.serverErrors.societe = typeof err === 'string'
+            ? err
+            : err.message || 'Erreur validation société';
+          this.loaderService.hideLoader();
+        }
+      });
+    } else if (this.step === 2) {
+      this.serverErrors.projet = '';
+      const pg = this.projetGroup;
+      if (pg.invalid) {
+        pg.markAllAsTouched();
+        return;
+      }
+      const dto = {
+        ...pg.value,
+        societeId: this.createdSocieteId   // créé **après** addSociete() dans submitAll
+      };
+      this.projetService.validateProjet(dto).subscribe({
+        next: () => this.step++,
+        error: (err: any) => {
+          this.serverErrors.projet = typeof err === 'string'
+            ? err
+            : err.message || 'Erreur validation projet';
+          this.loaderService.hideLoader();
+        }
+      });
+    }
   }
+  
   
 
   get societeGroup(): FormGroup {
@@ -273,7 +292,7 @@ export class AjouterSocieteWizardComponent implements OnInit {
     if (this.step === 1 || !this.createdSocieteId) {
       return;
     }
-  
+
     // Si on est à l'étape 3 ou plus, on a créé un projet
     if (this.step > 2 && this.createdProjetId) {
       this.projetService.deleteProjet(this.createdProjetId).subscribe({
@@ -287,8 +306,8 @@ export class AjouterSocieteWizardComponent implements OnInit {
   }
   private deleteSociete(): void {
     this.societeService.deleteSociete(this.createdSocieteId).subscribe({
-      next:     () => { /* OK, la société est supprimée */ },
-      error:    () => { /* On continue quand même */ }
+      next: () => { /* OK, la société est supprimée */ },
+      error: () => { /* On continue quand même */ }
     });
   }
 
@@ -301,61 +320,68 @@ export class AjouterSocieteWizardComponent implements OnInit {
     }
   }
 
-@HostListener('window:unload')
-onUnload(): void {
-  const base = this.societeService.apiUrl;
+  @HostListener('window:unload')
+  onUnload(): void {
+    const base = this.societeService.apiUrl;
 
-  // 1) Suppression du projet si on en a créé un
-  if (this.step > 2 && this.createdProjetId) {
-    const urlProj = `${base}/projets/supprimerProjet/${this.createdProjetId}`;
-    fetch(urlProj, { keepalive: true });
-    // ou, si vous préférez le hack "Image":
-    // const img1 = new Image(); img1.src = urlProj;
+    // 1) Suppression du projet si on en a créé un
+    if (this.step > 2 && this.createdProjetId) {
+      const urlProj = `${base}/projets/supprimerProjet/${this.createdProjetId}`;
+      fetch(urlProj, { keepalive: true });
+      // ou, si vous préférez le hack "Image":
+      // const img1 = new Image(); img1.src = urlProj;
+    }
+
+    // 2) Puis suppression de la société
+    if (this.step > 1 && this.createdSocieteId) {
+      const urlSoc = `${base}/delet/${this.createdSocieteId}`;
+      fetch(urlSoc, { keepalive: true });
+      // ou :
+      // const img2 = new Image(); img2.src = urlSoc;
+    }
   }
 
-  // 2) Puis suppression de la société
-  if (this.step > 1 && this.createdSocieteId) {
-    const urlSoc = `${base}/delet/${this.createdSocieteId}`;
-    fetch(urlSoc, { keepalive: true });
-    // ou :
-    // const img2 = new Image(); img2.src = urlSoc;
+  togglePaysDropdown(): void {
+    this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
   }
-}
 
-togglePaysDropdown(): void {
-  this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
-}
+  /** Met à jour filteredPays selon le terme saisi */
+  filterPays(): void {
+    const term = this.paysSearchTerm.toLowerCase();
+    this.filteredPays = this.paysList.filter(p =>
+      p.nom.toLowerCase().includes(term)
+    );
+  }
 
-/** Met à jour filteredPays selon le terme saisi */
-filterPays(): void {
-  const term = this.paysSearchTerm.toLowerCase();
-  this.filteredPays = this.paysList.filter(p =>
-    p.nom.toLowerCase().includes(term)
-  );
-}
+  /** Renvoie le nom du pays pour l’ID en param */
+  getPaysName(id?: number): string {
+    return this.paysList.find(p => p.idPays === id)?.nom || '';
+  }
 
-/** Renvoie le nom du pays pour l’ID en param */
-getPaysName(id?: number): string {
-  return this.paysList.find(p => p.idPays === id)?.nom || '';
-}
+  /** Sélectionne un pays dans la liste */
+  selectPays(idPays: number): void {
+    this.societeGroup.get('paysId')!.setValue(idPays);
+    this.isPaysDropdownOpen = false;
+    this.paysSearchTerm = '';
+    this.filteredPays = this.paysList;
+  }
 
-/** Sélectionne un pays dans la liste */
-selectPays(idPays: number): void {
-  this.societeGroup.get('paysId')!.setValue(idPays);
-  this.isPaysDropdownOpen = false;
-  this.paysSearchTerm = '';
-  this.filteredPays = this.paysList;
-}
-openPaysModal(): void {
-  const modal = this.overlayModalService.open(PaysModalComponent);
-  // Quand un nouveau pays est ajouté, on recharge la liste
-  modal.added.subscribe(() => {
-    this.loadPays();          // recharge paysList & filteredPays
-    this.overlayModalService.close();
-  });
-}
+  selectPaysClient(idPays: number): void {
+    this.clientGroup.get('pays')!.setValue(idPays);
+    this.isPaysDropdownOpen = false;
+    this.paysSearchTerm = '';
+    this.filteredPays = this.paysList;
+  }
+  openPaysModal(): void {
+    const modal = this.overlayModalService.open(PaysModalComponent);
+    // Quand un nouveau pays est ajouté, on recharge la liste
+    modal.added.subscribe(() => {
+      this.loadPays();          // recharge paysList & filteredPays
+      this.overlayModalService.close();
+    });
+  }
 
-@HostListener('document:click', ['$event'])
+  @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     if (!target.closest('.custom-select')) {
@@ -363,5 +389,14 @@ openPaysModal(): void {
     }
   }
 
+  private loadSocietes(): void {
+    this.societeService.getSocietes().subscribe(data => this.societesList = data);
+  }
+  
+  // Charger les projets d'une société donnée
+  private loadProjetsBySociete(societeId: number): void {
+    this.projetService.getProjetsBySocieteId(societeId)
+      .subscribe(projs => this.projetsList = projs);
+  }
 
 }

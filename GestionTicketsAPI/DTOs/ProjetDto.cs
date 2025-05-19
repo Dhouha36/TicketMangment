@@ -15,5 +15,7 @@ namespace GestionTicketsAPI.DTOs
 
          public int? ChefProjetId { get; set; }
         public UserDto? ChefProjet { get; set; }
+         public ContratDto? Contrat { get; set; }
+
     }
 }

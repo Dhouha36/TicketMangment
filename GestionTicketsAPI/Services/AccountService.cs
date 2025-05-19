@@ -34,29 +34,27 @@ namespace GestionTicketsAPI.Services
     public async Task<UserDto> RegisterAsync(RegisterDto registerDto)
     {
       // 1. Vérifier si l'utilisateur existe déjà
-      if (await _accountRepository.UserExistsAsync(registerDto.Firstname, registerDto.Lastname, registerDto.Email))
+      if (await _accountRepository.UserExistsAsync(
+              registerDto.Firstname,
+              registerDto.Lastname,
+              registerDto.Email))
+      {
         throw new Exception("L'utilisateur existe déjà.");
+      }
 
       // 2. Récupérer le pays
       var pays = await _accountRepository.GetPaysByIdAsync(registerDto.Pays);
       if (pays == null)
-        throw new Exception("Le pays spécifié est introuvable.");
-
-      // 3. Si une société est spécifiée, vérifier son existence
-      if (registerDto.SocieteId.HasValue)
       {
-        var societe = await _societeRepository.GetSocieteByIdAsync(registerDto.SocieteId.Value);
-        if (societe == null)
-          throw new Exception("La société spécifiée est introuvable.");
+        throw new Exception("Le pays spécifié est introuvable.");
       }
 
-      // 4. Générer un mot de passe aléatoire de 8 caractères
+      // 3. Générer un mot de passe aléatoire
       string generatedPassword = GenerateRandomPassword(8);
 
-      // 5. Créer l'utilisateur et hacher son mot de passe
+      // 4. Créer l'utilisateur et hacher son mot de passe
       using var hmac = new HMACSHA512();
       var passwordBytes = Encoding.UTF8.GetBytes(generatedPassword);
-
       var user = new User
       {
         FirstName = registerDto.Firstname,
@@ -71,42 +69,52 @@ namespace GestionTicketsAPI.Services
         PasswordSalt = hmac.Key
       };
 
-      // 6. Associer à une société si nécessaire
-      if (registerDto.SocieteId.HasValue)
-      {
-        user.SocieteUsers.Add(new SocieteUser
-        {
-          SocieteId = registerDto.SocieteId.Value
-        });
-      }
-
-      // 7. Enregistrer l'utilisateur en base
+      // 5. Enregistrer l'utilisateur
       await _accountRepository.AddUserAsync(user);
       if (!await _accountRepository.SaveAllAsync())
+      {
         throw new Exception("Erreur lors de l'enregistrement de l'utilisateur.");
+      }
+      // À présent, user.Id contient l'ID généré
 
-      // 8. Ajouter un contrat si fourni
+      // 6. Gérer le contrat si fourni
       if (registerDto.Contract != null)
       {
+        var dto = registerDto.Contract;
+
+        // Valider la cohérence du type de contrat
+        if ((dto.Type == TypeContrat.CDD || dto.Type == TypeContrat.CDI) && dto.UserId != null)
+          throw new Exception("Vous ne devez pas passer UserId pour un contrat employé.");
+        if (dto.Type == TypeContrat.Projet && dto.ProjetId == null)
+          throw new Exception("Un contrat de projet doit spécifier un ProjetId.");
+
         var contrat = new Contrat
         {
-          DateDebut = registerDto.Contract.DateDebut,
-          DateFin = registerDto.Contract.DateFin,
-          TypeContrat = "Client-Societe",
-          ClientId = user.Id
+          DateDebut = dto.DateDebut,
+          DateFin = dto.DateFin,
+          Type = dto.Type,
+          // On met l'ID du user pour CDD/CDI, ou null si contrat de projet
+          UserId = (dto.Type != TypeContrat.Projet) ? user.Id : null,
+          // On met l'ID du projet si contrat de projet, sinon null
+          ProjetId = (dto.Type == TypeContrat.Projet) ? dto.ProjetId : null
         };
+
         await _accountRepository.AddContractAsync(contrat);
         if (!await _accountRepository.SaveAllAsync())
+        {
           throw new Exception("Erreur lors de l'enregistrement du contrat.");
+        }
       }
 
-      // 9. Mapper vers UserDto, créer le token et exposer le mot de passe initial
+      // 7. Mapper et retourner le DTO
       var userDto = _mapper.Map<UserDto>(user);
       userDto.Token = _tokenService.CreateToken(user);
       userDto.InitialPassword = generatedPassword;
+      // userDto.Id contient l'identifiant auto‑généré
 
       return userDto;
     }
+
 
 
     public async Task<object> LoginAsync(LoginDto dto)
@@ -185,19 +193,29 @@ namespace GestionTicketsAPI.Services
 
     public async Task<ClientDto> RegisterClientAsync(RegisterClientDto dto)
     {
+      // 1. Vérifier si le client existe déjà (email, prénom + nom)
       if (await _accountRepository.ClientExistsAsync(dto.Email, dto.FirstName, dto.LastName))
         throw new Exception("Le client existe déjà.");
 
+      // 2. Récupérer le pays et la société
       var pays = await _accountRepository.GetPaysByIdAsync(dto.Pays);
       if (pays == null)
-        throw new Exception("Pays introuvable.");
+        throw new Exception("Le pays spécifié est introuvable.");
 
       var societe = await _societeRepository.GetSocieteByIdAsync(dto.SocieteId);
       if (societe == null)
-        throw new Exception("Société introuvable.");
+        throw new Exception("La société spécifiée est introuvable.");
 
+      // 3. Générer un mot de passe aléatoire de 8 caractères
+      string generatedPassword = GenerateRandomPassword(8);
+
+      // 4. Hacher le mot de passe
       using var hmac = new HMACSHA512();
-      var pwdBytes = Encoding.UTF8.GetBytes(dto.Password);
+      var pwdBytes = Encoding.UTF8.GetBytes(generatedPassword);
+      var passwordHash = hmac.ComputeHash(pwdBytes);
+      var passwordSalt = hmac.Key;
+
+      // 5. Construire l’entité Client
       var client = new Client
       {
         Email = dto.Email,
@@ -208,19 +226,41 @@ namespace GestionTicketsAPI.Services
         PaysNavigation = pays,
         SocieteId = dto.SocieteId,
         Societe = societe,
-        PasswordHash = hmac.ComputeHash(pwdBytes),
-        PasswordSalt = hmac.Key
+        Actif = dto.Actif,
+        PasswordHash = passwordHash,
+        PasswordSalt = passwordSalt,
+        CreatedAt = DateTime.UtcNow,
+        UpdatedAt = DateTime.UtcNow
       };
 
+      // 6. Persister le client
       await _accountRepository.AddClientAsync(client);
       if (!await _accountRepository.SaveAllAsync())
         throw new Exception("Erreur lors de l'enregistrement du client.");
 
+      // 7. Associer les projets, si fournis dans le DTO
+      if (dto.ProjetIds != null && dto.ProjetIds.Any())
+      {
+        foreach (var projetId in dto.ProjetIds.Distinct())
+        {
+          client.ProjetClients.Add(new ProjetClient
+          {
+            ClientId = client.Id,
+            ProjetId = projetId
+          });
+        }
+
+        if (!await _accountRepository.SaveAllAsync())
+          throw new Exception("Erreur lors de l'association des projets au client.");
+      }
+
+      // 8. Mapper vers ClientDto, générer le token et exposer le mot de passe initial
       var clientDto = _mapper.Map<ClientDto>(client);
       clientDto.Token = _tokenService.CreateToken(client);
+      clientDto.InitialPassword = generatedPassword;
+
       return clientDto;
     }
-
 
   }
 }

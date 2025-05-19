@@ -1,0 +1,153 @@
+<div class="card-container">
+  <div class="card">
+    <div class="card-header">
+      <h2>Créer Client</h2>
+    </div>
+    <div class="card-body">
+      <div class="form-container">
+        <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="lastName">Nom <span class="required">*</span></label>
+              <input id="lastName" type="text" formControlName="lastName" class="form-control"
+                [class.is-invalid]="clientForm.controls['lastName'].invalid && clientForm.controls['lastName'].touched" />
+              <div *ngIf="clientForm.controls['lastName'].hasError('required')" class="invalid-feedback text-start">
+                Nom est obligatoire
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="firstName">Prénom <span class="required">*</span></label>
+              <input id="firstName" type="text" formControlName="firstName" class="form-control"
+                [class.is-invalid]="clientForm.controls['firstName'].invalid && clientForm.controls['firstName'].touched" />
+              <div *ngIf="clientForm.controls['firstName'].hasError('required')" class="invalid-feedback text-start">
+                Prénom est obligatoire
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="email">Email <span class="required">*</span></label>
+              <input id="email" type="email" formControlName="email" class="form-control"
+                [class.is-invalid]="clientForm.controls['email'].invalid && clientForm.controls['email'].touched" />
+              <div *ngIf="clientForm.controls['email'].hasError('required')" class="invalid-feedback text-start">
+                Email est obligatoire
+              </div>
+              <div *ngIf="clientForm.controls['email'].hasError('email')" class="invalid-feedback text-start">
+                Email invalide
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="pays">Pays <span class="required">*</span></label>
+              <select id="pays" formControlName="pays" class="form-control"
+                [class.is-invalid]="clientForm.controls['pays'].invalid && clientForm.controls['pays'].touched">
+                <option value="" disabled>Sélectionnez un pays</option>
+                <option *ngFor="let p of paysList" [value]="p.idPays">{{p.nom}}</option>
+              </select>
+              <div *ngIf="clientForm.controls['pays'].hasError('required')" class="invalid-feedback text-start">
+                Pays est obligatoire
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="numTelephone">Numéro de Téléphone <span class="required">*</span></label>
+              <div class="input-group">
+                <!-- Préfixe téléphonique affiché automatiquement -->
+                <div class="input-group-prepend">
+                  <span class="input-group-text">
+                    <img
+                      *ngIf="selectedCountry?.photoUrl"
+                      [src]="selectedCountry?.photoUrl"
+                      alt="{{ selectedCountry?.nom }}"
+                      style="width:24px; height:auto; margin-right:5px;"
+                    />
+                    {{ selectedCountry?.codeTel || '+XX' }}
+                  </span>
+                </div>
+                <input
+                  id="numTelephone"
+                  type="tel"
+                  formControlName="numTelephone"
+                  class="form-control"
+                  [class.is-invalid]="clientForm.controls['numTelephone'].touched && clientForm.controls['numTelephone'].invalid"
+                />
+              </div>
+              <div *ngIf="clientForm.controls['numTelephone'].hasError('required')" class="invalid-feedback text-start">
+                Téléphone est obligatoire
+              </div>
+              <div *ngIf="clientForm.controls['numTelephone'].hasError('pattern')" class="invalid-feedback text-start">
+                Numéro de téléphone invalide
+              </div>
+            </div>
+            
+
+            <div class="form-group">
+              <label for="societeId">Société <span class="required">*</span></label>
+              <select id="societeId" formControlName="societeId" class="form-control"
+                [class.is-invalid]="clientForm.controls['societeId'].invalid && clientForm.controls['societeId'].touched">
+                <option value="" disabled>Sélectionnez une société</option>
+                <option *ngFor="let s of societesList" [value]="s.id">{{s.nom}}</option>
+              </select>
+              <div *ngIf="clientForm.controls['societeId'].hasError('required')" class="invalid-feedback text-start">
+                Société est obligatoire
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="fill" class="projets-field" [hideRequiredMarker]="true">
+              <mat-label>Projets associés <span class="required">*</span></mat-label>
+              <mat-select
+                formControlName="projetIds"
+                multiple
+                [disabled]="projetsList.length === 0"
+                [class.is-invalid]="clientForm.controls['projetIds'].touched && clientForm.controls['projetIds'].invalid"
+              >
+                <mat-option *ngFor="let proj of projetsList" [value]="proj.id">
+                  {{ proj.nom }}
+                </mat-option>
+              </mat-select>
+              <div
+                *ngIf="clientForm.controls['projetIds'].hasError('required')"
+                class="invalid-feedback text-start"
+              >
+                Au moins un projet est obligatoire
+              </div>
+              <div
+                *ngIf="clientForm.controls['projetIds'].hasError('minlength')"
+                class="invalid-feedback text-start"
+              >
+                Sélectionnez au moins un projet
+              </div>
+            </mat-form-field>                                    
+            
+            <div class="form-group">
+              <label for="actif">Actif</label>
+              <div class="toggle-switch">
+                <input type="checkbox" id="actif" formControlName="actif" />
+                <label for="actif" class="toggle-label"></label>
+              </div>
+            </div>
+            <!-- si besoin d'autre toggle, ajouter ici -->
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn-create" [disabled]="clientForm.invalid || isLoading">
+              <ng-container *ngIf="!isLoading; else loadingTpl">
+                Créer
+              </ng-container>
+              <ng-template #loadingTpl>
+                <span class="spinner"></span> Créer
+              </ng-template>
+            </button>
+            <button type="button" class="btn-cancel" (click)="onCancel()">Annuler</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

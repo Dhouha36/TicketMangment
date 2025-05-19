@@ -45,6 +45,7 @@ namespace GestionTicketsAPI.Controllers
     [HttpPost("paged")]
     public async Task<ActionResult<IEnumerable<TicketDto>>> GetTickets([FromBody] TicketFilterParams filterParams)
     {
+      // Récupération des claims
       var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
       var roleClaim = HttpContext.User.FindFirst(ClaimTypes.Role);
       if (userIdClaim != null && roleClaim != null)
@@ -53,8 +54,21 @@ namespace GestionTicketsAPI.Controllers
         filterParams.Role = roleClaim.Value;
       }
 
+      // Appel au service
       var pagedTickets = await _ticketService.GetTicketsPagedAsync(filterParams);
 
+      // Si null ou aucun ticket, on crée un PagedList vide
+      if (pagedTickets == null || !pagedTickets.Any())
+      {
+        pagedTickets = new PagedList<TicketDto>(
+            items: Enumerable.Empty<TicketDto>(),
+            count: 0,
+            pageNumber: filterParams.PageNumber,
+            pageSize: filterParams.PageSize
+        );
+      }
+
+      // Préparation des en‑têtes de pagination
       var pagination = new
       {
         currentPage = pagedTickets.CurrentPage,
@@ -63,8 +77,11 @@ namespace GestionTicketsAPI.Controllers
         totalPages = pagedTickets.TotalPages
       };
       Response.Headers["Pagination"] = JsonConvert.SerializeObject(pagination);
+
       return Ok(pagedTickets);
     }
+
+
 
     // GET api/tickets/{id}
     [HttpGet("{id}")]
@@ -76,121 +93,121 @@ namespace GestionTicketsAPI.Controllers
     }
 
     [HttpPost]
-        public async Task<ActionResult<TicketDto>> CreateTicket([FromBody] TicketCreateDto dto)
+    public async Task<ActionResult<TicketDto>> CreateTicket([FromBody] TicketCreateDto dto)
+    {
+      // 0) Validation d’existence
+      if (await _ticketService.TicketExists(dto.Title))
+        return BadRequest("Un ticket avec ce titre existe déjà");
+
+      // 1) Mapping initial
+      var ticket = _mapper.Map<Ticket>(dto);
+      ticket.CreatedAt = DateTime.UtcNow;
+
+      // 2) Traitement de l’attachement Base64 (s’il existe)
+      if (!string.IsNullOrEmpty(dto.AttachmentBase64) &&
+          !string.IsNullOrEmpty(dto.AttachmentFileName))
+      {
+        byte[] fileBytes;
+        try
         {
-            // 0) Validation d’existence
-            if (await _ticketService.TicketExists(dto.Title))
-                return BadRequest("Un ticket avec ce titre existe déjà");
-
-            // 1) Mapping initial
-            var ticket = _mapper.Map<Ticket>(dto);
-            ticket.CreatedAt = DateTime.UtcNow;
-
-            // 2) Traitement de l’attachement Base64 (s’il existe)
-            if (!string.IsNullOrEmpty(dto.AttachmentBase64) &&
-                !string.IsNullOrEmpty(dto.AttachmentFileName))
-            {
-                byte[] fileBytes;
-                try
-                {
-                    fileBytes = Convert.FromBase64String(dto.AttachmentBase64);
-                }
-                catch (FormatException)
-                {
-                    return BadRequest("Le format Base64 de l’attachement est invalide.");
-                }
-
-                // Prépare le dossier wwwroot/attachments
-                var uploadsFolder = Path.Combine(_env.WebRootPath, "attachments");
-                if (!Directory.Exists(uploadsFolder))
-                    Directory.CreateDirectory(uploadsFolder);
-
-                // Génère un nom de fichier unique
-                var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(dto.AttachmentFileName)}";
-                var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-                await System.IO.File.WriteAllBytesAsync(filePath, fileBytes);
-
-                // Construit l'URL d'accès (ex: https://monapi.com/attachments/xxx.pdf)
-                var request = HttpContext.Request;
-                var baseUrl = $"{request.Scheme}://{request.Host}";
-                ticket.Attachments = $"{baseUrl}/attachments/{uniqueFileName}";
-            }
-
-            // 3) Statut par défaut
-            var defaultStatus = await _ticketService.GetStatusByNameAsync("—");
-            if (defaultStatus == null)
-                return BadRequest("Statut par défaut introuvable");
-            ticket.StatutId = defaultStatus.Id;
-
-            // 4) Persistance
-            await _ticketService.AddTicketAsync(ticket);
-            await _ticketService.SaveAllAsync();
-
-            // 5) Rechargement complet
-            var ticketFromDb = await _ticketService.GetTicketByIdAsync(ticket.Id);
-            if (ticketFromDb == null)
-                return NotFound();
-
-            // 6) Notifications et emails
-            // 6.a) Chef de projet
-            if (ticketFromDb.Projet?.ChefProjet is { } chef)
-            {
-                BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
-                    $"{chef.FirstName} {chef.LastName}",
-                    chef.Email,
-                    "Nouveau ticket créé",
-                    $"Bonjour {chef.FirstName}, un nouveau ticket #{ticket.Id} a été créé."
-                ));
-
-                var notifDto = new NotificationDto
-                {
-                    Message = $"Nouveau ticket #{ticket.Id} créé par {ticket.Owner.FirstName} {ticket.Owner.LastName}.",
-                    DateEnvoi = DateTime.UtcNow,
-                    EntityType = "Tickets",
-                    EntityId = ticket.Id
-                };
-                BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(chef.Id, notifDto));
-                BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(chef.Id, notifDto));
-            }
-
-            // 6.b) Client (email uniquement)
-            if (ticketFromDb.Owner is { } client)
-            {
-                BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
-                    $"{client.FirstName} {client.LastName}",
-                    client.Email,
-                    "Confirmation de création de ticket",
-                    $"Bonjour {client.FirstName}, votre ticket #{ticket.Id} a bien été créé."
-                ));
-            }
-
-            // 6.c) Super-admins
-            var superAdmins = await _userService.GetUsersByRoleAsync("super admin");
-            foreach (var admin in superAdmins)
-            {
-                BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
-                    $"{admin.FirstName} {admin.LastName}",
-                    admin.Email,
-                    "Nouveau ticket créé",
-                    $"Bonjour {admin.FirstName}, un nouveau ticket #{ticket.Id} a été créé."
-                ));
-
-                var notifDto = new NotificationDto
-                {
-                    Message = $"Nouveau ticket #{ticket.Id} créé par {ticket.Owner.FirstName} {ticket.Owner.LastName}.",
-                    DateEnvoi = DateTime.UtcNow,
-                    EntityType = "Tickets",
-                    EntityId = ticket.Id
-                };
-                BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(admin.Id, notifDto));
-                BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(admin.Id, notifDto));
-            }
-
-            // 7) Retour
-            var resultDto = _mapper.Map<TicketDto>(ticketFromDb);
-            return CreatedAtAction(nameof(GetTicket), new { id = ticket.Id }, resultDto);
+          fileBytes = Convert.FromBase64String(dto.AttachmentBase64);
         }
+        catch (FormatException)
+        {
+          return BadRequest("Le format Base64 de l’attachement est invalide.");
+        }
+
+        // Prépare le dossier wwwroot/attachments
+        var uploadsFolder = Path.Combine(_env.WebRootPath, "attachments");
+        if (!Directory.Exists(uploadsFolder))
+          Directory.CreateDirectory(uploadsFolder);
+
+        // Génère un nom de fichier unique
+        var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(dto.AttachmentFileName)}";
+        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+        await System.IO.File.WriteAllBytesAsync(filePath, fileBytes);
+
+        // Construit l'URL d'accès (ex: https://monapi.com/attachments/xxx.pdf)
+        var request = HttpContext.Request;
+        var baseUrl = $"{request.Scheme}://{request.Host}";
+        ticket.Attachments = $"{baseUrl}/attachments/{uniqueFileName}";
+      }
+
+      // 3) Statut par défaut
+      var defaultStatus = await _ticketService.GetStatusByNameAsync("—");
+      if (defaultStatus == null)
+        return BadRequest("Statut par défaut introuvable");
+      ticket.StatutId = defaultStatus.Id;
+
+      // 4) Persistance
+      await _ticketService.AddTicketAsync(ticket);
+      await _ticketService.SaveAllAsync();
+
+      // 5) Rechargement complet
+      var ticketFromDb = await _ticketService.GetTicketByIdAsync(ticket.Id);
+      if (ticketFromDb == null)
+        return NotFound();
+
+      // 6) Notifications et emails
+      // 6.a) Chef de projet
+      if (ticketFromDb.Projet?.ChefProjet is { } chef)
+      {
+        BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
+            $"{chef.FirstName} {chef.LastName}",
+            chef.Email,
+            "Nouveau ticket créé",
+            $"Bonjour {chef.FirstName}, un nouveau ticket #{ticket.Id} a été créé."
+        ));
+
+        var notifDto = new NotificationDto
+        {
+          Message = $"Nouveau ticket #{ticket.Id} créé par {ticket.Owner.FirstName} {ticket.Owner.LastName}.",
+          DateEnvoi = DateTime.UtcNow,
+          EntityType = "Tickets",
+          EntityId = ticket.Id
+        };
+        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(chef.Id, notifDto));
+        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(chef.Id, notifDto));
+      }
+
+      // 6.b) Client (email uniquement)
+      if (ticketFromDb.Owner is { } client)
+      {
+        BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
+            $"{client.FirstName} {client.LastName}",
+            client.Email,
+            "Confirmation de création de ticket",
+            $"Bonjour {client.FirstName}, votre ticket #{ticket.Id} a bien été créé."
+        ));
+      }
+
+      // 6.c) Super-admins
+      var superAdmins = await _userService.GetUsersByRoleAsync("super admin");
+      foreach (var admin in superAdmins)
+      {
+        BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
+            $"{admin.FirstName} {admin.LastName}",
+            admin.Email,
+            "Nouveau ticket créé",
+            $"Bonjour {admin.FirstName}, un nouveau ticket #{ticket.Id} a été créé."
+        ));
+
+        var notifDto = new NotificationDto
+        {
+          Message = $"Nouveau ticket #{ticket.Id} créé par {ticket.Owner.FirstName} {ticket.Owner.LastName}.",
+          DateEnvoi = DateTime.UtcNow,
+          EntityType = "Tickets",
+          EntityId = ticket.Id
+        };
+        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(admin.Id, notifDto));
+        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(admin.Id, notifDto));
+      }
+
+      // 7) Retour
+      var resultDto = _mapper.Map<TicketDto>(ticketFromDb);
+      return CreatedAtAction(nameof(GetTicket), new { id = ticket.Id }, resultDto);
+    }
 
     [HttpPost("validate/{id}")]
     public async Task<IActionResult> ValidateTicket(int id, [FromBody] TicketValidationDto validationDto)
@@ -212,7 +229,7 @@ namespace GestionTicketsAPI.Controllers
       var isChef = ticket.Projet?.ChefProjet?.Id == currentUserId;
       var isSuperAdmin = string.Equals(normalizedRole, "superadmin", StringComparison.OrdinalIgnoreCase);
       if (!isChef && !isSuperAdmin)
-          return Unauthorized("Vous n'êtes pas autorisé à valider ce ticket.");
+        return Unauthorized("Vous n'êtes pas autorisé à valider ce ticket.");
 
       // 3) Acceptation ou refus
       if (validationDto.IsAccepted)
@@ -372,7 +389,7 @@ namespace GestionTicketsAPI.Controllers
 
       ticket.StatutId = newStatus.Id;
       ticket.CompletionComment = completionDto.Comment;
-      ticket.HoursSpent   = completionDto.DurationInMinutes / 60;
+      ticket.HoursSpent = completionDto.DurationInMinutes / 60;
       ticket.MinutesSpent = completionDto.DurationInMinutes % 60;
       ticket.SolvedAt = completionDto.CompletionDate;
       ticket.UpdatedAt = DateTime.UtcNow;
@@ -423,7 +440,7 @@ namespace GestionTicketsAPI.Controllers
 
       // 4) Commentaire interne
       var totalMinutes = completionDto.DurationInMinutes;
-      var hours   = totalMinutes / 60;
+      var hours = totalMinutes / 60;
       var minutes = totalMinutes % 60;
 
       var sb = new StringBuilder()

@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { NotificationsComponent } from '../notifications/notifications.component';
 import { NotificationService } from '../_services/notification.service';
 import { AppNotification } from '../_models/notification';
+import { ClientDto } from '../DTOs/ClientDto';
 
 @Component({
   selector: 'app-header',
@@ -22,7 +23,7 @@ import { AppNotification } from '../_models/notification';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent implements OnInit {
-  currentUser: User | null = null;
+  currentUser: User | ClientDto | null = null;
   userInitials = "";
   isMenuOpen: boolean = false;
 
@@ -51,6 +52,16 @@ export class HeaderComponent implements OnInit {
       distinctUntilChanged()
     ).subscribe(q => this.executeSearch(q));
   }
+
+  private isUser(u: User | ClientDto | null): u is User {
+    return !!u && (u as User).role !== undefined;
+  }
+
+  /** True si c’est un vrai client en base (ClientDto, sans `role`) */
+  private isClientDto(u: User | ClientDto | null): u is ClientDto {
+    return !!u && (u as ClientDto).paysId !== undefined;
+  }
+
 
   ngOnInit(): void {
     this.currentUser = this.accountService.currentUser();
@@ -186,6 +197,15 @@ export class HeaderComponent implements OnInit {
     }
   }
 
+  get displayRole(): string {
+    if (this.isUser(this.currentUser)) {
+      return this.currentUser.role;          // ex. "Super Admin"
+    }
+    if (this.isClientDto(this.currentUser)) {
+      return 'Client';                       // rôle statique pour les clients
+    }
+    return '';
+  }
 
 
 }

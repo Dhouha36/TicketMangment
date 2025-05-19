@@ -1,0 +1,223 @@
+<div class="container">
+  <!-- Affichage du nom du client ou indicateur de chargement -->
+  <h1 *ngIf="client; else loading">
+    {{ client.firstName || 'Aucun' }} {{ client.lastName || '' }}
+  </h1>
+  <ng-template #loading>
+    <h2>Chargement...</h2>
+  </ng-template>
+
+  <!-- Formulaire de modification du client -->
+  <div *ngIf="mode==='edit'" class="form-container">
+    <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
+      <!-- Ligne 1 : Nom & Prénom -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="lastName">Nom <span class="required">*</span></label>
+          <input id="lastName" type="text" formControlName="lastName" class="form-control" readonly />
+        </div>
+        <div class="form-group">
+          <label for="firstName">Prénom <span class="required">*</span></label>
+          <input id="firstName" type="text" formControlName="firstName" class="form-control" readonly />
+        </div>
+      </div>
+  
+      <!-- Ligne 2 : Email & Pays -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="email">Email <span class="required">*</span></label>
+          <input id="email" type="email" formControlName="email" class="form-control" readonly />
+        </div>
+        <div class="form-group">
+          <label for="pays">Pays</label>
+          <input id="pays" type="text" class="form-control" [value]="selectedCountry?.nom || ''" readonly />
+        </div>
+      </div>
+  
+      <!-- Ligne 3 : Société & Téléphone -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="societe">Société <span class="required">*</span></label>
+          <input id="societe" type="text" class="form-control" [value]="client?.societe?.nom || ''" readonly />
+        </div>
+        <div class="form-group">
+          <label for="numTelephone">Téléphone <span class="required">*</span></label>
+          <div class="input-group">
+            <div class="input-group-prepend">
+              <span class="input-group-text">
+                <img *ngIf="selectedCountry?.photoUrl" [src]="selectedCountry?.photoUrl" alt="{{ selectedCountry?.nom }}" style="width:24px; margin-right:5px;" />
+                {{ selectedCountry?.codeTel || '+XX' }}
+              </span>
+            </div>
+            <input id="numTelephone" type="tel" formControlName="numTelephone" class="form-control" readonly />
+          </div>
+        </div>
+      </div>
+  
+      <!-- Toggle Actif (modifiable) -->
+      <div class="form-group toggle-container">
+        <div class="toggle-row">
+          <div class="toggle-group">
+            <label for="actif">Actif <span class="required">*</span></label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="actif" formControlName="actif" />
+              <label for="actif" class="toggle-label"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+  
+      <!-- Boutons -->
+      <div class="button-group">
+        <button type="submit" class="btn-create" [disabled]="isLoading">
+          <ng-container *ngIf="!isLoading; else loadingTpl">Sauvegarder</ng-container>
+          <ng-template #loadingTpl><span class="spinner"></span> Sauvegarder</ng-template>
+        </button>
+        <button type="button" class="btn-cancel" (click)="switchMode()">Annuler</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Mode vue avec onglets -->
+  <div *ngIf="mode==='view'">
+    <nav class="tabs-nav">
+      <ul>
+        <li [class.active]="activeTab==='projets'">
+          <a href="#" (click)="switchTab('projets'); $event.preventDefault()">Projets</a>
+        </li>
+        <li [class.active]="activeTab==='tickets'">
+          <a href="#" (click)="switchTab('tickets'); $event.preventDefault()">Tickets</a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Onglet Projets -->
+    <div *ngIf="activeTab==='projets'" class="tab-pane">
+      <table>
+        <colgroup>
+          <col style="width: 25%;">
+          <col style="width: 35%;">
+          <col style="width: 15%;">
+          <col style="width: 15%;">
+          <col style="width: 10%;">
+        </colgroup>
+        <thead>
+          <tr class="filter-row">
+            <td colspan="1">
+              <h3>Projets associés</h3>
+            </td>
+            <td colspan="7">
+              <div class="search-wrapper">
+                <button type="button" class="btn-create" (click)="openAttachProjectDialog()">Attacher</button>
+              </div>
+            </td>
+          </tr>
+          <tr class="filter-row">
+            <td colspan="8">
+              <div class="search-wrapper">
+                <input type="text" class="search-input" placeholder="Rechercher un projet..."
+                  [(ngModel)]="projectSearchTerm" (ngModelChange)="onProjectSearch()" />
+                <span class="material-icons search-icon">search</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Projet</th>
+            <th>Chef de Projet</th>
+            <th>Société</th>
+            <th>Pays</th>
+            <th>Contrat</th>
+            <th>Date début</th>
+            <th>Date fin</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngIf="displayedProjects && displayedProjects.length > 0; else noProjects">
+            <tr *ngFor="let projet of displayedProjects">
+              <td>{{ projet.nom || 'Aucun' }}</td>
+              <td>{{ projet.chefProjet?.firstName + ' ' + projet.chefProjet?.lastName || 'Aucun' }}</td>
+              <td>{{ projet.nomSociete || 'Aucun' }}</td>
+              <td>{{ projet.nomPays || 'Aucun pays' }}</td>
+              <td>
+                <span class="status active">✔</span>
+              </td>
+              <td>{{ projet.contrat?.dateDebut | date:'yyyy-MM-dd' }}</td>
+              <td>{{ projet.contrat?.dateFin   | date:'yyyy-MM-dd' }}</td>
+              <td class="actions">
+                <button class="view-btn" (click)="viewProjet(projet.id)">
+                  <span class="material-icons">visibility</span>
+                </button>
+                <button class="delete-btn" (click)="detachProject(projet.id)">
+                  <span class="material-icons">delete</span>
+                </button>
+              </td>
+            </tr>
+          </ng-container>
+          <ng-template #noProjects>
+            <tr>
+              <td colspan="5">
+                <div class="no-content"><span class="icon">✕</span>
+                  <p>Aucun projet trouvé</p>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Onglet Tickets -->
+    <div *ngIf="activeTab==='tickets'" class="tab-pane">
+      <table>
+        <colgroup>
+          <col style="width: 20%;">
+          <col style="width: 20%;">
+          <col style="width: 20%;">
+          <col style="width: 20%;">
+          <col style="width: 20%;">
+        </colgroup>
+        <thead>
+          <tr class="filter-row">
+            <td colspan="4">
+              <h3>Tickets</h3>
+            </td>
+            <td colspan="1">
+              <div class="search-wrapper">
+                <input type="text" class="search-input" placeholder="Rechercher un ticket..."
+                  [(ngModel)]="ticketSearchTerm" (ngModelChange)="onTicketSearch()" />
+                <span class="material-icons search-icon">search</span>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <th>Titre</th>
+            <th>Description</th>
+            <th>Statut</th>
+            <th>Date création</th>
+            <th>Priorité</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngIf="displayedTickets && displayedTickets.length > 0; else noTickets">
+            <tr *ngFor="let ticket of displayedTickets">
+              <td>{{ ticket.title || 'Aucun' }}</td>
+              <td>{{ ticket.description ? (ticket.description | truncate:50) : 'Aucune description' }}</td>
+              <td>{{ getStatusName(ticket.statutId) || 'Aucun statut' }}</td>
+              <td>{{ ticket.createdAt | date:'dd/MM/yyyy' }}</td>
+              <td>{{ getPriorityName(ticket.priorityId) || 'Aucune priorité' }}</td>
+            </tr>
+          </ng-container>
+          <ng-template #noTickets>
+            <tr>
+              <td colspan="5">
+                <div class="no-content"><span class="icon">✕</span>
+                  <p>Aucun ticket trouvé</p>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </tbody>
+      </table>
+    </div>
+  </div>

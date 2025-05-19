@@ -11,6 +11,9 @@ import { CommonModule } from '@angular/common';
 import { LoaderService } from '../../_services/loader.service';
 import { MAT_DATE_LOCALE, MatNativeDateModule } from '@angular/material/core';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { ClientDto } from 'src/app/DTOs/ClientDto';
+import { User } from 'src/app/_models/user';
+import { ClientService } from 'src/app/_services/client.service';
 
 @Component({
   selector: 'app-ticket-filter',
@@ -86,6 +89,7 @@ export class TicketFilterComponent implements OnInit {
     private fb: FormBuilder,
     private elRef: ElementRef,
     private accountService: AccountService,
+    private clientService: ClientService,
     private categorieService: CategorieProblemeService,
     private prioriteService: PrioriteService,
     private statutService: StatusService,
@@ -100,22 +104,22 @@ export class TicketFilterComponent implements OnInit {
    }
 
   ngOnInit(): void {
-    const user = this.accountService.currentUser();
-    // Par exemple, si le rôle client est "client", on vérifie ainsi :
-    if (user && user.role === 'Client') {
-      this.isClient = true;
-    }
-    this.filterForm = this.fb.group({
-      client: [''],
-      categorie: [''],
-      priorite: [''],
-      statut: [''],
-      qualification: [''],
-      projet: [''],
-      societe: [''],
-      startDate: [new Date()],
-      endDate: [new Date()]
-    });
+    const cu = this.accountService.currentUser();
+  // Détecter s’il s’agit vraiment d’un client
+  this.isClient = this.isClientDto(cu);
+
+  this.filterForm = this.fb.group({
+    clientId:  [ this.isClient ? cu?.id : null ],
+    client:    [''],
+    categorie: [''],
+    priorite:  [''],
+    statut:    [''],
+    qualification: [''],
+    projet:    [''],
+    societe:   [''],
+    startDate: [ new Date() ],
+    endDate:   [ new Date() ],
+  });
 
     // Chargement des données depuis la base via les services
     this.loadClients();
@@ -128,9 +132,14 @@ export class TicketFilterComponent implements OnInit {
   }
 
   loadClients(): void {
-    this.accountService.getUsersByRole('client').subscribe(clients => {
-      this.clientOptions = clients;
-      this.filteredClients = [...clients];
+    this.clientService.getAll().subscribe({
+      next: clients => {
+        this.clientOptions = clients;
+        this.filteredClients = [...clients];
+      },
+      error: err => {
+        console.error('Erreur lors du chargement des clients', err);
+      }
     });
   }
 
@@ -248,8 +257,13 @@ export class TicketFilterComponent implements OnInit {
   // Méthodes de filtrage
   filterClients(): void {
     const term = this.clientSearchTerm.toLowerCase();
-    this.filteredClients = this.clientOptions.filter(c => c.name.toLowerCase().includes(term));
+    this.filteredClients = this.clientOptions.filter(c =>
+      (`${c.firstName} ${c.lastName}`)
+        .toLowerCase()
+        .includes(term)
+    );
   }
+  
   filterCategories(): void {
     const term = this.categorieSearchTerm.toLowerCase();
     this.filteredCategories = this.categorieOptions.filter(c => c.nom.toLowerCase().includes(term));
@@ -279,7 +293,7 @@ export class TicketFilterComponent implements OnInit {
   selectClient(client: any): void {
     this.selectedClient = client;
     this.isClientDropdownOpen = false;
-    this.filterForm.patchValue({ client: client.firstName + ' ' + client.lastName });
+    this.filterForm.patchValue({ clientId: client.id });
   }
   selectCategorie(categorie: any): void {
     this.selectedCategorie = categorie;
@@ -314,6 +328,7 @@ export class TicketFilterComponent implements OnInit {
 
   onSubmit(): void {
     this.loaderService.showLoader();
+    console.log('Filters envoyés :', this.filterForm.value);
     this.applyFilter.emit(this.filterForm.value);
     this.loaderService.hideLoader();
   }
@@ -383,4 +398,39 @@ export class TicketFilterComponent implements OnInit {
     this.isSocieteDropdownOpen = false;
   }
 
+
+  /** Type-guard: vraie entité User (avec role) */
+  private isUser(u: User | ClientDto | null): u is User {
+    return !!u && (u as User).role !== undefined;
+  }
+
+  /** Type-guard: vraie entité ClientDto (depuis table clients) */
+  private isClientDto(u: User | ClientDto | null): u is ClientDto {
+    return !!u && (u as ClientDto).paysId !== undefined;
+  }
+
+  // Getter pratique pour currentUser
+  private get currentUser() {
+    return this.accountService.currentUser();
+  }
+
+  /** Vérifie si super admin */
+  isSuperAdmin(): boolean {
+    const cu = this.currentUser;
+    return this.isUser(cu) && cu.role.toLowerCase().trim() === 'super admin';
+  }
+
+  isChefDeProjet(): boolean {
+    const cu = this.currentUser;
+    return this.isUser(cu) && cu.role.toLowerCase().trim() === 'chef de projet';
+  }
+
+  isCollaborateur(): boolean {
+    const cu = this.currentUser;
+    return this.isUser(cu) && cu.role.toLowerCase().trim() === 'collaborateur';
+  }
+
+  canManage(): boolean {
+    return this.isSuperAdmin() || this.isChefDeProjet();
+  }
 }

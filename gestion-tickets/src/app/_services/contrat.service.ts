@@ -13,11 +13,11 @@ export class ContratService {
   constructor(private http: HttpClient) {}
 
   getContract(id: number): Observable<Contrat> {
-    return this.http.get<Contrat>(`${this.baseUrl}${id}`);
+    return this.http.get<Contrat>(`${this.baseUrl}/${id}`);
   }
 
   updateContract(id: number, contract: Contrat): Observable<any> {
-    return this.http.put(`${this.baseUrl}${id}`, contract);
+    return this.http.put(`${this.baseUrl}/${id}`, contract);
   }
 
   addContract(contract: Contrat): Observable<Contrat> {

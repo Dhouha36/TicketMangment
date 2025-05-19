@@ -30,6 +30,7 @@ import { ConfirmModalComponent } from '../../confirm-modal/confirm-modal.compone
 import { OverlayModalService } from '../../_services/overlay-modal.service';
 import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
+import { TypeContrat } from 'src/app/DTOs/type-contrat.enum';
 
 @Component({
   selector: 'app-details-utilisateur',
@@ -66,6 +67,8 @@ export class DetailsUtilisateurComponent implements OnInit {
   selectedCountry: Pays | undefined;
 
   isLoading: boolean = false;
+  mode: 'view' | 'edit' = 'view';
+  TypeContrat = TypeContrat;
 
   constructor(
     private paysService: PaysService,
@@ -98,6 +101,9 @@ export class DetailsUtilisateurComponent implements OnInit {
   private ticketSearchSubject = new Subject<string>();
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      this.mode = params['mode'] === 'edit' ? 'edit' : 'view';
+    });
     // Initialisation des formulaires et chargement des listes
     this.initForm();
     this.initContratForm();
@@ -287,6 +293,7 @@ export class DetailsUtilisateurComponent implements OnInit {
             id: user.contrat.id,
             dateDebut: user.contrat.dateDebut ? new Date(user.contrat.dateDebut + 'Z').toISOString().substring(0, 10) : '',
             dateFin: user.contrat.dateFin ? new Date(user.contrat.dateFin + 'Z').toISOString().substring(0, 10) : '',
+            type: user.contrat.type 
           });
         }
         // Chargement des projets et tickets associés

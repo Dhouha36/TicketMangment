@@ -6,6 +6,7 @@ import { ProjetMember } from '../_models/projet-member';
 import { PaginatedResult, Pagination } from '../_models/pagination';
 import { environment } from '../../environments/environment';
 import { ProjetCreate } from '../DTOs/projet-create.model';
+import { ClientDto } from '../DTOs/ClientDto';
 
 @Injectable({
   providedIn: 'root'
@@ -56,6 +57,10 @@ export class ProjetService {
   // Ajouter un nouveau projet
   addProjet(payload: ProjetCreate): Observable<Projet> {
     return this.http.post<Projet>(`${this.baseUrl}/ajouterProjet`, payload);
+  }
+
+  validateProjet(dto: ProjetCreate): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl}/validateProjet`, dto);
   }
 
   // Mettre à jour un projet
@@ -120,4 +125,7 @@ export class ProjetService {
     return this.http.post(`${this.baseUrl}/export`, filters, { responseType: 'blob' });
   }
 
+  getClientProjects(projetId: number): Observable<ClientDto[]> {
+    return this.http.get<ClientDto[]>(`${this.baseUrl}/${projetId}/clients`);
+  }
 }

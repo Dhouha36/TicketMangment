@@ -2,7 +2,7 @@
   <div class="header">
     <h2>Liste des projets</h2>
     <button class="add-user-btn" 
-      *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin'" 
+      *ngIf="isSuperAdmin()"
       routerLink="/home/Projets/ajouterProjet">
       <span class="material-icons">add</span> Ajouter
     </button>
@@ -55,7 +55,7 @@
         <th>Pays</th>
         <th class="actions">
           <button class="delete-btn" 
-            *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin'" 
+            *ngIf="isSuperAdmin()" 
             (click)="deleteSelectedProjects()" [disabled]="isDeleteMultipleLoading">
             <ng-container *ngIf="!isDeleteMultipleLoading; else loadingDeleteMultipleTpl">
               <span class="material-icons">delete</span>
@@ -88,7 +88,7 @@
           </button>
           <!-- Bouton Supprimer d'un projet -->
           <button class="delete-btn" 
-            *ngIf="accountService.currentUser()?.role?.toLowerCase() === 'super admin'" 
+            *ngIf="isSuperAdmin()"
             (click)="deleteProjet(projet.id)" [disabled]="isDeleteLoading">
             <ng-container *ngIf="!isDeleteLoading; else loadingDeleteTpl">
               <span class="material-icons">delete</span>

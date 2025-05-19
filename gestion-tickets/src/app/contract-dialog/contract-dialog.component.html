@@ -23,6 +23,21 @@
           La date de fin est obligatoire.
         </div>
       </div>
+
+      <div *ngIf="!isProject" class="form-group">
+        <label for="type">Type de contrat <span class="required">*</span></label>
+        <select id="type"
+                formControlName="type"
+                class="form-control"
+                [class.is-invalid]="data.contractForm.get('type')?.invalid && (data.contractForm.get('type')?.touched)">
+          <option [value]="null" disabled>Sélectionnez</option>
+          <option *ngFor="let t of types" [value]="t">{{ t }}</option>
+        </select>
+        <div *ngIf="data.contractForm.get('type')?.hasError('required')" class="invalid-feedback">
+          Le type de contrat est obligatoire.
+        </div>
+      </div>
+      
     </div>
   
     <!-- Boutons d'actions -->

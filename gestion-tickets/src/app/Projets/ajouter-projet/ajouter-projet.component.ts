@@ -11,6 +11,14 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { LoaderService } from '../../_services/loader.service';
 import { ProjetCreate } from 'src/app/DTOs/projet-create.model';
 import { ClientCreate } from 'src/app/DTOs/client-create.model';
+import { RegisterClientDto } from 'src/app/DTOs/RegisterClientDto';
+import { ClientService } from 'src/app/_services/client.service';
+import { catchError, concatMap } from 'rxjs/operators';
+import { throwError } from 'rxjs';
+import { ContractDialogComponent } from 'src/app/contract-dialog/contract-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { TypeContrat } from 'src/app/DTOs/type-contrat.enum';
+import { PendingChangesComponent } from 'src/app/_guards/pending-changes.guard';
 
 @Component({
   selector: 'app-ajouter-projet',
@@ -18,9 +26,10 @@ import { ClientCreate } from 'src/app/DTOs/client-create.model';
   templateUrl: './ajouter-projet.component.html',
   styleUrls: ['./ajouter-projet.component.css']
 })
-export class AjouterProjetComponent implements OnInit {
+export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
   wizardForm!: FormGroup;
   step = 1;
+  clientMode: 'existant' | 'nouveau' | null = null;
   isLoading = false;
   isCompleted = false;
 
@@ -28,12 +37,20 @@ export class AjouterProjetComponent implements OnInit {
   chefsProjet = [] as any[];
   paysList = [] as any[];
   selectedCountry?: any;
+  existingClients: any[] = [];
+
+  serverErrors = {
+    projet: '' as string,
+    client: '' as string,
+  };
 
   constructor(
     private fb: FormBuilder,
     private projetService: ProjetService,
     private societeService: SocieteService,
     private accountService: AccountService,
+    private dialog: MatDialog,
+    private clientService: ClientService,
     private paysService: PaysService,
     private toastr: ToastrService,
     private loaderService: LoaderService,
@@ -48,27 +65,102 @@ export class AjouterProjetComponent implements OnInit {
     this.loadChefs();
     this.loadPays();
 
+    this.projetGroup.valueChanges.subscribe(val => {
+      if (this.step === 2) {
+        const societeId = this.projetGroup.value.societeId;
+        this.clientService.getBySociete(societeId).subscribe(
+          clients => this.existingClients = clients,
+          () => this.toastr.error('Impossible de charger les clients existants')
+        );
+      }
+    });
+    this.clientGroup.get('modeClient')!.valueChanges
+      .subscribe(val => this.clientMode = val);
+
     this.clientGroup.get('pays')!.valueChanges.subscribe(id => {
       this.selectedCountry = this.paysList.find(p => p.idPays === +id);
     });
   }
 
+  cleanupOnExit(): void {
+    // Réinitialise le wizard ou masque une éventuelle modale en cours
+    this.step = 1;
+    this.wizardForm.reset();
+  }
+
   private initForm(): void {
-    this.wizardForm = this.fb.group({
-      projet: this.fb.group({
-        nom: ['', Validators.required],
-        societeId: [null, Validators.required],
-        chefProjetId: [null, Validators.required]
-      }),
-      client: this.fb.group({
-        firstName: ['', Validators.required],
-        lastName: ['', Validators.required],
-        email: ['', [Validators.required, Validators.email]],
-        pays: [null, Validators.required],
-        numTelephone: ['', [Validators.required, Validators.pattern('^[0-9\\s]+$'), Validators.minLength(8), Validators.maxLength(15)]]
+    // 1) Création du FormGroup projet
+    const projetGroup = this.fb.group({
+      nom: ['', Validators.required],
+      societeId: [null, Validators.required],
+      chefProjetId: [null, Validators.required],
+
+      // toggle obligatoire
+      hasContract: [false, Validators.requiredTrue],
+
+      // données du contrat
+      contract: this.fb.group({
+        dateDebut: ['', Validators.required],
+        dateFin: ['', Validators.required],
+        type: [TypeContrat.Projet, Validators.required]
       })
     });
+
+    // 2) Désactivation initiale du sous-groupe contract
+    const contractGroup = projetGroup.get('contract') as FormGroup;
+    contractGroup.disable({ emitEvent: false });
+
+    // 3) Réaction au changement de hasContract
+    projetGroup.get('hasContract')!.valueChanges.subscribe(checked => {
+      if (checked) {
+        // on active les champs de la modal et on l’ouvre
+        contractGroup.enable();
+        this.openContractDialogForProject();
+      } else {
+        // on vide et désactive le sous-groupe
+        contractGroup.reset({ dateDebut: '', dateFin: '', type: TypeContrat.Projet });
+        contractGroup.disable();
+      }
+    });
+
+    // 4) Création du FormGroup client (reste inchangé)
+    const clientGroup = this.fb.group({
+      modeClient: ['existant', Validators.required],
+      clientExistantId: [null],
+      firstName: ['', Validators.required],
+      lastName: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      pays: [null, Validators.required],
+      actif: [true],
+      numTelephone: ['', [
+        Validators.required,
+        Validators.pattern('^[0-9\\s]+$'),
+        Validators.minLength(8),
+        Validators.maxLength(15)
+      ]]
+    });
+
+    // 5) Ajustements dynamiques du FormGroup client (tel que déjà en place)
+    clientGroup.get('modeClient')!.valueChanges.subscribe(mode => {
+      const existCtrl = clientGroup.get('clientExistantId')!;
+      const newCtrls = ['firstName', 'lastName', 'email', 'pays', 'numTelephone'];
+      if (mode === 'existant') {
+        existCtrl.setValidators([Validators.required]);
+        newCtrls.forEach(f => clientGroup.get(f)!.disable());
+      } else {
+        existCtrl.clearValidators();
+        newCtrls.forEach(f => clientGroup.get(f)!.enable());
+      }
+      existCtrl.updateValueAndValidity();
+    });
+
+    // 6) Assemblage final
+    this.wizardForm = this.fb.group({
+      projet: projetGroup,
+      client: clientGroup
+    });
   }
+
 
   private loadSocietes() {
     this.societeService.getSocietes().subscribe(
@@ -93,56 +185,179 @@ export class AjouterProjetComponent implements OnInit {
   get clientGroup() { return this.wizardForm.get('client') as FormGroup; }
 
   nextStep(): void {
-    if (this.projetGroup.invalid) return;
-    this.step = 2;
+    // Réinitialise les erreurs serveur
+    this.serverErrors = { projet: '', client: '' };
+
+    if (this.step === 1) {
+      // Étape 1 : validation du projet
+      if (this.projetGroup.invalid) {
+        this.projetGroup.markAllAsTouched();
+        return;
+      }
+
+      const dto: ProjetCreate = { ...this.projetGroup.value };
+      this.projetService.validateProjet(dto).subscribe({
+        next: () => {
+          // Passe à l'étape 2 : choix du type de client
+          this.step = 2;
+
+          // Précharge les clients existants pour la société sélectionnée
+          const societeId = this.projetGroup.value.societeId;
+          this.clientService.getBySociete(societeId).subscribe(
+            clients => this.existingClients = clients,
+            () => this.toastr.error('Impossible de charger les clients existants')
+          );
+        },
+        error: err => {
+          const msg = typeof err === 'string' ? err : err.error?.message || err.message;
+          this.serverErrors.projet = msg || 'Erreur de validation du projet';
+          this.loaderService.hideLoader();
+        }
+      });
+
+    } else if (this.step === 2) {
+      if (!this.clientMode) {
+        this.toastr.warning('Veuillez sélectionner le type de client');
+        return;
+      }
+      this.step = 3;
+    }
+    else if (this.step === 3) {
+      // Si jamais on clique « Suivant » en step 3, on lance la soumission finale
+      if (this.clientGroup.invalid) {
+        this.clientGroup.markAllAsTouched();
+        return;
+      }
+      this.submitAll();
+    }
   }
 
-  prevStep(): void {
-    this.step = 1;
+
+  prevStep() {
+    if (this.step > 1) {
+      this.step--;
+    }
   }
 
   submitAll(): void {
     if (this.clientGroup.invalid) return;
 
-    const { projet, client } = this.wizardForm.value;
-    const projetDto: ProjetCreate = {
-      nom: projet.nom,
-      description: '',
-      societeId: projet.societeId,
-      chefProjetId: projet.chefProjetId
-    };
+    this.serverErrors = { projet: '', client: '' }; // si vous gérez des messages
     this.loaderService.showLoader();
 
-    this.projetService.addProjet(projetDto).subscribe({
-      next: projResp => {
-        const clientDto: ClientCreate = {
-          firstName: client.firstName,
-          lastName: client.lastName,
-          email: client.email,
-          pays: +client.pays,
-          numTelephone: this.selectedCountry!.codeTel + ' ' + client.numTelephone,
-          role: 'Client',
-          societeId: projet.societeId,
-          projetId: projResp.id
-        };
-        this.accountService.register(clientDto).subscribe({
-          next: () => {
-            this.toastr.success('Projet et client ajoutés avec succès');
-            this.isCompleted = true;
-            this.loaderService.hideLoader();
-            this.router.navigate(['/home/Projets']);
-          },
-          error: () => {
-            this.toastr.error('Erreur création client');
-            this.loaderService.hideLoader();
-          }
-        });
+    // 1) Préparation du DTO Projet
+    const projetCtrl = this.projetGroup.value;
+
+    const projetDto: ProjetCreate = {
+      nom: projetCtrl.nom,
+      description: '',
+      societeId: projetCtrl.societeId,
+      chefProjetId: projetCtrl.chefProjetId,
+      contract: {
+        dateDebut: projetCtrl.contract.dateDebut,
+        dateFin: projetCtrl.contract.dateFin,
+        type: projetCtrl.contract.type,
+      }
+    };
+
+    // 2) Pipeline RxJS : addProjet → register(client) avec rollback
+    this.projetService.addProjet(projetDto).pipe(
+      concatMap(projResp => {
+        const projetId = projResp.id;
+        const mode = this.clientGroup.value.modeClient;
+
+        if (mode === 'existant') {
+          // 1) rattacher client existant
+          const clientId = this.clientGroup.value.clientExistantId;
+          return this.clientService.addClientToProject(clientId, projetId).pipe(
+            // Pas de rollback si échec rattachement ? selon besoin
+            catchError(err => throwError(() => err))
+          );
+        } else {
+          // 2) création d’un nouveau client
+          const form = this.clientGroup.value;
+          const clientDto: RegisterClientDto = {
+            email: form.email,
+            firstName: form.firstName,
+            lastName: form.lastName,
+            numTelephone: this.selectedCountry!.codeTel + ' ' + form.numTelephone.trim(),
+            pays: +form.pays,
+            societeId: projetDto.societeId,
+            actif: form.actif,
+            projetIds: [projetId]
+          };
+          return this.clientService.register(clientDto).pipe(
+            catchError(err =>
+              // rollback : suppression projet si la création client échoue
+              this.projetService.deleteProjet(projetId).pipe(
+                concatMap(() => throwError(() => err))
+              )
+            )
+          );
+        }
+      })
+    ).subscribe({
+      next: () => {
+        // 5) Tout s’est bien passé
+        this.isCompleted = true;             // pour votre guard
+        this.toastr.success('Projet et client créés avec succès');
+        this.loaderService.hideLoader();
+        this.router.navigate(['/home/Projets']);
       },
-      error: () => {
-        this.toastr.error('Erreur création projet');
+      error: (err: any) => {
+        // 1) Récupérer le message d’erreur (string ou payload)
+        const msg = typeof err === 'string'
+          ? err
+          : (err.error?.message || err.error || err.message || 'Échec de la création');
+
+        // 2) Affecter à serverErrors.client
+        this.serverErrors.client = msg;
+
+        // 3) Masquer le loader (sinon il reste bloqué)
         this.loaderService.hideLoader();
       }
     });
+  }
+
+  onContractChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.checked) {
+      this.openContractDialogForProject();
+    }
+  }
+
+  openContractDialogForProject(): void {
+    // passez directement le FormGroup existing
+    const dialogRef = this.dialog.open(ContractDialogComponent, {
+      data: {
+        contractForm: this.projetGroup.get('contract'),
+        isProject: true
+      }
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result) {
+        // result contient { dateDebut, dateFin, type }
+        // on met à jour le FormGroup (ça le rend valide)
+        this.projetGroup.get('contract')!.setValue(result);
+        // on peut marquer comme touched pour montrer les erreurs éventuelles
+        this.projetGroup.get('contract')!.markAllAsTouched();
+      }
+    });
+  }
+
+  private applyClientMode(mode: string) {
+    const existCtrl = this.clientGroup.get('clientExistantId')!;
+    const newFields = ['firstName', 'lastName', 'email', 'pays', 'numTelephone'];
+
+    if (mode === 'existant') {
+      existCtrl.setValidators([Validators.required]);
+      newFields.forEach(f => this.clientGroup.get(f)!.disable());
+    } else {
+      existCtrl.clearValidators();
+      newFields.forEach(f => this.clientGroup.get(f)!.enable());
+    }
+    existCtrl.updateValueAndValidity();
   }
 
   @HostListener('window:beforeunload', ['$event'])

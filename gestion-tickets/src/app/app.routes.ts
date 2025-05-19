@@ -49,6 +49,11 @@ export const routes: Routes = [
           import('./utilisateurs/utilisateurs.module').then(m => m.UtilisateursModule),
       },
       {
+        path: 'clients',
+        loadChildren: () =>
+          import('./Clients/clients.module').then(m => m.ClientsModule),
+      },
+      {
         path: 'Pays',
         loadChildren: () =>
           import('./PaysFile/pays.module').then(m => m.PaysModule),

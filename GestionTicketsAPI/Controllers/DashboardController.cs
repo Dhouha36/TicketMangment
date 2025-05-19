@@ -77,7 +77,7 @@ namespace GestionTicketsAPI.Controllers
           req.Start,
           req.End,
           req.Granularity,
-          req.ClientId,
+          req.OwnerId,
           req.PersonnelId
       );
 
@@ -95,7 +95,7 @@ namespace GestionTicketsAPI.Controllers
           req.Start,
           req.End,
           req.Granularity,
-          req.ClientId,
+          req.OwnerId,
           req.PersonnelId
       );
 

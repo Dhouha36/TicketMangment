@@ -78,18 +78,15 @@
           <p>{{ ticket.statut?.name }}</p>
         </div>
 
-        <div *ngIf="currentUser?.role?.toLowerCase() === 'client'; else selectableResponsible">
+        <div *ngIf="isClient(); else selectableResponsible">
           <label>Responsable</label>
-          <input type="text"
-            [value]="ticket.responsible
+          <input type="text" [value]="ticket.responsible
                       ? (ticket.responsible.firstName + ' ' + ticket.responsible.lastName)
-                      : 'Aucun responsable'"
-            disabled />
+                      : 'Aucun responsable'" disabled />
         </div>
         <ng-template #selectableResponsible>
           <label>Responsable</label>
-          <select [(ngModel)]="selectedResponsibleId"
-                  [disabled]="!canUpdateResponsible()">
+          <select [(ngModel)]="selectedResponsibleId" [disabled]="!canUpdateResponsible()">
             <option [ngValue]="null" disabled>Sélectionner un responsable</option>
             <option *ngFor="let dev of developers" [ngValue]="dev.id">
               {{ dev.firstName }} {{ dev.lastName }} - {{ dev.role }}
@@ -114,15 +111,26 @@
         <div class="comment-header">
           <div class="left-part">
             <div class="comment-icon"
-                 [ngClass]="{'my-comment-icon': comment.utilisateur?.id !== currentUser?.id}">
-              {{ getInitials(comment.utilisateur?.firstName, comment.utilisateur?.lastName) }}
+              [ngClass]="{'my-comment-icon': (comment.clientId ? comment.clientId : comment.utilisateur?.id) !== currentUser?.id}">
+              {{ getInitials(
+              comment.client ? comment.client.firstName : comment.utilisateur?.firstName,
+              comment.client ? comment.client.lastName : comment.utilisateur?.lastName
+              ) }}
             </div>
             <div class="comment-info">
               <span class="comment-author">
-                {{ comment.utilisateur?.id === currentUser?.id
-                   ? 'Moi'
-                   : (comment.utilisateur?.firstName + ' ' + comment.utilisateur?.lastName +
-                      ' - ' + comment.utilisateur?.role) }}
+                <!-- Cas client -->
+                <ng-container *ngIf="comment.client; else userTemplate">
+                  {{ comment.client.firstName }}
+                  {{ comment.client.lastName }} – Client
+                </ng-container>
+
+                <!-- Cas utilisateur “interne” -->
+                <ng-template #userTemplate>
+                  {{ comment.utilisateur?.firstName }}
+                  {{ comment.utilisateur?.lastName }}
+                  – {{ comment.utilisateur?.role }}
+                </ng-template>
               </span>
             </div>
           </div>
@@ -133,10 +141,8 @@
         <!-- Affichage des pièces jointes du commentaire -->
         <div class="attachments" *ngIf="comment.photos?.length">
           <ng-container *ngFor="let p of comment.photos">
-            <img *ngIf="isImage(p.url)"
-                 [src]="assetsUrl + p.url"
-                 class="thumb"
-                 (click)="openPhoto(assetsUrl + p.url)"  />
+            <img *ngIf="isImage(p.url)" [src]="assetsUrl + p.url" class="thumb"
+              (click)="openPhoto(assetsUrl + p.url)" />
             <a *ngIf="!isImage(p.url)" [href]="assetsUrl + p.url" target="_blank">
               {{ p.url.split('/').pop() }}
             </a>
@@ -156,43 +162,26 @@
 
     <div class="file-links-container" *ngIf="filesToUpload.length">
       <div class="file-link-input" *ngFor="let item of filesToUpload">
-        <input
-          type="text"
-          [value]="item.file.name"
-          readonly
-          (click)="selectAllText($event)"
-        />
+        <input type="text" [value]="item.file.name" readonly (click)="selectAllText($event)" />
         <button (click)="removeFile(item.file)">✕</button>
-      </div>      
+      </div>
     </div>
     <!-- Zone d'édition rich text + upload -->
-    <div
-  class="comment-input-container"
-  (drop)="onDrop($event)"
-  (dragover)="onDragOver($event)"
-  (paste)="onPaste($event)"
->
-  <div
-    #editor
-    contenteditable="true"
-    class="comment-editor"
-    (input)="onEditorInput($event)"
-  ></div>
+    <div class="comment-input-container" (drop)="onDrop($event)" (dragover)="onDragOver($event)"
+      (paste)="onPaste($event)">
+      <div #editor contenteditable="true" class="comment-editor" (input)="onEditorInput($event)"></div>
 
 
-  <button
-    class="send-button"
-    (click)="onAddComment()"
-    [disabled]="isLoading || (!newComment.trim() && !filesToUpload.length)"
-  >
-    <ng-container *ngIf="!isLoading; else loadingTpl">
-      <i class="fas fa-paper-plane"></i>
-    </ng-container>
-    <ng-template #loadingTpl>
-      <span class="spinner"></span>
-    </ng-template>
-  </button>
-</div>
+      <button class="send-button" (click)="onAddComment()"
+        [disabled]="isLoading || (!newComment.trim() && !filesToUpload.length)">
+        <ng-container *ngIf="!isLoading; else loadingTpl">
+          <i class="fas fa-paper-plane"></i>
+        </ng-container>
+        <ng-template #loadingTpl>
+          <span class="spinner"></span>
+        </ng-template>
+      </button>
+    </div>
 
   </div>
 

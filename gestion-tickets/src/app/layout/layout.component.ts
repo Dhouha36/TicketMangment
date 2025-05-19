@@ -15,6 +15,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
+import { ClientDto } from '../DTOs/ClientDto';
 
 @Component({
   selector: 'app-layout',
@@ -98,21 +99,46 @@ export class LayoutComponent implements OnInit, OnDestroy {
   }
 
   // Méthode pour récupérer l'utilisateur courant
-  get currentUser(): User | null {
+  get currentUser(): User | ClientDto | null {
     return this.accountService.currentUser();
   }
 
   isSuperAdmin(): boolean {
-    return this.currentUser?.role?.toLowerCase() === 'super admin';
+    const u = this.currentUser;
+    if (!u || !('role' in u)) return false;
+    return u.role.toLowerCase() === 'super admin';
   }
+
+  /** Type‑guard pour détecter un User (interne) */
+  private isUser(u: User | ClientDto | null): u is User {
+    return !!u && (u as User).role !== undefined;
+  }
+
+  /** Type‑guard pour détecter un ClientDto (client réel en base) */
+  private isClientDto(u: User | ClientDto | null): u is ClientDto {
+    return !!u && (u as ClientDto).paysId !== undefined;
+  }
+
   isChefDeProjet(): boolean {
-    return this.currentUser?.role?.toLowerCase() === 'chef de projet';
+    if (!this.isUser(this.currentUser)) {
+      return false;  // ce n’est pas un User, donc pas Chef de Projet
+    }
+    return this.currentUser.role.toLowerCase() === 'chef de projet';
   }
+
   isCollaborateur(): boolean {
-    return this.currentUser?.role?.toLowerCase() === 'collaborateur';
+    if (!this.isUser(this.currentUser)) {
+      return false;  // ce n’est pas un User, donc pas Collaborateur
+    }
+    return this.currentUser.role.toLowerCase() === 'collaborateur';
   }
+
+  /**
+   * L’utilisateur est « client » si et seulement si
+   * il s’agit d’un ClientDto (venant de la table clients).
+   */
   isClient(): boolean {
-    return this.currentUser?.role?.toLowerCase() === 'client';
+    return this.isClientDto(this.currentUser);
   }
 
   // Méthodes pour le sidenav des notifications
@@ -120,5 +146,5 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.isNotificationSidenavOpen = !this.isNotificationSidenavOpen;
   }
 
-  
+
 }

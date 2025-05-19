@@ -28,7 +28,11 @@ namespace GestionTicketsAPI.Helpers
           .ForMember(dest => dest.NomPays, opt => opt.MapFrom(src => src.Societe.Pays.Nom))
           .ForMember(dest => dest.NomSociete, opt => opt.MapFrom(src => src.Societe.Nom))
           .ForMember(dest => dest.ChefProjetId, opt => opt.MapFrom(src => src.ChefProjetId))
-          .ForMember(dest => dest.ChefProjet, opt => opt.MapFrom(src => src.ChefProjet));
+          .ForMember(dest => dest.ChefProjet, opt => opt.MapFrom(src => src.ChefProjet))
+          .ForMember(dest => dest.Contrat,
+              opt => opt.MapFrom(src =>
+                    src.Contrats.FirstOrDefault(c => c.Type == TypeContrat.Projet)
+                ));
       CreateMap<ProjetDto, Projet>()
           .ForMember(dest => dest.IdPays, opt => opt.Ignore())
           .ForMember(dest => dest.ChefProjetId, opt => opt.MapFrom(src => src.ChefProjetId));
@@ -44,7 +48,6 @@ namespace GestionTicketsAPI.Helpers
       CreateMap<Societe, SocieteDetailsDto>()
           .ForMember(dest => dest.Utilisateurs, opt => opt.MapFrom(src => src.SocieteUsers.Select(su => su.User)))
           .ForMember(dest => dest.Projets, opt => opt.MapFrom(src => src.Projets))
-          .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.ContratsPartenaire.FirstOrDefault()))
           .ForMember(dest => dest.PaysId, opt => opt.MapFrom(src => src.PaysId))
           .ForMember(dest => dest.Pays, opt => opt.MapFrom(src => src.Pays));
 
@@ -123,7 +126,46 @@ namespace GestionTicketsAPI.Helpers
           .ForMember(dest => dest.Adresse, opt => opt.MapFrom(src => src.Adresse))
           .ForMember(dest => dest.Telephone, opt => opt.MapFrom(src => src.Telephone))
           .ForMember(dest => dest.Pays, opt => opt.MapFrom(src => src.Pays != null ? src.Pays.Nom : string.Empty));
+      CreateMap<Client, ClientDto>()
+      .ForMember(dest => dest.PaysId,
+                 opt => opt.MapFrom(src => src.Pays))              // FK int
+      .ForMember(dest => dest.Pays,
+                 opt => opt.MapFrom(src => src.PaysNavigation.Nom))
+      .ForMember(dest => dest.SocieteId,
+                 opt => opt.MapFrom(src => src.SocieteId))
+      .ForMember(dest => dest.Societe,
+                 opt => opt.MapFrom(src => src.Societe))
+      .ForMember(dest => dest.Projets,
+                 opt => opt.MapFrom(src => src.ProjetClients))    // ← map collection directly
+      .ForMember(dest => dest.InitialPassword,
+                 opt => opt.Ignore());
 
+      CreateMap<ClientUpdateDto, Client>()
+          // mappez le FK sur PaysId
+          .ForMember(dest => dest.Pays,
+                    opt => opt.MapFrom(src => src.PaysId))
+
+          // mappez SocieteId
+          .ForMember(dest => dest.SocieteId,
+                    opt => opt.MapFrom(src => src.SocieteId))
+
+          // ignorez la navigation sur Pays (évite l’erreur de type)
+          .ForMember(dest => dest.Pays,
+                    opt => opt.Ignore())
+
+          // ignorez la navigation sur Société, si elle existe aussi
+          .ForMember(dest => dest.Societe,
+                    opt => opt.Ignore())
+
+          // le reste en conditionnel comme avant
+          .ForAllMembers(opt =>
+              opt.Condition((src, dest, srcMember) => srcMember != null)
+          );
+
+
+      CreateMap<ProjetClient, ProjetMiniDto>()
+           .ForMember(d => d.Id, o => o.MapFrom(s => s.Projet.Id))
+           .ForMember(d => d.Nom, o => o.MapFrom(s => s.Projet.Nom));
 
     }
   }

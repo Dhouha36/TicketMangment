@@ -20,6 +20,8 @@ import { LoaderService } from '../../_services/loader.service';
 import { ConfirmModalComponent } from '../../confirm-modal/confirm-modal.component';
 import { OverlayModalService } from '../../_services/overlay-modal.service';
 import { TicketCreateDto } from '../../_models/ticketCreateDto';
+import { ClientService } from 'src/app/_services/client.service';
+import { ClientDto } from 'src/app/DTOs/ClientDto';
 
 @Component({
   selector: 'app-ajouter-ticket',
@@ -80,6 +82,7 @@ export class AjouterTicketComponent implements OnInit, OnDestroy {
     private categorieProblemeService: CategorieProblemeService,
     private projetService: ProjetService,
     private accountService: AccountService,
+    private clientService: ClientService,
     private prioriteService: PrioriteService,
     private qualificationService: QualificationService,
     private toastr: ToastrService,
@@ -107,7 +110,7 @@ export class AjouterTicketComponent implements OnInit, OnDestroy {
     // Use forkJoin to wait for all data loading observables
     forkJoin([
       this.loadCategories(),
-      this.loadProjets(),
+      this.loadClientProjets(),
       this.loadPriorites(),
       this.loadQualifications(),
       this.loadUsers()
@@ -146,15 +149,22 @@ export class AjouterTicketComponent implements OnInit, OnDestroy {
     );
   }
 
-  loadProjets(): Observable<any> {
-    return this.projetService.getProjets({}).pipe(
+  loadClientProjets(): Observable<any[]> {
+    // Récupère le client connecté
+    const client = this.accountService.currentUser() as ClientDto;
+    if (!client) {
+      this.toastr.error("Impossible de récupérer l'utilisateur courant.");
+      return of([]);
+    }
+  
+    return this.clientService.getClientProjects(client.id).pipe(
       tap(projets => {
         this.projets = projets;
         this.filteredProjets = [...projets];
       }),
-      catchError(error => {
-        console.error("Erreur lors du chargement des projets", error);
-        this.toastr.error("Erreur lors du chargement des projets.");
+      catchError(err => {
+        console.error("Erreur lors du chargement des projets du client", err);
+        this.toastr.error("Impossible de charger vos projets.");
         return of([]);
       })
     );

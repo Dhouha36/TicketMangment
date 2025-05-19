@@ -11,5 +11,6 @@ public class CommentDto
     public int? UserId { get; set; }
     public UserDto? Utilisateur { get; set; }
     public int? ClientId { get; set; }
+    public ClientDto? Client { get; set; }
     public IEnumerable<PhotoDto>? Photos { get; set; }
 }

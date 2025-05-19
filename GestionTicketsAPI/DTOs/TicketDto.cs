@@ -14,7 +14,7 @@ namespace GestionTicketsAPI.DTOs
         public DateTime CreatedAt { get; set; }          // Anciennement DateCreation
         public DateTime? UpdatedAt { get; set; }           // Anciennement DateModification
         public int OwnerId { get; set; }                 // Anciennement UtilisateurId
-        public UserDto? Owner { get; set; }              // Anciennement Utilisateur
+        public ClientDto? Owner { get; set; }              // Anciennement Utilisateur
         public int ProblemCategoryId { get; set; }       // Anciennement CategorieProblemeId
         public CategorieProbleme? ProblemCategory { get; set; } // Anciennement CategorieProbleme
         public int QualificationId { get; set; }         // Anciennement Qualification

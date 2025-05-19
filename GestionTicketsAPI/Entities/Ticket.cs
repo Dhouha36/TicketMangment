@@ -13,6 +13,7 @@ public class Ticket
     public int ProjetId { get; set; }
     public Projet Projet { get; set; }
     public int OwnerId { get; set; }
+    [ForeignKey(nameof(OwnerId))]
     public Client Owner { get; set; }
     public int QualificationId { get; set; }
     public Qualification Qualification { get; set; }

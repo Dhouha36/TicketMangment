@@ -21,6 +21,7 @@ namespace GestionTicketsAPI.Interfaces
     Task<bool> SupprimerUtilisateurDuProjetAsync(int projetId, int userId);
     Task<bool> ProjetExists(string nom);
     Task<IEnumerable<ProjetDto>> GetProjetsBySocieteIdAsync(int societeId);
+    Task<IEnumerable<ClientDto>> GetClientsByProjetIdAsync(int projetId);
 
   }
 }

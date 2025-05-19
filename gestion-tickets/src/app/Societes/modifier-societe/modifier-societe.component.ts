@@ -1,6 +1,6 @@
-import { Component, HostListener, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SocieteService } from '../../_services/societe.service';
 import { ContratService } from '../../_services/contrat.service';
 import { ToastrService } from 'ngx-toastr';
@@ -24,24 +24,38 @@ import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
 import { take } from 'rxjs';
 import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
+import { ClientDto } from 'src/app/DTOs/ClientDto';
+import { ClientService } from 'src/app/_services/client.service';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelect, MatSelectModule } from '@angular/material/select';
 
 @Component({
-    selector: 'app-modifier-societe',
-    imports: [ReactiveFormsModule, NgIf, NgFor, FormsModule, CommonModule],
-    templateUrl: './modifier-societe.component.html',
-    styleUrls: ['./modifier-societe.component.scss']
+  selector: 'app-modifier-societe',
+  imports: [ReactiveFormsModule, NgIf, NgFor, FormsModule, CommonModule, RouterLink,
+    MatMenuModule,
+    MatIconModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatSelectModule,
+  ],
+  templateUrl: './modifier-societe.component.html',
+  styleUrls: ['./modifier-societe.component.scss']
 })
 export class ModifierSocieteComponent implements OnInit {
+  @ViewChild('projectsSelect') matSelect!: MatSelect;
   societeForm!: FormGroup;
-  contratForm!: FormGroup;
+  //contratForm!: FormGroup;
   societeId!: number;
   societeDetails!: Societe;
 
-  activeTab: string = 'utilisateurs';
-
+  activeTab: 'personnels' | 'projets' | 'clients' = 'clients';
+  formVisible = true;
   // ----- Pagination & recherche pour les PROJETS -----
   pageNumber: number = 1;
-  pageSize: number = 1;
+  pageSize: number = 5;
   totalPages: number = 1;
   totalProjects: number = 0;
   projectSearchTerm: string = '';
@@ -66,6 +80,16 @@ export class ModifierSocieteComponent implements OnInit {
   isLoading: boolean = false;
   selectedCountry?: Pays;
 
+  displayedClients: ClientDto[] = [];
+  clientPageNumber = 1;
+  clientPageSize = 5;
+  clientTotalPages = 1;
+  totalClients = 0;
+  clientSearchTerm = '';
+  clientJumpPage = 1;
+
+  isDeleteLoading = false;
+
   constructor(
     private route: ActivatedRoute,
     private fb: FormBuilder,
@@ -73,6 +97,7 @@ export class ModifierSocieteComponent implements OnInit {
     private paysService: PaysService,
     private contratService: ContratService,
     private projetsService: ProjetService,
+    private clientService: ClientService,
     public accountService: AccountService,
     private overlayModalService: OverlayModalService,
     private dialog: MatDialog,
@@ -87,6 +112,17 @@ export class ModifierSocieteComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route.queryParams.subscribe(params => {
+      const mode = params['mode'];
+      if (mode === 'view') {
+        this.formVisible = false;
+        // lorsqu'on arrive en “view”, on montre directement la 2ᵉ partie
+        this.activeTab = 'clients';
+      } else {
+        // mode edit (ou pas de param) : formulaire
+        this.formVisible = true;
+      }
+    });
     // Chargez la liste des pays
     this.loadPays();
 
@@ -111,49 +147,54 @@ export class ModifierSocieteComponent implements OnInit {
       nom: ['', Validators.required],
       adresse: ['', Validators.required],
       telephone: ['', [Validators.required, Validators.pattern('^\\+?[0-9\\-\\s]+$')]],
-      paysId: [null, Validators.required] 
+      paysId: [null, Validators.required],
+      ville: ['', Validators.required],
+      codePostal: ['', Validators.required],
     });
 
     // Initialisation du formulaire du contrat
-    this.contratForm = this.fb.group({
-      id: [0],
-      dateDebut: ['', Validators.required],
-      dateFin: ['', Validators.required],
-      type: ['Standard', Validators.required],
-      typeContrat: ['Client-Societe', Validators.required]
-    });
+    //this.contratForm = this.fb.group({
+    //id: [0],
+    //  dateDebut: ['', Validators.required],
+    //  dateFin: ['', Validators.required],
+    //type: ['Standard', Validators.required],
+    //typeContrat: ['Client-Societe', Validators.required]
+    //});
   }
 
   private loadSocieteDetails(): void {
     this.globalLoaderService.showGlobalLoader();
-  
+
     this.societeService.getSocieteDetails(this.societeId).subscribe({
       next: (details: Societe) => {
         this.societeDetails = details;
-  
+
         // On récupère la country complète depuis la liste déjà chargée
         this.selectedCountry = this.pays.find(p => p.idPays === details.paysId);
-  
+
         // Découpage du fullPhone en préfixe + partie locale
         const fullPhone = details.telephone || '';
-        const prefix    = this.selectedCountry?.codeTel || '';
-        let localPart   = fullPhone;
-  
+        const prefix = this.selectedCountry?.codeTel || '';
+        let localPart = fullPhone;
+
         if (prefix && fullPhone.startsWith(prefix)) {
           localPart = fullPhone.slice(prefix.length).trim();
         }
-  
+
         // Patch du formulaire : on passe la partie locale seule
         this.societeForm.patchValue({
-          nom:       details.nom,
-          adresse:   details.adresse,
-          paysId:    details.paysId,
+          nom: details.nom,
+          adresse: details.adresse,
+          ville: details.ville,
+          codePostal: details.codePostal,
+          paysId: details.paysId,
           telephone: localPart
         });
-  
+
         // Chargez aussi projets & utilisateurs…
         this.loadProjects();
         this.loadSocieteUsers();
+        this.loadSocieteClients();
       },
       error: err => {
         console.error('Erreur lors de la récupération des détails', err);
@@ -164,35 +205,35 @@ export class ModifierSocieteComponent implements OnInit {
       }
     });
   }
-   
-  
+
+
 
   onSubmit(): void {
     if (this.societeForm.invalid) {
       this.toastr.warning("Veuillez corriger les erreurs du formulaire.");
       return;
     }
-  
+
     // 1) on récupère la partie locale saisie
     const localNumber = this.societeForm.get('telephone')!.value as string;
-  
+
     // 2) on reconstruit le numéro complet avec préfixe
-    const prefix     = this.selectedCountry?.codeTel || '';
+    const prefix = this.selectedCountry?.codeTel || '';
     const fullNumber = prefix
       ? `${prefix} ${localNumber.trim()}`
       : localNumber.trim();
-  
+
     // 3) on construit l'objet à envoyer
     const updated: Societe = {
       ...this.societeDetails,
       ...this.societeForm.value,
       telephone: fullNumber
     };
-  
+
     // 4) confirmation et appel au service
     const modal = this.overlayModalService.open(ConfirmModalComponent);
     modal.message = "Confirmez-vous la modification de la société ?";
-  
+
     modal.confirmed.pipe(take(1)).subscribe(() => {
       this.loaderService.showLoader();
       this.societeService.updateSociete(this.societeId, updated).subscribe({
@@ -210,72 +251,13 @@ export class ModifierSocieteComponent implements OnInit {
       });
       this.overlayModalService.close();
     });
-  
+
     modal.cancelled.pipe(take(1)).subscribe(() => {
       this.overlayModalService.close();
     });
-  }  
-    
-  onSubmitContrat(): void {
-    if (this.contratForm.valid) {
-      const contractData: Contrat = {
-        ...this.contratForm.value,
-        societePartenaireId: this.societeDetails.id
-      };
-  
-      if (contractData.id && contractData.id > 0) {
-        this.contratService.updateContract(contractData.id, contractData).subscribe({
-          next: () => {
-            this.toastr.success("Contrat mis à jour avec succès");
-            this.societeDetails.contrat = { ...contractData };
-          },
-          error: error => {
-            console.error("Erreur lors de la mise à jour du contrat", error);
-            this.toastr.error("Erreur lors de la mise à jour du contrat");
-          }
-        });
-      } else {
-        this.contratService.addContract(contractData).subscribe({
-          next: (newContract: Contrat) => {
-            this.toastr.success("Contrat créé avec succès");
-            this.societeDetails.contrat = newContract;
-          },
-          error: error => {
-            console.error("Erreur lors de la création du contrat", error);
-            this.toastr.error("Erreur lors de la création du contrat");
-          }
-        });
-      }
-    } else {
-      this.toastr.warning("Veuillez remplir correctement le formulaire de contrat.");
-    }
   }
-  
-  cancelContrat(): void {
-    if (this.societeDetails.contrat) {
-      this.contratForm.patchValue({
-        id: this.societeDetails.contrat.id,
-        dateDebut: this.societeDetails.contrat.dateDebut
-          ? new Date(this.societeDetails.contrat.dateDebut).toISOString().substring(0, 10)
-          : '',
-        dateFin: this.societeDetails.contrat.dateFin
-          ? new Date(this.societeDetails.contrat.dateFin).toISOString().substring(0, 10)
-          : '',
-        type: this.societeDetails.contrat.type,
-        typeContrat: this.societeDetails.contrat.typeContrat
-      });
-    } else {
-      this.contratForm.reset({
-        id: 0,
-        dateDebut: '',
-        dateFin: '',
-        type: 'Standard',
-        typeContrat: 'Client-Societe'
-      });
-    }
-    this.contratForm.markAsPristine();
-  }
-  
+
+
   onCancel(): void {
     // 1) Réinitialisation des champs de base
     const fullPhone = this.societeDetails.telephone || '';
@@ -287,66 +269,44 @@ export class ModifierSocieteComponent implements OnInit {
       localPart = fullPhone.slice(prefix.length).trim();
     }
   
-    // 3) Patch du formulaire : nom, adresse et téléphone local seul
+    // 3) Patch du formulaire : ON REPATCH TOUT
     this.societeForm.patchValue({
-      nom:       this.societeDetails.nom,
-      adresse:   this.societeDetails.adresse,
-      telephone: localPart,
-      paysId:    this.societeDetails.paysId
+      nom:        this.societeDetails.nom,
+      adresse:    this.societeDetails.adresse,
+      ville:      this.societeDetails.ville,
+      codePostal: this.societeDetails.codePostal,
+      paysId:     this.societeDetails.paysId,
+      telephone:  localPart
     });
   
-    // 4) Réinitialisation du formulaire contrat, comme avant
-    if (this.societeDetails.contrat) {
-      this.contratForm.patchValue({
-        id:           this.societeDetails.contrat.id,
-        dateDebut:    this.societeDetails.contrat.dateDebut
-          ? new Date(this.societeDetails.contrat.dateDebut + 'Z')
-              .toISOString().substring(0, 10)
-          : '',
-        dateFin:      this.societeDetails.contrat.dateFin
-          ? new Date(this.societeDetails.contrat.dateFin + 'Z')
-              .toISOString().substring(0, 10)
-          : '',
-        type:         this.societeDetails.contrat.type,
-        typeContrat:  this.societeDetails.contrat.typeContrat
-      });
-    }
-  
-    // 5) On remet les formulaires en état “non modifié”
+    // 4) Remettre en état “non modifié” et “non touché”
     this.societeForm.markAsPristine();
-    this.contratForm.markAsPristine();
+    this.societeForm.markAsUntouched();
   }  
-  
-  switchTab(tab: string): void {
+
+  switchTab(tab: 'personnels' | 'projets' | 'clients'): void {
     this.activeTab = tab;
     if (tab === 'projets') {
       this.pageNumber = 1;
       this.jumpPage = 1;
       this.loadProjects();
-    } else if (tab === 'utilisateurs') {
+    } else if (tab === 'personnels') {
       this.userPageNumber = 1;
       this.userJumpPage = 1;
       this.loadSocieteUsers();
-    }
+    }else if (tab === 'clients') {
+      this.loadSocieteClients();
+        }
   }
 
-  initializeContratForm(): void {
-    this.contratForm.reset({
-      id: 0,
-      dateDebut: '',
-      dateFin: '',
-      type: 'Standard',
-      typeContrat: 'Client-Societe'
-    });
-  }
-  
+
   loadProjects(): void {
     this.projetsService.getPaginatedProjets(
-        this.pageNumber,
-        this.pageSize,
-        this.projectSearchTerm,
-        this.societeDetails.id
-      )
+      this.pageNumber,
+      this.pageSize,
+      this.projectSearchTerm,
+      this.societeDetails.id
+    )
       .subscribe((result: PaginatedResult<Projet[]>) => {
         this.displayedProjects = result.items || [];
         if (result.pagination) {
@@ -360,7 +320,24 @@ export class ModifierSocieteComponent implements OnInit {
         console.error('Erreur lors du chargement des projets paginés', error);
       });
   }
+  private loadSocieteClients(): void {
+    this.clientService.getBySociete(this.societeId)
+      .subscribe(clients => {
+        // on filtre clientSearchTerm
+        const filtered = this.clientSearchTerm
+          ? clients.filter(c =>
+              `${c.firstName} ${c.lastName}`.toLowerCase().includes(this.clientSearchTerm.toLowerCase())
+            )
+          : clients;
   
+        this.totalClients = filtered.length;
+        this.clientTotalPages = Math.ceil(this.totalClients / this.clientPageSize);
+  
+        const start = (this.clientPageNumber - 1) * this.clientPageSize;
+        this.displayedClients = filtered.slice(start, start + this.clientPageSize);
+      });
+  }
+
   onPageChange(newPage: number): void {
     this.pageNumber = Math.min(Math.max(newPage, 1), this.totalPages);
     this.jumpPage = this.pageNumber;
@@ -400,12 +377,12 @@ export class ModifierSocieteComponent implements OnInit {
           }
         },
         error => {
-          console.error("Erreur lors du chargement des utilisateurs paginés", error);
+          console.error("Erreur lors du chargement des personnels paginés", error);
           this.toastr.error("Erreur lors du chargement des membres de la société");
         }
       );
   }
-  
+
   onUserPageChange(newPage: number): void {
     this.userPageNumber = Math.min(Math.max(newPage, 1), this.userTotalPages);
     this.userJumpPage = this.userPageNumber;
@@ -425,6 +402,12 @@ export class ModifierSocieteComponent implements OnInit {
     this.loadSocieteUsers();
   }
 
+  onProjectSelect(projetId: number) {
+    // vide la sélection pour pouvoir recliquer sur le même projet
+    setTimeout(() => this.matSelect.writeValue(null), 0);
+    this.viewProjet(projetId);
+  }
+
   viewProjet(projetId: number): void {
     this.router.navigate(['/home/Projets/details', projetId]);
   }
@@ -439,7 +422,7 @@ export class ModifierSocieteComponent implements OnInit {
         const dialogRef = this.dialog.open(UserSelectorDialogComponent, {
           data: { availableUsers: allUsers }
         });
-        
+
         dialogRef.afterClosed().subscribe((selectedUser: User) => {
           if (selectedUser) {
             this.attachUser(selectedUser.id);
@@ -447,12 +430,12 @@ export class ModifierSocieteComponent implements OnInit {
         });
       },
       error: error => {
-        console.error("Erreur lors de la récupération des utilisateurs", error);
-        this.toastr.error("Erreur lors de la récupération des utilisateurs");
+        console.error("Erreur lors de la récupération des personnels", error);
+        this.toastr.error("Erreur lors de la récupération des personnels");
       }
     });
   }
-  
+
   attachUser(userId: number): void {
     this.loaderService.showLoader();
     this.societeService.attachUser(this.societeDetails.id, userId).subscribe({
@@ -460,7 +443,7 @@ export class ModifierSocieteComponent implements OnInit {
         if (result) {
           this.toastr.success("Utilisateur attaché avec succès");
           this.loadSocieteUsers();
-        } 
+        }
         this.loaderService.hideLoader();
       },
       error: error => {
@@ -475,7 +458,7 @@ export class ModifierSocieteComponent implements OnInit {
     const confirmationMessage = `Êtes-vous sûr de vouloir détacher ${user.firstName} ${user.lastName} de ${this.societeDetails.nom} ?`;
     const modalInstance = this.overlayModalService.open(ConfirmModalComponent);
     modalInstance.message = confirmationMessage;
-    
+
     modalInstance.confirmed.subscribe(() => {
       this.societeService.detachUser(this.societeDetails.id, user.id).subscribe({
         next: () => {
@@ -489,21 +472,21 @@ export class ModifierSocieteComponent implements OnInit {
       });
       this.overlayModalService.close();
     });
-    
+
     modalInstance.cancelled.subscribe(() => {
       this.overlayModalService.close();
     });
   }
-  
+
   toggleDropdown(type: string): void {
     if (type === 'pays') {
       this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
-    } 
+    }
   }
-  
+
   getPaysName(idPays: number): string {
     return this.pays.find(p => p.idPays === idPays)?.nom || '';
-  }  
+  }
 
   private loadPays(): void {
     this.paysService.getPays().subscribe({
@@ -515,7 +498,7 @@ export class ModifierSocieteComponent implements OnInit {
       error: err => this.toastr.error('Impossible de charger la liste des pays.')
     });
   }
-  
+
 
   onPaysSearch(): void {
     const term = this.paysSearchTerm.trim().toLowerCase();
@@ -523,7 +506,7 @@ export class ModifierSocieteComponent implements OnInit {
       ? this.pays.filter(p => p.nom.toLowerCase().includes(term))
       : [...this.pays];
   }
-  
+
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -543,7 +526,7 @@ export class ModifierSocieteComponent implements OnInit {
   openProjectModal(): void {
     const modalInstance = this.overlayModalService.open(ProjectModalComponent);
     modalInstance.societeId = this.societeDetails.id;
-    
+
     if (modalInstance.closed) {
       modalInstance.closed.subscribe((result: any) => {
         if (result && result.projectCreated) {
@@ -560,5 +543,92 @@ export class ModifierSocieteComponent implements OnInit {
       this.overlayModalService.close();
     });
   }
+
+  /** Type-guard pour User interne (avec .role) */
+  private isUser(u: any): u is { role: string; id: number } {
+    return !!u && typeof u.role === 'string' && typeof u.id === 'number';
+  }
+
+  /** Raccourci vers l’utilisateur courant */
+  private get currentUser() {
+    return this.accountService.currentUser();
+  }
+
+  /** Vérifie si super admin */
+  isSuperAdmin(): boolean {
+    const cu = this.currentUser;
+    return this.isUser(cu) && cu.role.toLowerCase().trim() === 'super admin';
+  }
+
+  /** Vérifie si chef de projet */
+  isChefDeProjet(): boolean {
+    const cu = this.currentUser;
+    return this.isUser(cu) && cu.role.toLowerCase().trim() === 'chef de projet';
+  }
+
+  /** Vérifie si collaborateur */
+  isCollaborateur(): boolean {
+    const cu = this.currentUser;
+    return this.isUser(cu) && cu.role.toLowerCase().trim() === 'collaborateur';
+  }
+
+  /** Seuls super admin et chef de projet peuvent gérer */
+  canManage(): boolean {
+    return this.isSuperAdmin() || this.isChefDeProjet();
+  }
+
   
+  // Méthodes de bascule manuelle depuis la template
+  showForm(): void {
+    this.formVisible = true;
+  }
+  showTabs(): void {
+    this.formVisible = false;
+    // si on veut forcer l'onglet “projets”
+    this.activeTab = 'projets';
+  }
+
+  getProjectIds(client: ClientDto): number[] {
+    return client.projets.map(p => p.id);
+  }
+  
+  onClientPageChange(page: number): void {
+    this.clientPageNumber = Math.max(1, Math.min(page, this.clientTotalPages));
+    this.clientJumpPage = this.clientPageNumber;
+    this.loadSocieteClients();
+  }
+  
+  jumpToClientPage(): void {
+    this.onClientPageChange(this.clientJumpPage);
+  }
+  
+  // Actions
+  viewClient(id: number) {
+    this.router.navigate(['/home/clients/details', id], { queryParams: { mode: 'view' } });
+  }
+  editClient(id: number) {
+    this.router.navigate(['/home/clients/details', id], { queryParams: { mode: 'edit' } });
+  }
+  openAddClient() {
+    this.router.navigate(['/home/clients/AjouterClient']);
+  }
+
+  deleteClient(client: ClientDto): void {
+    const modal = this.overlayModalService.open(ConfirmModalComponent);
+    modal.message = `Supprimer le client ${client.firstName}  ${client.lastName}?`;
+    modal.confirmed.subscribe(() => {
+      this.isDeleteLoading = true;
+      this.clientService.delete(client.id).subscribe({
+        next: () => {
+          this.toastr.success('Client supprimé.');
+          this.loadSocieteClients();
+        },
+        error: () => {},
+        complete: () => this.isDeleteLoading = false
+      });
+      this.overlayModalService.close();
+    });
+    modal.cancelled.subscribe(() => this.overlayModalService.close());
+  }
+
 }
