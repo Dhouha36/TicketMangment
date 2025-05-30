@@ -11,10 +11,13 @@ import { TicketStatDto } from '../_models/ticket-stat.dto';
 import { FormsModule } from '@angular/forms';
 import { TicketFilterRequest } from '../_models/TicketFilterRequest';
 import { curveBasis } from 'd3';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map } from 'rxjs';
 import { PaysModalComponent } from '../PaysFile/pays-modal/pays-modal.component';
 import { OverlayModalService } from '../_services/overlay-modal.service';
 import { ClientDto } from '../DTOs/ClientDto';
+import { ClientService } from '../_services/client.service';
+import { Projet } from '../_models/Projet';
+import { ProjetService } from '../_services/projet.service';
 
 @Component({
   selector: 'app-tableau-bord',
@@ -28,6 +31,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     userId: null as number | null,
     clientId: null as number | null,
     personnelId: null as number | null,
+    projectId:   null as number|null,
     start: null as string | null,
     end: null as string | null,
     granularity: 'daily' as 'daily' | 'weekly' | 'monthly' | 'yearly' | 'none'
@@ -81,14 +85,18 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
   personnelCount: number = 0;
   curve: any = curveBasis;
 
-  clientUsers: User[] = [];
+  clientUsers: ClientDto[] = [];
   personnelUsers: User[] = [];
 
   myTicketsCount: number = 0;
 
+  projects: Projet[] = [];
+
   constructor(
     private ticketService: TicketService,
     private accountService: AccountService,
+    private clientService: ClientService,
+    private projetService: ProjetService,
     private router: Router,
     private dashboardService: DashboardService,
     private route: ActivatedRoute,
@@ -105,7 +113,9 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
       this.loadDashboardCounts();
       this.dashboardService.getMyTicketsCount()
         .subscribe(count => this.myTicketsCount = count);
-      this.loadAllUsers();
+      this.loadClientUsers();
+      this.loadPersonnelUsers();
+      this.updateProjectList();
       this.applyFilters();
     }
     // Définition initiale de la taille du graphique
@@ -136,6 +146,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     return this.ticketCounts.length === 1
       && this.ticketCounts[0].name === 'Aucune donnée';
   }
+  
   loadTicketCounts() {
     this.ticketService.getTicketCountByStatus().subscribe({
       next: (data: any[]) => {
@@ -193,58 +204,28 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     this.view = [chartWidth, chartHeight];
   }
 
-  /** Détecte un User « interne » (avec .role) */
-  private isUser(u: User | ClientDto | null): u is User {
-    return !!u && (u as User).role !== undefined;
+  private loadClientUsers() {
+    this.clientService.getAll().subscribe(clients => this.clientUsers = clients);
   }
 
-  /** Détecte un vrai ClientDto (depuis la table clients) */
-  private isClientDto(u: User | ClientDto | null): u is ClientDto {
-    return !!u && (u as ClientDto).paysId !== undefined;
+  private loadPersonnelUsers() {
+    this.accountService.getAllUsers().subscribe(users => {
+      // Exclure les clients
+      this.personnelUsers = users.filter(u => u.role && u.role.toLowerCase() !== 'client');
+    });
   }
 
-
-  isSuperAdmin(): boolean {
-    if (!this.isUser(this.currentUser)) {
-      return false;
-    }
-    return this.currentUser.role.toLowerCase() === 'super admin';
-  }
-
-  isChefDeProjet(): boolean {
-    if (!this.isUser(this.currentUser)) {
-      return false;
-    }
-    return this.currentUser.role.toLowerCase() === 'chef de projet';
-  }
-
-  isCollaborateur(): boolean {
-    if (!this.isUser(this.currentUser)) {
-      return false;
-    }
-    return this.currentUser.role.toLowerCase() === 'collaborateur';
-  }
-
-  /**
-   * Vu que vos vrais clients viennent de la table « clients », 
-   * isClient() doit renvoyer true exactement pour un ClientDto.
-   */
   isClient(): boolean {
-    return this.isClientDto(this.currentUser);
+    return (this.currentUser as ClientDto)?.paysId !== undefined;
   }
 
-
-  loadAllUsers() {
-    this.accountService.getAllUsers()
-      .subscribe(u => {
-        this.users = u;
-        // Une fois les users chargés, on remplit les listes filtrées
-        this.clientUsers = this.users.filter(x => x.role.toLowerCase() === 'client');
-        this.personnelUsers = this.users.filter(x => x.role.toLowerCase() !== 'client');
-      });
+  isUser(u: any): u is User {
+    return u && (u as User).role !== undefined;
   }
 
-
+  isSuperAdmin(): boolean { return this.isUser(this.currentUser) && this.currentUser.role.toLowerCase() === 'super admin'; }
+  isChefDeProjet(): boolean { return this.isUser(this.currentUser) && this.currentUser.role.toLowerCase() === 'chef de projet'; }
+  isCollaborateur(): boolean { return this.isUser(this.currentUser) && this.currentUser.role.toLowerCase() === 'collaborateur'; }
 
   applyFilters(): void {
     const currentUser = this.accountService.currentUser();
@@ -263,7 +244,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
       // ─── COURBE “Mes tickets” ───
       const reqUser: TicketFilterRequest = {
         userId: currentUser.id,
-        clientId: undefined,
+        ownerId: undefined,
         personnelId: undefined,
         start: start,
         end: end,
@@ -285,7 +266,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
       // ─── BAR + PIE “Mes tickets” ───
       const reqStatusCP: TicketFilterRequest = {
         userId: undefined,
-        clientId: undefined,
+        ownerId: undefined,
         personnelId: currentUser.id,
         start: start,
         end: end,
@@ -313,8 +294,9 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
       // ─── COURBE “Tous les tickets” ───
       const reqFilt: TicketFilterRequest = {
         userId: undefined,
-        clientId: clientId,
+        ownerId: clientId,
         personnelId: personnelId,
+        projetId:  this.filter.projectId ?? undefined,
         start: start,
         end: end,
         granularity: gran
@@ -335,8 +317,9 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
       // ─── BAR + PIE “Tous les tickets” ───
       const reqStatus: TicketFilterRequest = {
         userId: undefined,
-        clientId: clientId,
+        ownerId: clientId,
         personnelId: personnelId,
+        projetId: this.filter.projectId ?? undefined,
         start: start,
         end: end,
         granularity: 'none'
@@ -366,6 +349,42 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     modalRef.added.subscribe(() => {
       // Recharge le compteur dès qu’un pays est ajouté dans le modal
       this.loadDashboardCounts();
+    });
+  }
+  updateProjectList(): void {
+    const cId = this.filter.clientId;
+    const pId = this.filter.personnelId;
+  
+    // 1) Aucun filtre → on charge tous les projets
+    if (cId == null && pId == null) {
+      this.projetService.getProjets({}).subscribe(all => this.projects = all ?? []);
+      return;
+    }
+  
+    // 2) Seulement client
+    if (cId != null && pId == null) {
+      this.clientService.getClientProjects(cId)
+        .subscribe(plist => this.projects = plist ?? []);
+      return;
+    }
+  
+    // 3) Seulement personnel
+    if (cId == null && pId != null) {
+      this.accountService.getUserProjects(pId, 1, 100).pipe(
+        map(pag => pag.items ?? [])
+      ).subscribe(plist => this.projects = plist);
+      return;
+    }
+  
+    // 4) Les deux → forkJoin puis intersection
+    forkJoin({
+      byClient: this.clientService.getClientProjects(cId!),
+      byUser: this.accountService
+        .getUserProjects(pId!, 1, 100)
+        .pipe(map(pag => pag.items ?? []))
+    }).subscribe(({ byClient, byUser }) => {
+      const userProjectIds = new Set(byUser.map(p => p.id));
+      this.projects = (byClient ?? []).filter(p => userProjectIds.has(p.id));
     });
   }
 }

@@ -18,6 +18,7 @@ import { PipesModule } from "../../_pipes/pipes.module";
 import { forkJoin } from 'rxjs';
 import { AttachProjectDialogComponent } from 'src/app/utilisateurs/attach-project-dialog/attach-project-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
 
 @Component({
   selector: 'app-details-client',
@@ -32,6 +33,11 @@ export class DetailsClientComponent implements OnInit {
   mode: 'view' | 'edit' = 'view';
 
   paysList: Pays[] = [];
+  filteredPays: Pays[] = [];
+  // Terme de recherche et état du dropdown
+  paysSearchTerm: string = '';
+  isPaysDropdownOpen = false;
+
   societesList: Societe[] = [];
   selectedCountry: Pays | undefined;
   activeTab: 'projets' | 'tickets' = 'projets';
@@ -40,6 +46,10 @@ export class DetailsClientComponent implements OnInit {
   displayedTickets: Ticket[] = [];
   projectSearchTerm: string = '';
   ticketSearchTerm: string = '';
+
+  filteredSocietes: Societe[] = [];
+  societeSearchTerm = '';
+  isSocieteDropdownOpen = false;
 
   private fullProjects: Projet[] = [];
   private fullTickets: Ticket[] = [];
@@ -51,6 +61,7 @@ export class DetailsClientComponent implements OnInit {
     private dialog: MatDialog,
     private toastr: ToastrService,
     private clientService: ClientService,
+    private overlayModalService: OverlayModalService,
     private paysService: PaysService,
     private societeService: SocieteService
   ) { }
@@ -63,7 +74,9 @@ export class DetailsClientComponent implements OnInit {
     }).subscribe({
       next: ({ pays, societes }) => {
         this.paysList = pays;
+        this.filteredPays = [...pays];
         this.societesList = societes;
+        this.filteredSocietes = [...societes];
         const id = +this.route.snapshot.params['id'];
         this.loadClient(id);
       },
@@ -166,14 +179,14 @@ export class DetailsClientComponent implements OnInit {
     }
     // Récupère le nom du pays sélectionné
     const selectedPays = this.paysList.find(p => p.idPays === this.clientForm.value.paysId)?.nom ?? '';
-  
+
     // Construit l'objet à envoyer, avec le champ `pays`
     const updated: Partial<ClientDto> = {
       ...this.clientForm.value,
       id: this.client!.id,
       pays: selectedPays
     };
-  
+
     this.clientService.update(this.client!.id, updated).subscribe({
       next: () => {
         this.toastr.success('Client mis à jour');
@@ -181,7 +194,7 @@ export class DetailsClientComponent implements OnInit {
       },
       error: () => this.toastr.error('Erreur mise à jour')
     });
-  }  
+  }
 
   deleteClient(): void {
     if (!this.client) return;
@@ -230,6 +243,63 @@ export class DetailsClientComponent implements OnInit {
   viewProjet(projectId: number): void {
     // Redirection vers la page de détails du projet
     this.router.navigate(['home/Projets/details/', projectId]);
+  }
+
+  /** Bascule l’affichage du dropdown */
+  togglePaysDropdown(): void {
+    this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
+  }
+
+  /** Filtre la liste selon le terme saisi */
+  onPaysSearch(): void {
+    const term = this.paysSearchTerm.trim().toLowerCase();
+    this.filteredPays = term
+      ? this.paysList.filter(p => p.nom.toLowerCase().includes(term))
+      : [...this.paysList];
+  }
+
+  /** Met à jour le formulaire et ferme le dropdown */
+  selectPays(idPays: number): void {
+    this.clientForm.get('paysId')!.setValue(idPays);
+    this.clientForm.get('paysId')!.markAsDirty();
+    this.isPaysDropdownOpen = false;
+  }
+
+  /** Renvoie le nom complet d’un pays à partir de son id */
+  getPaysName(idPays: number): string {
+    return this.paysList.find(p => p.idPays === idPays)?.nom || '';
+  }
+  openPaysModal(): void {
+    const modal = this.overlayModalService.open(PaysModalComponent);
+    // Quand un nouveau pays est ajouté, on recharge la liste
+    modal.added.subscribe(() => {
+      this.paysService.getPays();          // recharge paysList & filteredPays
+      this.overlayModalService.close();
+    });
+  }
+
+  toggleSocieteDropdown(): void {
+    this.isSocieteDropdownOpen = !this.isSocieteDropdownOpen;
+  }
+  
+  /** Filtre la liste des sociétés */
+  onSocieteSearch(): void {
+    const term = this.societeSearchTerm.trim().toLowerCase();
+    this.filteredSocietes = term
+      ? this.societesList.filter(s => s.nom.toLowerCase().includes(term))
+      : [...this.societesList];
+  }
+  
+  /** Sélectionne une société dans le formulaire */
+  selectSociete(idSociete: number): void {
+    this.clientForm.get('societeId')!.setValue(idSociete);
+    this.clientForm.get('societeId')!.markAsDirty();
+    this.isSocieteDropdownOpen = false;
+  }
+  
+  /** Récupère le nom d’une société par son id */
+  getSocieteName(idSociete: number): string {
+    return this.societesList.find(s => s.id === idSociete)?.nom || '';
   }
 }
 

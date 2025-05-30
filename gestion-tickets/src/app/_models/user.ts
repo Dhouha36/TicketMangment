@@ -20,4 +20,5 @@ export interface User {
   societe?: Societe;
   projetMembers?: ProjetMember[]; 
   createdAt?: Date;
+  photoUrl?: string;
 }

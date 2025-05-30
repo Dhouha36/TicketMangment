@@ -233,37 +233,44 @@ export class TicketDetailsComponent implements OnInit {
 
   // Logique pour afficher le bouton de validation
   canValidateTicket(): boolean {
-    if (!this.ticket || !this.isUser(this.currentUser)) return false;
+    if (!this.ticket || !this.isUser(this.currentUser) || !this.ticket.projet) return false;
+    
     const role = this.currentUser.role.toLowerCase();
     const isDefaultStatus = this.ticket.statut?.name === '—';
-    return isDefaultStatus && (role === 'chef de projet' || role === 'super admin');
+    const isSuperAdmin = role === 'super admin';
+    const isProjectChef = this.currentUser.id === this.ticket.projet.chefProjetId;
+  
+    return isDefaultStatus && (isSuperAdmin || (role === 'chef de projet' && isProjectChef));
   }
 
-  // Méthode pour déterminer si l'utilisateur peut terminer ou modifier le responsable
   canFinishTicket(): boolean {
     if (!this.ticket || !this.isUser(this.currentUser)) return false;
-    const role = this.currentUser.role.toLowerCase();
-    if (role === 'client') return false;
-
-    // La mise à jour du responsable ne doit être possible que si le ticket a été validé (approvedAt renseigné)
+    
+    // Seul le responsable peut terminer
+    if (this.ticket.responsibleId !== this.currentUser.id) return false;
+  
+    // Doit être validé
     if (!this.ticket.approvedAt) return false;
-
-    // Vérifier le statut du ticket : si le ticket est déjà dans un statut final (résolu, non résolu, refusé ou non validé) on bloque
+  
+    // Statut non final
     const statusName = this.ticket.statut?.name?.toLowerCase();
     const invalidStatuses = ['—', 'résolu', 'non résolu', 'refusé'];
-    if (statusName && invalidStatuses.includes(statusName)) {
-      return false;
-    }
-
-    const userRole = this.currentUser.role.toLowerCase();
-    return userRole === 'chef de projet' ||
-      userRole === 'super admin' ||
-      (this.ticket.responsibleId === this.currentUser.id);
+    
+    return !(statusName && invalidStatuses.includes(statusName));
   }
 
   // Pour garder la même condition pour la mise à jour du responsable
   canUpdateResponsible(): boolean {
-    return this.canFinishTicket();
+    if (!this.ticket || !this.isUser(this.currentUser) || !this.ticket.projet) return false;
+    
+    const role = this.currentUser.role.toLowerCase();
+    const isSuperAdmin = role === 'super admin';
+    const isProjectChef = this.currentUser.id === this.ticket.projet.chefProjetId;
+    const isCurrentResponsible = this.currentUser.id === this.ticket.responsibleId;
+  
+    // Autoriser : super admin, chef du projet, OU responsable actuel
+    return (isSuperAdmin || isProjectChef || isCurrentResponsible) 
+      && !!this.ticket.approvedAt; // Ticket doit être validé
   }
 
 

@@ -103,7 +103,7 @@
 
   <!-- Boutons d'édition / sauvegarde / annulation -->
   <div class="buttons">
-    <button *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())" class="edit-btn" (click)="editMode = true">
+    <button *ngIf="!editMode && isSuperAdmin()" class="edit-btn" (click)="editMode = true">
       Modifier
     </button>
     <button *ngIf="editMode" class="edit-btn" (click)="saveProjet()" [disabled]="isLoading">

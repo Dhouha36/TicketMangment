@@ -9,37 +9,93 @@
 
   <!-- Formulaire de modification du client -->
   <div *ngIf="mode==='edit'" class="form-container">
-    <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">
-      <!-- Ligne 1 : Nom & Prénom -->
-      <div class="form-row">
-        <div class="form-group">
-          <label for="lastName">Nom <span class="required">*</span></label>
-          <input id="lastName" type="text" formControlName="lastName" class="form-control" readonly />
-        </div>
-        <div class="form-group">
-          <label for="firstName">Prénom <span class="required">*</span></label>
-          <input id="firstName" type="text" formControlName="firstName" class="form-control" readonly />
-        </div>
-      </div>
-  
+    <form [formGroup]="clientForm" (ngSubmit)="onSubmit()">  
       <!-- Ligne 2 : Email & Pays -->
       <div class="form-row">
         <div class="form-group">
           <label for="email">Email <span class="required">*</span></label>
-          <input id="email" type="email" formControlName="email" class="form-control" readonly />
+          <input id="email" type="email" formControlName="email" class="form-control"/>
         </div>
-        <div class="form-group">
-          <label for="pays">Pays</label>
-          <input id="pays" type="text" class="form-control" [value]="selectedCountry?.nom || ''" readonly />
-        </div>
+        <div class="form-group" *ngIf="client">
+          <label for="paysId">Pays</label>
+          <div id="paysId" class="custom-select">
+            <div class="select-box" (click)="togglePaysDropdown()">
+              <div class="selected-item">
+                {{ getPaysName(clientForm.get('paysId')?.value) || 'Sélectionner un pays' }}
+              </div>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="dropdown-content" [class.show]="isPaysDropdownOpen">
+              <div class="search-box">
+                <input type="text"
+                       placeholder="Rechercher un pays..."
+                       [(ngModel)]="paysSearchTerm"
+                       [ngModelOptions]="{ standalone: true }"
+                       (ngModelChange)="onPaysSearch()" />
+              </div>
+              <div class="option-list">
+                <ng-container *ngIf="filteredPays.length > 0; else noPaysResults">
+                  <div *ngFor="let pays of filteredPays"
+                       class="option-item"
+                       (click)="selectPays(pays.idPays)">
+                    {{ pays.nom || '–' }}
+                  </div>
+                  <div class="option-item autre" (click)="openPaysModal()">
+                    Autre…
+                  </div>
+                </ng-container>
+                <ng-template #noPaysResults>
+                  <div class="no-results">
+                    <span class="no-results-icon">🔍</span>
+                    <p class="no-results-text">Aucun pays trouvé</p>
+                    <div class="option-item autre" (click)="openPaysModal()">
+                      Autre…
+                    </div>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>        
       </div>
   
       <!-- Ligne 3 : Société & Téléphone -->
       <div class="form-row">
-        <div class="form-group">
-          <label for="societe">Société <span class="required">*</span></label>
-          <input id="societe" type="text" class="form-control" [value]="client?.societe?.nom || ''" readonly />
-        </div>
+        <div class="form-group" *ngIf="mode==='edit'">
+          <label for="societeId">Société <span class="required">*</span></label>
+          <div id="societeId" class="custom-select">
+            <div class="select-box" (click)="toggleSocieteDropdown()">
+              <div class="selected-item">
+                {{ getSocieteName(clientForm.get('societeId')?.value) || 'Sélectionner une société' }}
+              </div>
+              <span class="arrow">▼</span>
+            </div>
+            <div class="dropdown-content" [class.show]="isSocieteDropdownOpen">
+              <div class="search-box">
+                <input type="text"
+                       placeholder="Rechercher une société..."
+                       [(ngModel)]="societeSearchTerm"
+                       [ngModelOptions]="{ standalone: true }"
+                       (ngModelChange)="onSocieteSearch()" />
+              </div>
+              <div class="option-list">
+                <ng-container *ngIf="filteredSocietes.length > 0; else noSocieteResults">
+                  <div *ngFor="let s of filteredSocietes"
+                       class="option-item"
+                       (click)="selectSociete(s.id)">
+                    {{ s.nom || '–' }}
+                  </div>
+                </ng-container>
+                <ng-template #noSocieteResults>
+                  <div class="no-results">
+                    <span class="no-results-icon">🔍</span>
+                    <p class="no-results-text">Aucune société trouvée</p>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+        </div>        
         <div class="form-group">
           <label for="numTelephone">Téléphone <span class="required">*</span></label>
           <div class="input-group">

@@ -1,253 +1,205 @@
-/* Main container styling */
-/*detail-utilisateur*/
-
-.form-container {
-  background-color: white;
-  padding: 2rem;
-  width: 90%;
-  max-width: 1200px; /* Limite la largeur pour les grands écrans */
-  margin: 0 auto;
-  font-weight: 500;
-  border-radius: 8px; /* Coins arrondis pour la boîte */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Ombre légère pour l'effet de profondeur */
+/* Variables CSS pour les couleurs */
+:host {
+  --primary-orange: #fa9745;
+  --light-orange: #ffbb94;
+  --coral: #fb9590;
+  --burgundy: #dc586d;
+  --deep-red: #dc2b37;
+  --dark-red: #b6232d;
+  --white: #ffffff;
+  --light-gray: #f8f9fa;
+  --medium-gray: #e9ecef;
+  --dark-gray: #6c757d;
+  --text-dark: #2c3e50;
+  --text-light: #7a8ba8;
+  --shadow: rgba(0, 0, 0, 0.08);
+  --shadow-hover: rgba(0, 0, 0, 0.12);
+  --success: #28a745;
+  --danger: #dc3545;
 }
 
-/* Pour créer un arrière-plan contrasté autour de la form-container */
-body {
-  background-color: #f5f5f5; /* Couleur de fond légère */
-  padding: 4rem;
+/* Container principal simplifié */
+.profile-container {
+  padding: 1.5rem;
+  background: var(--light-gray);
+  min-height: calc(100vh - 80px);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-h1 {
-  font-size: 2.5rem;
-  color: #2d3748;
-  margin: 2rem;
-  margin-left: 2rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  position: relative;
-  padding-bottom: 0.2rem;
-  transition: all 0.3s ease;
+/* Header du profil avec gradient coral-burgundy */
+.profile-header {
+  background: linear-gradient(135deg, #fa695b,#fbb2b2 );
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 16px rgba(251, 149, 144, 0.25);
 }
 
-h1::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 50px;
-  height: 3px;
-  background-color: #f57c00;
-  border-radius: 2px;
-}
-
-/* Style global pour harmoniser les champs de formulaire */
-.form-container input,
-.form-container select,
-.form-container textarea {
-  border: 1px solid rgb(184, 183, 183); /* Bordure noire par défaut */
-  padding: 8px;
-  border-radius: 4px;
-  font-size: 14px;
-  outline: none; /* Supprime la bordure bleue au focus */
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Style au focus (tous les champs auront une bordure noire ou une bordure personnalisée au focus) */
-.form-container input:focus,
-.form-container select:focus,
-.form-container textarea:focus {
-  outline: none;
-  border-color: #fa9745;
-  box-shadow: 0 0 0 3px rgba(250, 151, 69, 0.2);
-}
-
-/* Optionnel : ajouter un style spécifique pour les champs invalides */
-.form-container input.is-invalid,
-.form-container select.is-invalid {
-  border-color: rgb(232, 2, 2);;
-}
-
-.invalid-feedback {
-  display: block;  /* S'assure que l'élément est affiché */
-  color: rgb(232, 2, 2);  /* Couleur rouge pour indiquer l'erreur */
-  font-size: 0.875em;  /* Taille de police adaptée */
-  margin-top: 0.25rem;
-}
-
-
-h2 {
-  margin-bottom: 2rem;
-  font-weight: 500;
-}
-
-.form-row {
-  display: flex;
-  gap: 2rem;
-  margin-bottom: 1rem;
-}
-
-.form-group {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-label {
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-  color: #333;
-}
-
-.required {
-  color: red;
-}
-
-input, select {
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-
-#telephone {
-  width: 100%; /* ou la taille souhaitée */
-}
-
-select {
-  background-color: white;
-}
-
-.toggle-row {
-  display: flex;
-  gap: 12.6rem;
-  margin-top: 40px;
-  margin-bottom: 0.1rem;
-  margin-right: 50px;
-}
-
-.toggle-group {
+.profile-info {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-/* Style pour le toggle switch */
-.toggle-switch {
-  position: relative;
-  width: 50px;
-  height: 32px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-label {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 24px;
-}
-
-.toggle-label:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
+/* Avatar avec accent burgundy */
+.profile-avatar {
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
-}
-
-input:checked + .toggle-label {
-  background-color: #f4811e;
-}
-
-input:checked + .toggle-label:before {
-  transform: translateX(26px);
-}
-
-.button-group {
+  background: var(--white);
   display: flex;
-  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fe4f3f;
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+  border: 2px solid var(--white);
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
-.btn-create {
-  background-color: #f4811e;
-  color: white;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 10px;
-  cursor: pointer;
+/* Détails du profil simplifiés */
+.profile-details h1 {
+  color: var(--white);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0;
+}
+
+.profile-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
   font-weight: 500;
-  
 }
 
-
-
-.btn-cancel {
-  background-color: #fc5203;
-  color: #ffffff;
-  border: 1px solid #fc5203;
-  padding: 0.75rem 2rem;
-  border-radius: 10px;
-  cursor: pointer;
-  
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background: #00ff88;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.5);
 }
 
-/* Styles pour les états hover */
-.btn-create:hover {
-  background-color: #e67716;
-  transition: all 0.2s ease;
+/* Container du formulaire simplifié */
+.form-container {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 12px var(--shadow);
+  border-top: 3px solid #fbb2b2;
 }
 
-.btn-cancel:hover {
-  background-color: #e74a01;
-  transition: all 0.2s ease;
-}
-
-
-
-
-.password-container {
+.form-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 1.5rem;
   position: relative;
-  width: 100%;
+  padding-bottom: 0.5rem;
 }
 
-.password-container input {
-  width: 100%;
-  padding-right: 30px;  /* Espacement pour laisser de la place à l'icône */
-}
-
-.password-container i {
+.form-title::after {
+  content: '';
   position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
-  color: #000000;  /* Couleur de l'icône */
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--coral), var(--burgundy));
+  border-radius: 2px;
 }
 
+/* Rangées de formulaire */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
 
-/* Appliquer le curseur 'not-allowed' à la zone du toggle quand l'input est désactivé */
-.toggle-switch input:disabled + .toggle-label {
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.required {
+  color: var(--deep-red);
+  font-weight: 600;
+}
+
+/* Contrôles de formulaire avec accents burgundy */
+.form-control {
+  padding: 0.75rem;
+  border: 1px solid var(--medium-gray);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  background: var(--white);
+  color: var(--text-dark);
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #fbb8b2;
+  box-shadow: 0 0 0 2px rgba(220, 88, 109, 0.15);
+}
+
+.form-control:read-only {
+  background: var(--light-gray);
+  color: var(--dark-gray);
   cursor: not-allowed;
 }
 
+.form-control.is-invalid {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1);
+}
+
+/* Container de mot de passe */
+.password-container {
+  position: relative;
+}
+
+.password-container .fa {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--dark-gray);
+  cursor: pointer;
+  font-size: 1rem;
+  transition: color 0.2s ease;
+}
+
+.password-container .fa:hover {
+  color: var(--coral);
+}
+
+/* Groupe d'input avec préfixe coral */
 .input-group {
   display: flex;
-  align-items: stretch;
-  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--medium-gray);
+  transition: all 0.2s ease;
+}
+
+.input-group:focus-within {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 2px rgba(251, 149, 144, 0.15);
 }
 
 .input-group-prepend {
@@ -255,44 +207,175 @@ input:checked + .toggle-label:before {
 }
 
 .input-group-text {
+  background: #e3e3e3;
+  color: black;
+  padding: 0.75rem;
+  border: none;
   display: flex;
   align-items: center;
-  padding: 0.375rem 0.75rem;
-  font-size: 1rem;
-  font-weight: 400;
-  line-height: 1.5;
-  color: #495057;
-  text-align: center;
-  white-space: nowrap;
-  background-color: #f8f9fa;
-  border: 1px solid #ced4da;
-  border-radius: 4px 0 0 4px;
-  border-right: none;
+  font-weight: 500;
+  font-size: 0.85rem;
+  min-width: 80px;
+  justify-content: center;
 }
 
 .input-group .form-control {
-  position: relative;
-  flex: 1 1 auto;
-  width: 1%;
-  min-width: 0;
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
+.input-group .form-control:focus {
+  box-shadow: none;
+}
+
+/* Messages d'erreur */
+.invalid-feedback {
+  color: var(--danger);
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 0.25rem;
+  padding-left: 0.25rem;
+  display: block;
+}
+
+/* Groupe de boutons simplifié */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--medium-gray);
+}
+
+/* Boutons avec nouvelles couleurs */
+.btn-cancel {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #b6232d;
+  background: transparent;
+  color: #b6232d;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.btn-cancel:hover {
+  background: #b6232db1;
+  color: var(--white);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(122, 139, 168, 0.3);
+}
+
+.btn-create {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #fbb8b2, #fe4f3f);
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(251, 149, 144, 0.3);
+}
+
+.btn-create:hover:not(:disabled) {
+  background: linear-gradient(135deg, #fe4f3f, #d64133);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(220, 88, 109, 0.4);
+}
+
+.btn-create:disabled {
+  background: var(--dark-gray);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Spinner de chargement */
 .spinner {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  border: 2px solid rgba(0, 0, 0, 0.2);
-  border-top-color: rgba(0, 0, 0, 0.6);
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid var(--white);
   border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  margin-right: 5px;
-  margin-top: 5px;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Effets de survol améliorés */
+.form-control:hover:not(:focus):not(:read-only) {
+  border-color: var(--coral);
+  transition: border-color 0.2s ease;
+}
+
+.input-group:hover:not(:focus-within) {
+  border-color: var(--coral);
+  transition: border-color 0.2s ease;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .profile-container {
+    padding: 1rem;
+  }
+  
+  .profile-header {
+    padding: 1rem;
+    background: linear-gradient(135deg, var(--coral), var(--burgundy));
+  }
+  
+  .profile-info {
+    gap: 0.75rem;
+  }
+  
+  .profile-avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
+  }
+  
+  .profile-details h1 {
+    font-size: 1.25rem;
+  }
+  
+  .form-container {
+    padding: 1rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .button-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-title {
+    font-size: 1.1rem;
+  }
+  
+  .profile-details h1 {
+    font-size: 1.1rem;
+  }
+  
+  .btn-cancel,
+  .btn-create {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.85rem;
   }
 }

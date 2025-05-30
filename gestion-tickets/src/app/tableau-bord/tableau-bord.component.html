@@ -49,7 +49,18 @@
         </div>
       </a>
     </div>
-
+    <div class="stat-box" *ngIf="isClient()">
+      <a class="stat-content">
+        <div class="stat-title">Projets</div>
+        <div class="stat-value">{{ projectsCount || 0 }}</div>
+        <div class="stat-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M10,2H14A2,2 0 0,1 16,4V6H20A2,2 0 0,1 22,8V19A2,2 0 0,1 20,21H4C2.89,21 2,20.1 2,19V8C2,6.89 2.89,6 4,6H8V4C8,2.89 8.89,2 10,2M14,6V4H10V6H14Z" />
+          </svg>
+        </div>
+      </a>
+    </div>
 
     <!-- Pays : uniquement pour SuperAdmin -->
     <div class="stat-box has-action" *ngIf="isSuperAdmin()">
@@ -97,7 +108,7 @@
 
     <!-- Utilisateurs : uniquement pour SuperAdmin -->
     <div class="stat-box" *ngIf="isSuperAdmin()">
-      <a [routerLink]="['/home', 'utilisateurs']" class="stat-content">
+      <a [routerLink]="['/home', 'clients']" class="stat-content">
         <div class="stat-title">Clients</div>
         <div class="stat-value">{{ clientsCount || 0 }}</div>
         <div class="stat-icon">
@@ -126,46 +137,76 @@
   <!-- Filtres dynamiques -->
   <form class="filters" (ngSubmit)="applyFilters()">
     <ng-container *ngIf="isSuperAdmin()">
-      <label>
-        Client :
-        <select [(ngModel)]="filter.clientId" name="clientId">
+      <div class="filter-group">
+        <label for="client-select">Client</label>
+        <select
+          id="client-select"
+          [(ngModel)]="filter.clientId"
+          name="clientId"
+          (ngModelChange)="updateProjectList(); applyFilters()">
           <option [ngValue]="null">Tous</option>
           <option *ngFor="let u of clientUsers" [ngValue]="u.id">
             {{ u.firstName }} {{ u.lastName }}
           </option>
         </select>
-      </label>
-
-      <label>
-        Personnel :
-        <select [(ngModel)]="filter.personnelId" name="personnelId">
+      </div>
+  
+      <div class="filter-group">
+        <label for="personnel-select">Personnel</label>
+        <select
+          id="personnel-select"
+          [(ngModel)]="filter.personnelId"
+          name="personnelId"
+          (ngModelChange)="updateProjectList(); applyFilters()">
           <option [ngValue]="null">Tous</option>
           <option *ngFor="let u of personnelUsers" [ngValue]="u.id">
             {{ u.firstName }} {{ u.lastName }}
           </option>
         </select>
-      </label>
+      </div>
     </ng-container>
-
-    <label>
-      Période :
-      <input type="date" [(ngModel)]="filter.start" name="start" />
-      à
-      <input type="date" [(ngModel)]="filter.end" name="end" />
-    </label>
-
-    <label>
-      Par :
-      <select [(ngModel)]="filter.granularity" name="granularity">
+  
+    <div class="filter-group">
+      <label for="project-select">Projet</label>
+      <select
+        id="project-select"
+        [(ngModel)]="filter.projectId"
+        name="projectId"
+        (ngModelChange)="applyFilters()">
+        <option [ngValue]="null">Tous</option>
+        <option *ngFor="let p of projects" [ngValue]="p.id">
+          {{ p.nom }}
+        </option>
+      </select>
+    </div>
+  
+    <div class="filter-group date-range">
+      <label>Période</label>
+      <div class="date-inputs">
+        <input class="filter-date" type="date" [(ngModel)]="filter.start" name="start" />
+        <span class="date-separator">à</span>
+        <input class="filter-date" type="date" [(ngModel)]="filter.end" name="end" />
+      </div>
+    </div>
+  
+    <div class="filter-group">
+      <label for="granularity-select">Par</label>
+      <select
+        id="granularity-select"
+        [(ngModel)]="filter.granularity"
+        name="granularity">
         <option value="daily">Jour</option>
         <option value="weekly">Semaine</option>
         <option value="monthly">Mois</option>
         <option value="yearly">Année</option>
       </select>
-    </label>
-
-    <button type="submit">Appliquer</button>
+    </div>
+  
+    <div class="filter-actions">
+      <button type="submit">Appliquer</button>
+    </div>
   </form>
+  
 
   <!-- Graphiques dynamiques -->
   <div class="charts-container">

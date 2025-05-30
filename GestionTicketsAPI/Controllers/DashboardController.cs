@@ -59,7 +59,8 @@ namespace GestionTicketsAPI.Controllers
           req.Start,
           req.End,
           req.Granularity,
-          req.UserId              // <— filtre éventuel sur un autre utilisateur
+          req.UserId,              // <— filtre éventuel sur un autre utilisateur
+          req.ProjetId 
       );
 
       return Ok(data);
@@ -78,7 +79,8 @@ namespace GestionTicketsAPI.Controllers
           req.End,
           req.Granularity,
           req.OwnerId,
-          req.PersonnelId
+          req.PersonnelId,
+          req.ProjetId  
       );
 
       return Ok(data);
@@ -96,7 +98,8 @@ namespace GestionTicketsAPI.Controllers
           req.End,
           req.Granularity,
           req.OwnerId,
-          req.PersonnelId
+          req.PersonnelId,
+          req.ProjetId
       );
 
       return Ok(data);

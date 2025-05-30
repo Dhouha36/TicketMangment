@@ -17,7 +17,8 @@ namespace GestionTicketsAPI.Services
            DateTime? start,
            DateTime? end,
            string granularity,
-           int? filterUserId
+           int? filterUserId,
+           int? projetId
        );
 
     IEnumerable<TicketStatDto> GetTicketCountsByStatusAndPeriod(
@@ -27,7 +28,8 @@ namespace GestionTicketsAPI.Services
           DateTime? end,
           string granularity,
           int? clientId,
-          int? personnelId
+          int? personnelId,
+          int? projetId
       );
     IEnumerable<TicketStatDto> GetTicketsFiltered(
         int currentUserId,
@@ -36,7 +38,8 @@ namespace GestionTicketsAPI.Services
         DateTime? end,
         string granularity,
         int? clientId,
-        int? personnelId
+        int? personnelId,
+        int? projetId
     );
   }
 
@@ -49,6 +52,10 @@ namespace GestionTicketsAPI.Services
       _context = context;
     }
 
+    private bool IsClient(int userId)
+    {
+      return _context.Clients.Any(c => c.Id == userId);
+    }
     public DashboardCountsDto GetDashboardCounts(int userId, string role)
     {
       var dto = new DashboardCountsDto();
@@ -56,13 +63,11 @@ namespace GestionTicketsAPI.Services
       // 1) Les counts visibles uniquement pour le super admin
       //    => si l’utilisateur est super admin, on compte tout ; sinon on ne renvoie rien (ou 0).
       bool isSuperAdmin = string.Equals(role, "super admin", StringComparison.OrdinalIgnoreCase);
-
+      bool isClient = IsClient(userId);
       int totalUsers = _context.Users.Count();
 
       // 1) Comptage distinct Clients vs Personnel (comparaison en ToLower())
-      int clients = _context.Users
-          .Count(u => u.Role.Name.ToLower() == "client");
-      int personnel = totalUsers - clients;
+      int clients = _context.Clients.Count();
 
       if (isSuperAdmin)
       {
@@ -71,13 +76,19 @@ namespace GestionTicketsAPI.Services
         dto.SocietesCount = _context.Societes.Count();
         dto.StatutsCount = _context.StatutsDesTickets.Count();
         dto.ClientsCount = clients;
-        dto.PersonnelCount = personnel;
+        dto.PersonnelCount = totalUsers;
       }
 
       // 2) Comptage des Projets
       if (isSuperAdmin)
       {
         dto.ProjectsCount = _context.Projets.Count();
+      }
+      else if (isClient)
+      {
+        // For clients: count projects where they are associated via ProjetClient
+        dto.ProjectsCount = _context.ProjetClients
+              .Count(pc => pc.ClientId == userId);
       }
       else
       {
@@ -111,11 +122,9 @@ namespace GestionTicketsAPI.Services
                           t.Projet.ProjetUsers.Any(pu => pu.UserId == userId)))
               .Count();
         }
-        else if (string.Equals(role, "client", StringComparison.OrdinalIgnoreCase))
+        else if (isClient)
         {
-          dto.TicketsCount = _context.Tickets
-              .Where(t => t.OwnerId == userId)
-              .Count();
+          dto.TicketsCount = _context.Tickets.Where(t => t.OwnerId == userId).Count();
         }
         else
         {
@@ -144,7 +153,7 @@ namespace GestionTicketsAPI.Services
               (t.ResponsibleId == userId ||
                t.Projet.ProjetUsers.Any(pu => pu.UserId == userId)));
         }
-        else if (string.Equals(role, "client", StringComparison.OrdinalIgnoreCase))
+        else if (isClient)
         {
           filteredTickets = filteredTickets.Where(t => t.OwnerId == userId);
         }
@@ -176,8 +185,8 @@ namespace GestionTicketsAPI.Services
 
     public int GetMyTicketsCount(int userId)
     {
-        return _context.Tickets
-            .Count(t => t.ResponsibleId == userId);
+      return _context.Tickets
+          .Count(t => t.ResponsibleId == userId);
     }
 
     public IEnumerable<TicketStatDto> GetTicketCountsByUserAndPeriod(
@@ -186,12 +195,15 @@ namespace GestionTicketsAPI.Services
             DateTime? start,
             DateTime? end,
             string granularity,
-            int? filterUserId
+            int? filterUserId,
+            int? projetId
         )
     {
       var query = _context.Tickets.AsQueryable();
       query = ApplyRoleFilter(query, userId, role, filterUserId);
 
+      if (projetId.HasValue)
+        query = query.Where(t => t.ProjetId == projetId.Value);
       if (start.HasValue)
         query = query.Where(t => t.CreatedAt >= start.Value.Date);
       if (end.HasValue)
@@ -207,7 +219,7 @@ namespace GestionTicketsAPI.Services
         ),
         "weekly" => GenerateStats(
             query
-              .AsEnumerable() 
+              .AsEnumerable()
               .GroupBy(t => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
                   t.CreatedAt.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
               .Select(g => new { Year = g.First().CreatedAt.Year, Week = g.Key, Count = g.Count() })
@@ -228,7 +240,8 @@ namespace GestionTicketsAPI.Services
     int userId, string role,
     DateTime? start, DateTime? end,
     string granularity,
-    int? clientId, int? personnelId)
+    int? clientId, int? personnelId,
+    int? projetId)
     {
       // 1️⃣ Filtre par rôle
       var query = ApplyRoleFilter(_context.Tickets.AsQueryable(), userId, role, null);
@@ -239,6 +252,8 @@ namespace GestionTicketsAPI.Services
       if (personnelId.HasValue)
         query = query.Where(t => t.ResponsibleId == personnelId.Value);
 
+      if (projetId.HasValue)
+        query = query.Where(t => t.ProjetId == projetId.Value);
       // 3️⃣ Filtre dates
       if (start.HasValue)
         query = query.Where(t => t.CreatedAt >= start.Value.Date);
@@ -269,7 +284,7 @@ namespace GestionTicketsAPI.Services
         ),
         "weekly" => GenerateStats(
             query
-              .AsEnumerable()  
+              .AsEnumerable()
               .GroupBy(t => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
                   t.CreatedAt.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
               .Select(g => new { Year = g.First().CreatedAt.Year, Week = g.Key, Count = g.Count() })
@@ -298,73 +313,70 @@ namespace GestionTicketsAPI.Services
           .ToList();
     }
 
-    private IQueryable<Ticket> ApplyRoleFilter(
-        IQueryable<Ticket> query,
-        int userId,
-        string role,
-        int? filterUserId)
+    private IQueryable<Ticket> ApplyRoleFilter(IQueryable<Ticket> query, int userId, string role, int? filterUserId)
     {
       bool isSuperAdmin = role.Equals("super admin", StringComparison.OrdinalIgnoreCase);
+      bool isClient = IsClient(filterUserId ?? userId);
+
+      // Super admin no filter
       if (isSuperAdmin && filterUserId == null)
         return query;
 
       int actualUser = filterUserId ?? userId;
 
-      IQueryable<Ticket> byRole = role.ToLower() switch
+      IQueryable<Ticket> byRole;
+      if (role.Equals("chef de projet", StringComparison.OrdinalIgnoreCase))
       {
-        "chef de projet" => query.Where(t =>
-            t.Projet != null && t.Projet.ChefProjetId == actualUser
-            || t.ResponsibleId == actualUser
-            || t.Projet.ProjetUsers.Any(pu => pu.UserId == actualUser)
-        ),
-        "collaborateur" => query.Where(t =>
-            t.ResponsibleId == actualUser
-            || t.Projet.ProjetUsers.Any(pu => pu.UserId == actualUser)
-        ),
-        "client" => query.Where(t => t.OwnerId == actualUser),
-        _ => query.Where(t =>
-            t.Projet != null
-            && t.Projet.ProjetUsers.Any(pu => pu.UserId == actualUser)
-        )
-      };
+        byRole = query.Where(t => t.Projet != null && (t.Projet.ChefProjetId == actualUser ||
+                           t.ResponsibleId == actualUser ||
+                           t.Projet.ProjetUsers.Any(pu => pu.UserId == actualUser)));
+      }
+      else if (role.Equals("collaborateur", StringComparison.OrdinalIgnoreCase))
+      {
+        byRole = query.Where(t => t.ResponsibleId == actualUser ||
+                           t.Projet.ProjetUsers.Any(pu => pu.UserId == actualUser));
+      }
+      else if (isClient)
+      {
+        byRole = query.Where(t => t.OwnerId == actualUser);
+      }
+      else
+      {
+        byRole = query.Where(t => t.Projet != null &&
+                           t.Projet.ProjetUsers.Any(pu => pu.UserId == actualUser));
+      }
 
       var byCreator = query.Where(t => t.OwnerId == actualUser);
       return byRole.Union(byCreator);
     }
 
     public IEnumerable<TicketStatDto> GetTicketsFiltered(
-    int userId, string role,
-    DateTime? start, DateTime? end,
-    string granularity,
-    int? clientId, int? personnelId)
+              int currentUserId,
+              string role,
+              DateTime? start,
+              DateTime? end,
+              string granularity,
+              int? clientId,
+              int? personnelId,
+              int? projetId)
     {
-      // 1️⃣ Filtrage par rôle (fallback sur userId)
-      var query = ApplyRoleFilter(_context.Tickets.AsQueryable(), userId, role, null);
+      // 1️⃣ Filtrage rôle
+      var query = ApplyRoleFilter(_context.Tickets.AsQueryable(), currentUserId, role, null);
 
-      // 2️⃣ Filtre client/personnel automatique
-      if (clientId.HasValue && personnelId.HasValue)
+      // 2️⃣ Filtre client/personnel basé sur le FK UserId
+      if (clientId.HasValue)
       {
-        // AND
-        query = query.Where(t =>
-            t.OwnerId == clientId.Value &&
-            t.ResponsibleId == personnelId.Value
-        );
+        // clientId est l'ID de la table Clients, on récupère son UserId
+        var userIdFilter = _context.Clients
+            .Where(c => c.Id == clientId.Value)
+            .Select(c => c.Id)
+            .FirstOrDefault();
+        query = query.Where(t => t.OwnerId == userIdFilter);
       }
-      else if (clientId.HasValue)
+      if (personnelId.HasValue)
       {
-        // Seulement client
-        query = query.Where(t =>
-            t.OwnerId == clientId.Value
-        );
+        query = query.Where(t => t.ResponsibleId == personnelId.Value);
       }
-      else if (personnelId.HasValue)
-      {
-        // Seulement personnel
-        query = query.Where(t =>
-            t.ResponsibleId == personnelId.Value
-        );
-      }
-      // sinon : ni client ni personnel → pas de filtre métier
 
       // 3️⃣ Filtre dates
       if (start.HasValue)
@@ -372,34 +384,35 @@ namespace GestionTicketsAPI.Services
       if (end.HasValue)
         query = query.Where(t => t.CreatedAt < end.Value.Date.AddDays(1));
 
+      if (projetId.HasValue)
+        query = query.Where(t => t.ProjetId == projetId.Value);
       // 4️⃣ Agrégation
       return granularity.ToLower() switch
       {
         "daily" => GenerateStats(
             query.GroupBy(t => t.CreatedAt.Date)
-                .Select(g => new { Date = g.Key, Count = g.Count() })
-                .ToList(),
+                 .Select(g => new { Date = g.Key, Count = g.Count() })
+                 .ToList(),
             g => new TicketStatDto { Key = g.Date.ToString("yyyy-MM-dd"), Count = g.Count }
         ),
         "weekly" => GenerateStats(
-            query
-              .AsEnumerable()   
-              .GroupBy(t => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
-                  t.CreatedAt.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
-              .Select(g => new { Year = g.First().CreatedAt.Year, Week = g.Key, Count = g.Count() })
-              .ToList(),
+            query.AsEnumerable()
+                 .GroupBy(t => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
+                     t.CreatedAt.Date, CalendarWeekRule.FirstDay, DayOfWeek.Monday))
+                 .Select(g => new { Year = g.First().CreatedAt.Year, Week = g.Key, Count = g.Count() })
+                 .ToList(),
             g => new TicketStatDto { Key = $"S{g.Week} {g.Year}", Count = g.Count }
         ),
         "monthly" => GenerateStats(
             query.GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
-                .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
-                .ToList(),
+                 .Select(g => new { g.Key.Year, g.Key.Month, Count = g.Count() })
+                 .ToList(),
             g => new TicketStatDto { Key = $"{g.Year}-{g.Month:D2}", Count = g.Count }
         ),
         "yearly" => GenerateStats(
             query.GroupBy(t => t.CreatedAt.Year)
-                .Select(g => new { Year = g.Key, Count = g.Count() })
-                .ToList(),
+                 .Select(g => new { Year = g.Key, Count = g.Count() })
+                 .ToList(),
             g => new TicketStatDto { Key = g.Year.ToString(), Count = g.Count }
         ),
         _ => throw new ArgumentException("Granularity must be 'daily', 'weekly', 'monthly' or 'yearly'.")

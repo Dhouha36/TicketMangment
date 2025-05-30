@@ -352,4 +352,21 @@ export class UserProfileComponent implements OnInit {
       && (this.userDetails as any).paysId !== undefined
       && Array.isArray((this.userDetails as any).projets);
   }
+
+  getInitials(): string {
+    if (!this.userDetails) {
+      return '';
+    }
+    const first = this.userDetails.firstName ?? '';
+    const last = this.userDetails.lastName ?? '';
+    return `${first.charAt(0).toUpperCase()}${last.charAt(0).toUpperCase()}`;
+  }
+
+  get roleLabel(): string {
+    if (this.userDetails && !this.isClient()) {
+      // on sait que userDetails est un User ici
+      return (this.userDetails as User).role;
+    }
+    return '';
+  }
 }

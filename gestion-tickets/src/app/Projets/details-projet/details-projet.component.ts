@@ -171,7 +171,7 @@ clientSearchTerm: string = '';
         this.availableChefs = users.filter(user => {
           const role = user.role.toLowerCase().trim();
           // Par exemple, pour inclure les utilisateurs avec le rôle "chef de projet" ou "collaborateur"
-          return role === 'chef de projet' || role === 'collaborateur';
+          return role === 'chef de projet';
         });
         this.filteredChefs = [...this.availableChefs];
       },

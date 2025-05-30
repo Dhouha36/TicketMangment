@@ -42,6 +42,7 @@ h2 {
 /* Table styles */
 table {
   width: 100%;
+  table-layout: auto;
   border-collapse: collapse;
   background: white;
   border-radius: 10px;
@@ -66,15 +67,6 @@ td {
   color: #333;
 }
 
-th:nth-child(3),
-td:nth-child(3) {
-  /* Choisis une largeur adaptée à ton design */
-  width: 5500px;
-  /* Autorise le wrapping et casse les mots trop longs */
-  white-space: normal;
-  word-wrap: break-word;
-  word-break: break-word;
-} 
 /* Role badges */
 .role {
   padding: 4px 8px;

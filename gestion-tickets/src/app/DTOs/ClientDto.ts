@@ -20,4 +20,5 @@ export interface ClientDto {
   deletedAt?: string;
   token?: string;
   projets: ProjetMini[];
+  photoUrl?: string;
 }
