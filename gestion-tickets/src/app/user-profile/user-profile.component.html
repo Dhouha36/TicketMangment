@@ -2,16 +2,46 @@
   <!-- Header du profil avec photo -->
   <div class="profile-header">
     <div class="profile-info">
-      <div class="profile-avatar">
-        <!-- Photo de profil ou initiales -->
-        <img *ngIf="userDetails?.photoUrl; else initials" 
-             [src]="userDetails?.photoUrl" 
-             [alt]="userDetails?.firstName + ' ' + userDetails?.lastName"
-             class="profile-avatar">
-        <ng-template #initials>
-          {{ getInitials() }}
+      <div
+        class="profile-avatar"
+        (mouseenter)="hoveringAvatar = true"
+        (mouseleave)="hoveringAvatar = false"
+      >
+        <!-- Si l'utilisateur a une URL de photo (photoFile contient l'URL de preview ou userDetails.photoUrl) -->
+        <img
+          *ngIf="avatarUrl; else showInitials"
+          [src]="avatarUrl"
+          [alt]="userDetails?.firstName + ' ' + userDetails?.lastName"
+          class="profile-avatar"
+        />
+
+        <!-- Sinon, on affiche les initiales -->
+        <ng-template #showInitials>
+          <div class="avatar-initials">
+            {{ getInitials() }}
+          </div>
         </ng-template>
+
+        <!-- Icône pour changer/ajouter la photo, visible uniquement au survol -->
+        <button
+          type="button"
+          class="avatar-edit-btn"
+          *ngIf="hoveringAvatar"
+          (click)="fileInput.click()"
+        >
+          <i class="fa fa-camera"></i> <!-- Vous pouvez remplacer par fa-pencil si vous voulez un crayon -->
+        </button>
+
+        <!-- Input file caché -->
+        <input
+          #fileInput
+          type="file"
+          accept="image/*"
+          style="display: none"
+          (change)="onFileSelected($event)"
+        />
       </div>
+
       <div class="profile-details">
         <h1>
           {{ userDetails?.firstName || 'Aucun' }}
@@ -28,7 +58,7 @@
             <span class="status-dot"></span>
             Client
           </div>
-        </ng-template>                
+        </ng-template>
       </div>
     </div>
   </div>
@@ -37,7 +67,7 @@
     <!-- Formulaire de modification des informations de l'utilisateur -->
     <div class="form-container">
       <h2 class="form-title">Informations du profil</h2>
-      
+
       <form [formGroup]="userForm" (ngSubmit)="onSubmit()">
         <div class="form-row">
           <div class="form-group">
@@ -66,18 +96,21 @@
           <div class="form-group">
             <label for="nouveauPassword">Mot de passe <span class="required">*</span></label>
             <div class="password-container">
-              <input id="nouveauPassword" [type]="passwordVisible ? 'text' : 'password'" formControlName="nouveauPassword"
-                class="form-control"
+              <input id="nouveauPassword" [type]="passwordVisible ? 'text' : 'password'"
+                formControlName="nouveauPassword" class="form-control"
                 [class.is-invalid]="userForm.controls['nouveauPassword'].touched && userForm.controls['nouveauPassword'].invalid" />
               <i class="fa" [ngClass]="passwordVisible ? 'fa-eye-slash' : 'fa-eye'"
                 (click)="togglePasswordVisibility()"></i>
-              <div *ngIf="userForm.controls['nouveauPassword'].hasError('required')" class="invalid-feedback text-start">
+              <div *ngIf="userForm.controls['nouveauPassword'].hasError('required')"
+                class="invalid-feedback text-start">
                 Mot de passe est obligatoire
               </div>
-              <div *ngIf="userForm.controls['nouveauPassword'].hasError('minlength')" class="invalid-feedback text-start">
+              <div *ngIf="userForm.controls['nouveauPassword'].hasError('minlength')"
+                class="invalid-feedback text-start">
                 Mot de passe doit avoir au moins 8 caractères
               </div>
-              <div *ngIf="userForm.controls['nouveauPassword'].hasError('maxlength')" class="invalid-feedback text-start">
+              <div *ngIf="userForm.controls['nouveauPassword'].hasError('maxlength')"
+                class="invalid-feedback text-start">
                 Mot de passe ne doit pas dépasser 16 caractères
               </div>
             </div>

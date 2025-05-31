@@ -9,4 +9,5 @@ export interface ClientUpdateDto {
   societeId:     number;
   nouveauPassword?:          string;
   confirmNouveauPassword?:   string;
+  photoFile?:    File; 
 }

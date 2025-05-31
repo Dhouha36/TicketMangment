@@ -64,30 +64,35 @@ export class HeaderComponent implements OnInit {
 
 
   ngOnInit(): void {
-    this.currentUser = this.accountService.currentUser();
-    if (this.currentUser) {
-      this.userInitials =
-        this.currentUser.firstName.charAt(0).toUpperCase() +
-        this.currentUser.lastName.charAt(0).toUpperCase();
-    }
-
-    const user = this.accountService.currentUser();
-    if (user?.id) {
-      const uid = user.id.toString();
-      this.notifSvc.startConnection(user.id.toString());
-      // Charge l’historique, compte seulement les non-lues 
-      this.notifSvc.getNotifications(uid)
-        .subscribe(notifs => {
-          this.notifications = notifs;
-          this.unreadCount = notifs.filter(n => !n.isRead).length;
+    //  1) On s’abonne dès le départ à currentUser$ pour être notifié à tout changement
+    this.accountService.currentUser$.subscribe((user) => {
+      this.currentUser = user;
+      if (user) {
+        // Calcul des initiales
+        this.userInitials =
+          user.firstName.charAt(0).toUpperCase() +
+          user.lastName.charAt(0).toUpperCase();
+        // On (re)lance la connexion aux notifications si besoin
+        const uid = user.id.toString();
+        this.notifSvc.startConnection(uid);
+        this.notifSvc
+          .getNotifications(uid)
+          .subscribe((notifs) => {
+            this.notifications = notifs;
+            this.unreadCount = notifs.filter((n) => !n.isRead).length;
+          });
+        // S’abonner aux notifications en temps réel
+        this.notifSvc.notification$.subscribe((dto: AppNotification) => {
+          this.notifications.unshift(dto);
+          this.unreadCount++;
         });
-
-      // En temps réel, on crée la notification avec isRead=false
-      this.notifSvc.notification$.subscribe((dto: AppNotification) => {
-        this.notifications.unshift(dto);
-        this.unreadCount++;
-      });
-    }
+      } else {
+        // Cas logout : on vide les notifications
+        this.userInitials = '';
+        this.notifications = [];
+        this.unreadCount = 0;
+      }
+    });
   }
 
   toggleNotifications(): void {

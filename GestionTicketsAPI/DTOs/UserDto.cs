@@ -12,6 +12,7 @@ public class UserDto
     public required string NumTelephone { get; set; }
     public required string Pays { get; set; }
     public required bool Actif { get; set; }
+    public string PhotoUrl { get; set; }
     public required string Token { get; set; }
     public string? InitialPassword { get; set; }
     public SocieteDto? Societe { get; set; }

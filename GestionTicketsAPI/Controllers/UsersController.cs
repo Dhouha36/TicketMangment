@@ -109,18 +109,19 @@ namespace GestionTicketsAPI.Controllers
 
 
 
-    [HttpPost("{id:int}")]
-    public async Task<ActionResult> UpdateUser(int id, [FromBody] UserUpdateDto userUpdateDto)
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<UserDto>> UpdateUser(int id, [FromForm] UserUpdateDto userUpdateDto)
     {
       if (id != userUpdateDto.Id)
         return BadRequest("L'ID de l'URL ne correspond pas à celui du body.");
 
-      var result = await _userService.UpdateUserAsync(userUpdateDto);
-      if (!result)
+      var updatedUserDto = await _userService.UpdateUserAsync(userUpdateDto);
+      if (updatedUserDto == null)
         return NotFound("Utilisateur non trouvé.");
 
-      return NoContent();
+      return Ok(updatedUserDto);
     }
+
 
 
     [HttpGet("role/{roleName}")]

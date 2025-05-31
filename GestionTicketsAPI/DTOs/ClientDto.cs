@@ -12,6 +12,7 @@ public class ClientDto
         public int PaysId { get; set; }
         public required string Pays { get; set; }
         public required bool Actif { get; set; }
+        public string PhotoUrl { get; set; }
         public string? Token { get; set; }
         public string InitialPassword { get; set; } = string.Empty;
         public int SocieteId { get; set; }  

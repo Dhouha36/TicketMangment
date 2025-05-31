@@ -24,11 +24,5 @@ namespace GestionTicketsAPI.DTOs
 
         [Required]
         public int ProjetId { get; set; }
-
-        // Fichier attaché encodé en Base64
-        public string? AttachmentBase64 { get; set; }
-        
-        // Nom du fichier attaché (permet de conserver l'extension)
-        public string? AttachmentFileName { get; set; }
     }
 }

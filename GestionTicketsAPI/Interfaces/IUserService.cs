@@ -21,7 +21,7 @@ public interface IUserService
         // Supprime un utilisateur via son identifiant
         Task<bool> DeleteUserAsync(int id);
 
-        Task<bool> UpdateUserAsync(UserUpdateDto userUpdateDto);
+        Task<UserDto?> UpdateUserAsync(UserUpdateDto userUpdateDto);
         Task<IEnumerable<UserDto>> GetUsersByRoleAsync(string roleName);
         Task<IEnumerable<UserDto>> GetUsersFilteredAsync(UserParams userParams);
 

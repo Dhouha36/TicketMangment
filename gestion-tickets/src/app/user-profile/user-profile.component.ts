@@ -1,5 +1,6 @@
+import { Photo } from './../_models/photo';
 import { ClientService } from './../_services/client.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, AbstractControl, ValidationErrors, ValidatorFn, ReactiveFormsModule } from '@angular/forms';
 import { User } from '../_models/user';
 import { AccountService } from '../_services/account.service';
@@ -32,16 +33,19 @@ export const newPasswordMatchValidator: ValidatorFn = (control: AbstractControl)
   styleUrls: ['./user-profile.component.css']
 })
 export class UserProfileComponent implements OnInit {
+  hoveringAvatar = false;
+  avatarUrl: string | null = null;
+
   userDetails: User | ClientDto | null = null;
   userForm!: FormGroup;
   passwordVisible: boolean = false;
   confirmPasswordVisible: boolean = false;
-
-  // Liste des pays chargée via PaysService
   paysList: any[] = [];
-  // Propriété pour afficher le drapeau et le code téléphone
   selectedCountry: any = null;
   isLoading: boolean = false;
+
+  selectedPhotoFile: File | null = null;
+  photoPreviewUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -58,10 +62,8 @@ export class UserProfileComponent implements OnInit {
   }
 
   ngOnInit(): void {
-
     this.initForm();
     this.globalLoaderService.showGlobalLoader();
-    // Charger la liste des pays avant de charger l'utilisateur
     this.paysService.getPays().subscribe({
       next: (pays) => {
         this.paysList = pays;
@@ -78,7 +80,7 @@ export class UserProfileComponent implements OnInit {
     this.userForm = this.fb.group({
       id: [null],
       lastName: [{ value: '', disabled: true }, Validators.required],
-      firstName:[{ value: '', disabled: true }, Validators.required],
+      firstName: [{ value: '', disabled: true }, Validators.required],
       email: ['', [Validators.required, Validators.email]],
       numTelephone: ['', [
         Validators.required,
@@ -97,6 +99,8 @@ export class UserProfileComponent implements OnInit {
       // Changement de mot de passe (optionnel)
       nouveauPassword: ['', [Validators.minLength(8), Validators.maxLength(16)]],
       confirmNouveauPassword: [''],
+      // --- ON AJOUTE LE FormControl photoFile POUR QUE LE FORMULAIRE SOIT DIRTY LORSQU’ON SÉLECTIONNE UNE IMAGE ---
+      photoFile: [null]
     }, { validators: newPasswordMatchValidator });
   }
 
@@ -110,67 +114,169 @@ export class UserProfileComponent implements OnInit {
     return pays ? pays.nom : '';
   }
 
-
   loadUserDetails(): void {
     this.globalLoaderService.showGlobalLoader();
-    this.userDetails = this.accountService.currentUser();
-    if (!this.userDetails) {
+  
+    // 1) On lit l’objet en session pour récupérer seulement l’ID
+    const stored = this.accountService.currentUser();
+    if (!stored) {
       this.globalLoaderService.hideGlobalLoader();
       return;
     }
-
-    const country = this.paysList.find(p =>
-      p.idPays === Number((this.userDetails as any).paysId ?? this.userDetails!.pays)
-    );
-    const codeTel = country?.codeTel || '';
-    let localNumber = this.userDetails.numTelephone || '';
-    if (codeTel && localNumber.startsWith(codeTel)) {
-      localNumber = localNumber.substring(codeTel.length).trim();
-    }
-    this.selectedCountry = country;
-
-    const patch: any = {
-      id: this.userDetails.id,
-      lastName: this.userDetails.lastName,
-      firstName: this.userDetails.firstName,
-      email: this.userDetails.email,
-      numTelephone: localNumber,
-      actif: this.userDetails.actif
-    };
-
-    if (this.isClient()) {
-      const c = this.userDetails as ClientDto;
-      this.userForm.patchValue({
-        id: c.id,
-        lastName: c.lastName,
-        firstName: c.firstName,
-        email: c.email,
-        numTelephone: c.numTelephone,
-        actif: c.actif,
-        paysId: c.paysId,
-        societeId: c.societeId,
-        societe:   c.societe.nom,
+  
+    const userId = stored.id;
+    // 2) Si le champ `role` est undefined, c’est un ClientDto
+    const isClientStored = (stored as any).role === undefined;
+  
+    if (isClientStored) {
+      // → on récupère un client
+      this.clientService.getById(userId).subscribe({
+        next: (freshClient: ClientDto) => {
+          // 3a) On met à jour le signal + localStorage
+          this.accountService.setCurrentUser(freshClient);
+  
+          // 4a) On met à jour le composant
+          this.userDetails = freshClient;
+          this.avatarUrl   = (freshClient as any).photoUrl || null;
+  
+          // 5a) On cherche la ligne “pays” correspondante
+          const countryC = this.paysList.find(p =>
+            p.idPays === Number(freshClient.paysId)
+          );
+          this.selectedCountry = countryC || null;
+  
+          // 6a) On patche le formulaire client en enlevant le préfixe du numéro
+          //    (si vous voulez garder “+216” masqué dans la saisie)
+          let localNumberC = freshClient.numTelephone || '';
+          if (countryC?.codeTel && localNumberC.startsWith(countryC.codeTel)) {
+            localNumberC = localNumberC.substring(countryC.codeTel.length).trim();
+          }
+          this.userForm.patchValue({
+            id: freshClient.id,
+            lastName: freshClient.lastName,
+            firstName: freshClient.firstName,
+            email: freshClient.email,
+            numTelephone: localNumberC,
+            actif: freshClient.actif,
+            paysId: freshClient.paysId,
+            societeId: freshClient.societeId,
+            societe: freshClient.societe.nom
+          });
+  
+          // Si la photo existe
+          if ((freshClient as any).photoUrl) {
+            this.photoPreviewUrl = (freshClient as any).photoUrl;
+            this.avatarUrl       = (freshClient as any).photoUrl;
+          }
+  
+          this.userForm.get('lastName')!.disable();
+          this.userForm.get('firstName')!.disable();
+  
+          this.globalLoaderService.hideGlobalLoader();
+        },
+        error: (err) => {
+          console.error('Erreur lors de la récupération du client', err);
+          this.globalLoaderService.hideGlobalLoader();
+        }
       });
     } else {
-      const u = this.userDetails as User;
-      this.userForm.patchValue({
-        id: u.id,
-        lastName: u.lastName,
-        firstName: u.firstName,
-        email: u.email,
-        numTelephone: u.numTelephone,
-        actif: u.actif,
-        pays: u.pays,
-        role: u.role,
+      // → on récupère un utilisateur interne (User)
+      this.accountService.getUser(userId).subscribe({
+        next: (freshUser: User) => {
+          // 3b) On met à jour le signal + localStorage
+          this.accountService.setCurrentUser(freshUser);
+  
+          // 4b) On met à jour le composant
+          this.userDetails = freshUser;
+          this.avatarUrl   = (freshUser as any).photoUrl || null;
+  
+          // 5b) On cherche la ligne “pays” correspondante
+          const countryU = this.paysList.find(p =>
+            p.idPays === Number((freshUser as any).pays)
+          );
+          this.selectedCountry = countryU || null;
+  
+          // 6b) On patche le formulaire User sans le préfixe
+          let localNumberU = freshUser.numTelephone || '';
+          if (countryU?.codeTel && localNumberU.startsWith(countryU.codeTel)) {
+            localNumberU = localNumberU.substring(countryU.codeTel.length).trim();
+          }
+          this.userForm.patchValue({
+            id: freshUser.id,
+            lastName: freshUser.lastName,
+            firstName: freshUser.firstName,
+            email: freshUser.email,
+            numTelephone: localNumberU,
+            actif: freshUser.actif,
+            pays: freshUser.pays,
+            role: freshUser.role
+          });
+  
+          if ((freshUser as any).photoUrl) {
+            this.photoPreviewUrl = (freshUser as any).photoUrl;
+            this.avatarUrl       = (freshUser as any).photoUrl;
+          }
+  
+          this.userForm.get('lastName')!.disable();
+          this.userForm.get('firstName')!.disable();
+  
+          this.globalLoaderService.hideGlobalLoader();
+        },
+        error: (err) => {
+          console.error('Erreur lors de la récupération de l’utilisateur', err);
+          this.globalLoaderService.hideGlobalLoader();
+        }
       });
     }
-
-    this.userForm.patchValue(patch);
+  }  
   
+  private patchFormWithUser(user: User): void {
+    this.userForm.patchValue({
+      id: user.id,
+      lastName: user.lastName,
+      firstName: user.firstName,
+      email: user.email,
+      numTelephone: user.numTelephone,
+      actif: user.actif,
+      pays: user.pays,
+      role: user.role
+    });
+  
+    if ((user as any).photoUrl) {
+      this.photoPreviewUrl = (user as any).photoUrl;
+      this.avatarUrl       = (user as any).photoUrl;
+    }
+  
+    // Verrouiller les champs firstName / lastName
     this.userForm.get('lastName')!.disable();
     this.userForm.get('firstName')!.disable();
-    this.globalLoaderService.hideGlobalLoader();
   }
+
+  private patchFormWithClient(client: ClientDto): void {
+    this.userForm.patchValue({
+      id: client.id,
+      lastName: client.lastName,
+      firstName: client.firstName,
+      email: client.email,
+      numTelephone: client.numTelephone,
+      actif: client.actif,
+      // Pour les clients, on n’affiche pas “role” (il n’existe pas dans ClientDto)
+      paysId: client.paysId,
+      societeId: client.societeId,
+      societe: client.societe.nom
+    });
+  
+    // Si l’API a renvoyé un photoUrl, on l’affiche également
+    if ((client as any).photoUrl) {
+      this.photoPreviewUrl = (client as any).photoUrl;
+      this.avatarUrl       = (client as any).photoUrl;
+    }
+  
+    // Les champs prénom/nom restent en lecture seule
+    this.userForm.get('lastName')!.disable();
+    this.userForm.get('firstName')!.disable();
+  }  
+  
 
   onSubmit(): void {
     if (!this.userForm.dirty) {
@@ -195,117 +301,124 @@ export class UserProfileComponent implements OnInit {
 
   private submitClient(): void {
     const raw = this.userForm.getRawValue();
-    const dto: ClientUpdateDto = {
-      id: raw.id,
-      email: raw.email,
-      firstName: raw.firstName,
-      lastName: raw.lastName,
-      numTelephone: raw.numTelephone,
-      actif: raw.actif,
-      paysId: raw.paysId, 
-      societeId: raw.societeId,
-      nouveauPassword: raw.nouveauPassword || undefined,
-      confirmNouveauPassword: raw.confirmNouveauPassword || undefined
-    };
+    const formData = new FormData();
+    formData.append('Id', raw.id);
+    formData.append('Email', raw.email);
+    formData.append('FirstName', raw.firstName);
+    formData.append('LastName', raw.lastName);
+    formData.append('NumTelephone', raw.numTelephone);
+    formData.append('Actif', raw.actif.toString());
+    formData.append('PaysId', raw.paysId);
+    formData.append('SocieteId', raw.societeId);
   
-    this.loaderService.showLoader();
-    this.clientService.update(dto.id, dto).subscribe({
-      next: () => {
-        this.clientService.getById(dto.id).subscribe({
-          next: updated => {
-            // 1) Restaurer l’ancien token
-            const current = this.accountService.currentUser() as ClientDto;
-            updated.token = current.token;
-  
-            // 2) Mettre à jour le signal
-            this.accountService.setCurrentUser(updated);
-  
-            // 3) Mettre à jour le localStorage
-            localStorage.setItem('user', JSON.stringify(updated));
-  
-            // 4) Recharger le formulaire
-            this.userDetails = updated;
-            this.loadUserDetails();
-  
-            this.toastr.success("Compte mis à jour avec succès.");
-            this.loaderService.hideLoader();
-          },
-          error: () => {
-            this.toastr.error("Compte mis à jour, mais impossible de rafraîchir.");
-            this.loaderService.hideLoader();
-          }
-        });
-      },
-      error: () => {
-        this.toastr.error("Erreur lors de la mise à jour du client.");
-        this.loaderService.hideLoader();
-      }
-    });
-  }
-  
-
-  private submitUser(): void {
-    const dto = this.userForm.getRawValue() as User;
-    this.loaderService.showLoader();
-  
-    // 1) Récupère le token depuis le localStorage
-    const stored = localStorage.getItem('user');
-    let token: string | undefined;
-    if (stored) {
-      try {
-        token = JSON.parse(stored)?.token;
-      } catch {
-        token = undefined;
-      }
+    if (raw.nouveauPassword) {
+      formData.append('NouveauPassword', raw.nouveauPassword);
+      formData.append('ConfirmNouveauPassword', raw.confirmNouveauPassword);
+    }
+    if (this.selectedPhotoFile) {
+      formData.append('PhotoFile', this.selectedPhotoFile, this.selectedPhotoFile.name);
     }
   
-    // 2) Appelle l'API de mise à jour
-    this.accountService.updateUser(dto).subscribe({
-      next: () => {
-        // 3) Recharge l'utilisateur complet
-        this.accountService.getUser(dto.id).subscribe({
-          next: (freshUser) => {
-            if (freshUser) {
-              // 4) Réinjecte le token préservé
-              if (token) {
-                (freshUser as any).token = token;
-              }
-              // 5) Mets à jour le signal et le localStorage
-              this.accountService.setCurrentUser(freshUser);
-              localStorage.setItem('user', JSON.stringify(freshUser));
-  
-              // Rechage le formulaire et UI
-              this.userDetails = freshUser;
-              this.loadUserDetails();
-  
-              this.toastr.success("Compte mis à jour avec succès.");
-              this.userForm.patchValue({
-                nouveauPassword: '',
-                confirmNouveauPassword: ''
-              });
-              // en bonus, tu peux les repasser en pristine et untouched
-              this.userForm.get('nouveauPassword')!.markAsPristine();
-              this.userForm.get('nouveauPassword')!.markAsUntouched();
-              this.userForm.get('confirmNouveauPassword')!.markAsPristine();
-              this.userForm.get('confirmNouveauPassword')!.markAsUntouched();
-            } else {
-              this.toastr.error("Utilisateur mis à jour, mais impossible de le recharger.");
+    this.clientService.update(raw.id, formData).subscribe({
+      next: (updatedClient: ClientDto) => {
+        // 1) Conserver l’ancien token s’il y en avait un
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          try {
+            const current = JSON.parse(stored) as ClientDto;
+            if (current.token) {
+              (updatedClient as any).token = current.token;
             }
-            this.loaderService.hideLoader();
-          },
-          error: () => {
-            this.toastr.error("Erreur lors du rechargement de l'utilisateur.");
-            this.loaderService.hideLoader();
-          }
-        });
+          } catch {}
+        }
+  
+        // 2) Mettre à jour le signal dans AccountService
+        this.accountService.setCurrentUser(updatedClient);
+  
+        // 3) Mettre à jour le localStorage avec le client actualisé
+        localStorage.setItem('user', JSON.stringify(updatedClient));
+  
+        // 4) Mise à jour immédiate de la vue
+        this.userDetails = updatedClient;
+        this.avatarUrl   = (updatedClient as any).photoUrl || null;
+        this.patchFormWithClient(updatedClient);
+  
+        this.toastr.success("Compte client mis à jour avec succès.");
+        this.loaderService.hideLoader();
       },
-      error: () => {
-        this.toastr.error("Erreur lors de la mise à jour de l'utilisateur.");
+      error: (err) => {
+        if (err.status === 400) {
+          this.toastr.error("Requête invalide, veuillez vérifier les champs.");
+        } else if (err.status === 404) {
+          this.toastr.error("Client non trouvé.");
+        } else {
+          this.toastr.error("Erreur lors de la mise à jour du client.");
+        }
         this.loaderService.hideLoader();
       }
     });
   }
+   
+
+  private submitUser(): void {
+    const raw = this.userForm.getRawValue();
+    const formData = new FormData();
+    formData.append('Id', raw.id);
+    formData.append('Email', raw.email);
+    formData.append('FirstName', raw.firstName);
+    formData.append('LastName', raw.lastName);
+    formData.append('NumTelephone', raw.numTelephone);
+    formData.append('Actif', raw.actif.toString());
+    formData.append('Pays', raw.pays);
+    formData.append('Role', raw.role);
   
+    if (raw.nouveauPassword) {
+      formData.append('NouveauPassword', raw.nouveauPassword);
+      formData.append('ConfirmNouveauPassword', raw.confirmNouveauPassword);
+    }
+    if (this.selectedPhotoFile) {
+      formData.append('PhotoFile', this.selectedPhotoFile, this.selectedPhotoFile.name);
+    }
+  
+    this.accountService.updateUser(raw.id, formData).subscribe({
+      next: (updated: User) => {
+        // 1) Conserver l’ancien token s’il y en avait un
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          try {
+            const current = JSON.parse(stored);
+            if (current.token) {
+              (updated as any).token = current.token;
+            }
+          } catch {}
+        }
+  
+        // 2) Mettre à jour le signal dans AccountService
+        this.accountService.setCurrentUser(updated);
+  
+        // 3) Mettre à jour le localStorage avec l’utilisateur actualisé
+        localStorage.setItem('user', JSON.stringify(updated));
+  
+        // 4) Mise à jour immédiate de la vue
+        this.userDetails = updated;
+        this.avatarUrl   = (updated as any).photoUrl || null;
+        this.patchFormWithUser(updated);
+  
+        this.toastr.success('Compte mis à jour avec succès.');
+        this.loaderService.hideLoader();
+      },
+      error: (err) => {
+        if (err.status === 400) {
+          this.toastr.error('Requête invalide, veuillez vérifier les champs.');
+        } else if (err.status === 404) {
+          this.toastr.error('Utilisateur non trouvé.');
+        } else {
+          this.toastr.error('Erreur lors de la mise à jour de l’utilisateur.');
+        }
+        this.loaderService.hideLoader();
+      }
+    });
+  }
   
   onCancel(): void {
     if (!this.userDetails) return;
@@ -321,8 +434,11 @@ export class UserProfileComponent implements OnInit {
         societe: c.societe.nom,     // pas de role ici
         numTelephone: c.numTelephone,
         actif: c.actif,
-        // pas de nouveauPassword / confirmNouveauPassword côté client ?
+        // REMETTRE l'aperçu de la photo
+        photoFile: null
       });
+      this.photoPreviewUrl = (c as any).photoUrl || null;
+      this.avatarUrl = (c as any).photoUrl || null;
     } else {
       const u = this.userDetails as User;
       this.userForm.patchValue({
@@ -333,11 +449,14 @@ export class UserProfileComponent implements OnInit {
         role: u.role,
         numTelephone: u.numTelephone,
         actif: u.actif,
-        // etc.
+        photoFile: null
       });
+      this.photoPreviewUrl = (u as any).photoUrl || null;
+      this.avatarUrl = (u as any).photoUrl || null;
     }
-  }
 
+    this.userForm.get('photoFile')!.reset();
+  }
 
   togglePasswordVisibility(): void {
     this.passwordVisible = !this.passwordVisible;
@@ -364,9 +483,30 @@ export class UserProfileComponent implements OnInit {
 
   get roleLabel(): string {
     if (this.userDetails && !this.isClient()) {
-      // on sait que userDetails est un User ici
       return (this.userDetails as User).role;
     }
     return '';
   }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) {
+      return;
+    }
+    const file = input.files[0];
+    this.selectedPhotoFile = file;
+
+    // Générer un aperçu de la photo en DataURL
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.photoPreviewUrl = e.target.result;
+      this.avatarUrl = e.target.result; // pour mettre à jour l’avatar immédiatement
+    };
+    reader.readAsDataURL(file);
+
+    // Mettre à jour le FormControl 'photoFile' (pour que le FormGroup soit marqué dirty)
+    this.userForm.patchValue({ photoFile: file });
+    this.userForm.get('photoFile')!.markAsDirty();
+  }
+
 }

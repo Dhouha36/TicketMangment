@@ -93,45 +93,30 @@ namespace GestionTicketsAPI.Controllers
     }
 
     [HttpPost]
-    public async Task<ActionResult<TicketDto>> CreateTicket([FromBody] TicketCreateDto dto)
+    public async Task<ActionResult<TicketDto>> CreateTicket(
+    [FromForm] string ticketJson,
+    [FromForm] IFormFile file)
     {
+      // Deserialize the JSON string into DTO
+      var dto = JsonConvert.DeserializeObject<TicketCreateDto>(ticketJson);
       // 0) Validation d’existence
       if (await _ticketService.TicketExists(dto.Title))
         return BadRequest("Un ticket avec ce titre existe déjà");
 
+      // Valider le DTO (vérifier que les champs requis sont présents)
+      if (dto == null || !ModelState.IsValid)
+        return BadRequest(ModelState);
       // 1) Mapping initial
       var ticket = _mapper.Map<Ticket>(dto);
       ticket.CreatedAt = DateTime.UtcNow;
 
-      // 2) Traitement de l’attachement Base64 (s’il existe)
-      if (!string.IsNullOrEmpty(dto.AttachmentBase64) &&
-          !string.IsNullOrEmpty(dto.AttachmentFileName))
+      // 2) Si un fichier est présent, on l’upload directement
+      if (file != null && file.Length > 0)
       {
-        byte[] fileBytes;
-        try
-        {
-          fileBytes = Convert.FromBase64String(dto.AttachmentBase64);
-        }
-        catch (FormatException)
-        {
-          return BadRequest("Le format Base64 de l’attachement est invalide.");
-        }
-
-        // Prépare le dossier wwwroot/attachments
-        var uploadsFolder = Path.Combine(_env.WebRootPath, "attachments");
-        if (!Directory.Exists(uploadsFolder))
-          Directory.CreateDirectory(uploadsFolder);
-
-        // Génère un nom de fichier unique
-        var uniqueFileName = $"{Guid.NewGuid()}_{Path.GetFileName(dto.AttachmentFileName)}";
-        var filePath = Path.Combine(uploadsFolder, uniqueFileName);
-
-        await System.IO.File.WriteAllBytesAsync(filePath, fileBytes);
-
-        // Construit l'URL d'accès (ex: https://monapi.com/attachments/xxx.pdf)
-        var request = HttpContext.Request;
-        var baseUrl = $"{request.Scheme}://{request.Host}";
-        ticket.Attachments = $"{baseUrl}/attachments/{uniqueFileName}";
+        // Upload vers Cloudinary via IFormFile
+        var uploadResult = await _photoService.UploadFileAsync(file);
+        ticket.Attachments = uploadResult.SecureUrl?.ToString()
+                       ?? uploadResult.Uri?.ToString();
       }
 
       // 3) Statut par défaut

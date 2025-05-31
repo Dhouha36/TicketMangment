@@ -35,6 +35,8 @@ namespace GestionTicketsAPI.Entities
 
     [InverseProperty("User")]
     public ICollection<Contrat>? Contrats { get; set; }
+    public int? PhotoId { get; set; }
+    public Photo? Photo { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

@@ -64,23 +64,19 @@ export class TicketService {
 
   // Create ticket returns an Observable.
   createTicket(ticket: TicketCreateDto, file?: File): Observable<any> {
-    // If a file is provided, convert it to base64 and then post the ticket.
+    const formData = new FormData();
+    
+    // Envoyer le JSON sous la clé 'ticketJson' (et non 'ticket')
+    formData.append('ticketJson', JSON.stringify(ticket));
+    
+    // Ajouter le fichier (s'il existe)
     if (file) {
-      return from(this.convertFileToBase64(file)).pipe(
-        switchMap(base64 => {
-          ticket.attachmentBase64 = base64;
-          ticket.attachmentFileName = file.name;
-          return this.http.post(this.baseUrl, ticket);
-        }),
-        catchError(error => {
-          console.error("Erreur lors de la conversion du fichier", error);
-          return throwError(error);
-        })
-      );
-    } else {
-      return this.http.post(this.baseUrl, ticket);
+        formData.append('file', file, file.name);
     }
-  }
+    
+    // Envoyer en multipart/form-data
+    return this.http.post(this.baseUrl, formData);
+}
   
   updateTicket(id: number, ticket: TicketUpdateDto): Observable<any> {
     return this.http.put(`${this.baseUrl}/${id}`, ticket);

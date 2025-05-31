@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace GestionTicketsAPI.DTOs;
 
@@ -9,9 +10,11 @@ public class ClientUpdateDto
   public required string FirstName { get; set; }
   public required string LastName { get; set; }
   public required string NumTelephone { get; set; }
-  public required int PaysId { get; set; } 
+  public required int PaysId { get; set; }
   public required bool Actif { get; set; }
   public int SocieteId { get; set; }
+  [DataType(DataType.Upload)]
+  public IFormFile? PhotoFile { get; set; }
 
   public string? NouveauPassword { get; set; }
   public string? ConfirmNouveauPassword { get; set; }

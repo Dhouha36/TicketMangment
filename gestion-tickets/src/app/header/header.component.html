@@ -19,15 +19,29 @@
     <!-- Barre de recherche avec résultats -->
     <div class="search-container">
       <div class="search-bar" [class.active]="isSearchActive" #searchBar>
-        <input type="text" placeholder="Rechercher" [(ngModel)]="query" (focus)="isSearchActive = true"
-          (keyup)="onSearchChange()">
+        <input
+          type="text"
+          placeholder="Rechercher"
+          [(ngModel)]="query"
+          (focus)="isSearchActive = true"
+          (keyup)="onSearchChange()"
+        />
         <i class="fas fa-search"></i>
       </div>
 
-      <div class="search-results" [class.visible]="isSearchActive && (results.length > 0 || query)">
+      <div
+        class="search-results"
+        [class.visible]="isSearchActive && (results.length > 0 || query)"
+      >
         <div *ngIf="results.length > 0; else noResultTemplate">
-          <div *ngFor="let result of results" class="result-item" (click)="navigateToResult(result)">
-            <h4>{{ result.title }} <small>({{ result.type }})</small></h4>
+          <div
+            *ngFor="let result of results"
+            class="result-item"
+            (click)="navigateToResult(result)"
+          >
+            <h4>
+              {{ result.title }} <small>({{ result.type }})</small>
+            </h4>
             <p>{{ result.description }}</p>
           </div>
         </div>
@@ -38,30 +52,52 @@
           </div>
         </ng-template>
       </div>
-
     </div>
-
 
     <!-- Actions à droite -->
     <div class="actions" style="position: relative;">
+      <!-- Bouton notifications -->
       <button class="action-item notif-button" (click)="toggleNotifications()">
         <i class="fas fa-bell"></i>
         <span *ngIf="unreadCount" class="badge">{{ unreadCount }}</span>
       </button>
-      <!-- Bouton affichant les initiales de l'utilisateur -->
-      <button class="action-item" (click)="toggleMenu()">
-        {{ userInitials }}
+
+      <!-- Bouton affichant la photo (ou les initiales) -->
+      <button class="action-item user-button" (click)="toggleMenu()">
+        <ng-container *ngIf="currentUser?.photoUrl; else initialsBtn">
+          <img
+            [src]="currentUser?.photoUrl"
+            alt="Avatar"
+            class="avatar-icon"
+          />
+        </ng-container>
+        <ng-template #initialsBtn>
+          {{ userInitials }}
+        </ng-template>
       </button>
 
       <!-- Menu déroulant qui apparaît quand isMenuOpen est true -->
       <div class="profile-menu" *ngIf="isMenuOpen">
-        <!-- Nouveau bloc de greeting -->
+        <!-- Bloc de greeting avec avatar/initiales -->
         <div class="user-greeting dropdown-greeting">
-          <div class="user-avatar">{{ userInitials }}</div>
+          <div class="user-avatar">
+            <ng-container *ngIf="currentUser?.photoUrl; else initialsAvatar">
+              <img
+                [src]="currentUser?.photoUrl"
+                alt="Avatar"
+                class="avatar-img"
+              />
+            </ng-container>
+            <ng-template #initialsAvatar>
+              {{ userInitials }}
+            </ng-template>
+          </div>
           <div class="greeting-text">
-            <h2>{{ currentUser?.firstName }} {{ currentUser?.lastName }}</h2>
+            <h2>
+              {{ currentUser?.firstName }} {{ currentUser?.lastName }}
+            </h2>
             <div class="user-role">{{ displayRole }}</div>
-          </div>          
+          </div>
           <hr />
         </div>
 
@@ -74,14 +110,11 @@
           </li>
         </ul>
       </div>
-
     </div>
-
   </div>
 </header>
 
 <div class="notif-sidenav" [class.open]="isNotifOpen">
-  <!-- On réutilise directement le composant notifications -->
   <app-notifications (closeSidenav)="toggleNotifications()"></app-notifications>
 </div>
 

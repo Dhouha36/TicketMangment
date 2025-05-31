@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable, map, tap } from 'rxjs';
+import { BehaviorSubject, Observable, map, tap } from 'rxjs';
 import { PaginatedResult, Pagination } from './../_models/pagination';
 import { User } from '../_models/user';
 import { Pays } from '../_models/pays';
@@ -17,28 +17,46 @@ import { RegisterUserDto } from '../DTOs/RegisterUserDto';
 export class AccountService {
   private http = inject(HttpClient);
   baseUrl = environment.apiUrl;
-  currentUser = signal<User | ClientDto | null>( this.getUserFromLocalStorage() );
   paginatedResult = signal<PaginatedResult<User[]> | null>(null);
+
+  // On stocke le user (User ou ClientDto) dans un BehaviorSubject
+  private currentUserSubject = new BehaviorSubject<User | ClientDto | null>(null);
+
+  // On expose un observable en lecture seule
+  public currentUser$: Observable<User | ClientDto | null> =
+    this.currentUserSubject.asObservable();
+    constructor(/* injecter HttpClient, etc. */) {
+      // Au démarrage du service, on peut initialiser le BehaviorSubject
+      // avec le contenu du localStorage (s’il existe) :
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          this.currentUserSubject.next(parsed);
+        } catch {
+          this.currentUserSubject.next(null);
+        }
+      }
+    } 
 
   private getUserFromLocalStorage(): User | ClientDto | null {
     const json = localStorage.getItem('user');
     return json ? JSON.parse(json) : null;
   }
 
-  login(model: any) {
-    return this.http.post<User>(this.baseUrl + 'account/login', model).pipe(
-      map(user => {
-        if (user) {
-          localStorage.setItem('user', JSON.stringify(user));
-          this.currentUser.set(user);
-        }
+  login(credentials: { email: string; password: string }) {
+    return this.http.post<User>('/api/account/login', credentials).pipe(
+      tap(user => {
+        localStorage.setItem('token', user.token);
+        this.setCurrentUser(user); 
       })
     );
   }
 
   logout() {
     localStorage.removeItem('user');
-    this.currentUser.set(null);
+    localStorage.removeItem('token');
+    this.setCurrentUser(null);
   }
 
   register(dto: RegisterUserDto): Observable<User> {
@@ -52,11 +70,25 @@ export class AccountService {
     return this.http.get<Pays[]>(this.baseUrl + 'users/pays');
   }
 
-  setCurrentUser(user: User | ClientDto) {
-    localStorage.setItem('user', JSON.stringify(user));
-    this.currentUser.set(user);
+
+  // À appeler systématiquement quand on veut changer le user
+  setCurrentUser(user: User | ClientDto | null): void {
+    if (user) {
+      // 1) On met à jour le BehaviorSubject
+      this.currentUserSubject.next(user);
+      // 2) On synchronise le localStorage
+      localStorage.setItem('user', JSON.stringify(user));
+    } else {
+      // Quand on logout : on next(null) et on nettoie localStorage
+      this.currentUserSubject.next(null);
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+    }
   }
 
+  public currentUser(): User | ClientDto | null {
+    return this.currentUserSubject.value;
+  }
   
 
   getAllUsers(): Observable<User[]> {
@@ -107,10 +139,9 @@ export class AccountService {
     return this.http.get<User>(this.baseUrl + 'users/' + id);
   }
 
-  updateUser(user: User): Observable<any> {
-    return this.http.post(this.baseUrl + 'users/' + user.id, user);
+  updateUser(id: number, formData: FormData): Observable<User> {
+    return this.http.put<User>(`${this.baseUrl}users/${id}`, formData);
   }
-  
 
   getUserProjects(
     userId: number,

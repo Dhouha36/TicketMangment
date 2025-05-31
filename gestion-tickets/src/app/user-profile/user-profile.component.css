@@ -324,6 +324,7 @@
   transition: border-color 0.2s ease;
 }
 
+
 /* Responsive */
 @media (max-width: 768px) {
   .profile-container {

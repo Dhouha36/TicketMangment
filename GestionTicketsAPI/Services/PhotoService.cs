@@ -42,23 +42,17 @@ namespace GestionTicketsAPI.Services
             return uploadResult;
         }
 
-        public async Task<UploadResult> UploadFileAsync(IFormFile file)
-        {
-            using var stream = file.OpenReadStream();
-            return await UploadFileAsync(stream, file.FileName);
-        }
-
         // Nouvelle implémentation pour l'upload via Stream et fileName
-        public async Task<UploadResult> UploadFileAsync(Stream fileStream, string fileName)
-        {
-            var uploadParams = new RawUploadParams
-            {
-                File = new FileDescription(fileName, fileStream),
-                Folder = "ticketManagment"
-            };
-
-            return await _cloudinary.UploadAsync(uploadParams);
-        }
+        public async Task<UploadResult> UploadFileAsync(IFormFile file)
+{
+    using var stream = file.OpenReadStream();
+    var uploadParams = new RawUploadParams
+    {
+        File = new FileDescription(file.FileName, stream),
+        Folder = "ticketManagment"
+    };
+    return await _cloudinary.UploadAsync(uploadParams);
+}
 
         public async Task<DeletionResult> DeletePhotoAsync(string publicId)
         {

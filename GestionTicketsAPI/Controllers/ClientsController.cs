@@ -114,17 +114,22 @@ namespace GestionTicketsAPI.Controllers
 
     // Mettre à jour un client
     [HttpPut("{id:int}")]
-    public async Task<ActionResult> UpdateClient(int id, [FromBody] ClientUpdateDto clientUpdateDto)
+    public async Task<ActionResult<ClientDto>> UpdateClient(int id, [FromForm] ClientUpdateDto clientUpdateDto)
     {
       if (id != clientUpdateDto.Id)
         return BadRequest("L'ID de l'URL ne correspond pas à celui du body.");
 
-      var result = await _clientService.UpdateClientAsync(clientUpdateDto);
-      if (!result)
+      // On appelle la nouvelle version de UpdateClientAsync qui renvoie un ClientDto ou null
+      var updatedClientDto = await _clientService.UpdateClientAsync(clientUpdateDto);
+      if (updatedClientDto == null)
         return NotFound("Client non trouvé.");
 
-      return NoContent();
+      // On renvoie 200 OK + le DTO au front
+      return Ok(updatedClientDto);
     }
+
+
+
 
     // Récupérer les clients par société
     [HttpGet("societe/{societeId:int}")]

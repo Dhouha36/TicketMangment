@@ -60,9 +60,9 @@ export class ClientService {
     return this.http.get<ClientDto>(`${this.baseUrl}/${id}`);
   }
 
-  update(id: number, dto: Partial<ClientDto>): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/${id}`, dto);
-  }
+  update(id: number, payload: Partial<ClientDto> | FormData): Observable<ClientDto> {
+    return this.http.put<ClientDto>(`${this.baseUrl}/clients/${id}`, payload);
+  }  
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);

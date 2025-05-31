@@ -314,32 +314,103 @@ export class DetailsUtilisateurComponent implements OnInit {
 
   // Mise à jour de l'utilisateur
   onSubmit(): void {
-    // Vérifier si l'utilisateur a modifié au moins un champ
+    // 1) Vérifier que le formulaire a été modifié
     if (!this.userForm.dirty) {
-      this.toastr.warning("Veuillez modifier au moins un champ.");
+      this.toastr.warning('Veuillez modifier au moins un champ.');
       return;
     }
-    // Si le formulaire est invalide, affiche un message d'erreur
+
+    // 2) Vérifier que le formulaire est valide
     if (this.userForm.invalid) {
-      this.toastr.error("Veuillez corriger les erreurs du formulaire.");
+      this.toastr.error('Veuillez corriger les erreurs du formulaire.');
       return;
     }
-  
-    const updatedUser: User = this.userForm.value;
-    
-    // Afficher le loader
+
+    // 3) Construire un FormData à partir des valeurs du formGroup
+    const raw = this.userForm.getRawValue() as {
+      id: number;
+      lastName: string;
+      firstName: string;
+      email: string;
+      pays: string;
+      role: string;
+      societeId: number | null;
+      numTelephone: string;
+      actif: boolean;
+    };
+
+    // Reconstituer le numéro international si vous stockez le préfixe (ex. "+216")
+    let internationalNumber = raw.numTelephone;
+    if (raw.pays) {
+      const pays = this.paysList.find(p => p.idPays === +raw.pays);
+      if (pays && pays.codeTel) {
+        // Si l’utilisateur a saisi "50 123 456", on préfixe avec "+216 "
+        if (!internationalNumber.startsWith(pays.codeTel)) {
+          internationalNumber = `${pays.codeTel} ${internationalNumber}`;
+        }
+      }
+    }
+
+    // Construire le FormData (même s’il n’y a pas de photo)
+    const formData = new FormData();
+    formData.append('Id', raw.id.toString());
+    formData.append('FirstName', raw.firstName);
+    formData.append('LastName', raw.lastName);
+    formData.append('Email', raw.email);
+    formData.append('Pays', raw.pays);   
+    formData.append('Role', raw.role);
+    formData.append('SocieteId', raw.societeId ? raw.societeId.toString() : '');
+    formData.append('NumTelephone', internationalNumber);
+    formData.append('Actif', raw.actif.toString());
+
+    // 4) Afficher le loader global
     this.loaderService.showLoader();
-  
-    this.accountService.updateUser(updatedUser).subscribe({
-      next: () => {
-        // Mise à jour locale de la variable utilisateur
-        this.user = { ...this.user, ...updatedUser };
-        this.toastr.success("Mise à jour effectuée avec succès.");
+
+    // 5) Appeler la méthode avec (id, formData)
+    this.accountService.updateUser(raw.id, formData).subscribe({
+      next: (updatedUser: User) => {
+        // 6) Réinjecter l’ancien token si besoin
+        const stored = localStorage.getItem('user');
+        if (stored) {
+          try {
+            const current = JSON.parse(stored) as User;
+            if (current.token) {
+              (updatedUser as any).token = current.token;
+            }
+          } catch {}
+        }
+
+        // 7) Mettre à jour le signal et le localStorage
+        this.accountService.setCurrentUser(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+
+        // 8) Mettre à jour la variable locale 'user' et la réafficher dans le formulaire
+        this.user = updatedUser;
+        this.userForm.reset();   // On reset pour désactiver le dirty
+        this.userForm.patchValue({
+          id: updatedUser.id,
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          role: updatedUser.role,
+          pays: updatedUser.pays,
+          societeId: updatedUser.societe ? updatedUser.societe.id : null,
+          numTelephone: updatedUser.numTelephone,
+          actif: updatedUser.actif
+        });
+
+        this.toastr.success('Mise à jour effectuée avec succès.');
         this.loaderService.hideLoader();
       },
-      error: (error) => {
-        console.error("Erreur lors de la mise à jour", error);
-        this.toastr.error("Erreur lors de la mise à jour de l'utilisateur.");
+      error: (err) => {
+        console.error('Erreur lors de la mise à jour', err);
+        if (err.status === 400) {
+          this.toastr.error('Requête invalide, veuillez vérifier les champs.');
+        } else if (err.status === 404) {
+          this.toastr.error("Utilisateur non trouvé.");
+        } else {
+          this.toastr.error("Erreur lors de la mise à jour de l'utilisateur.");
+        }
         this.loaderService.hideLoader();
       }
     });

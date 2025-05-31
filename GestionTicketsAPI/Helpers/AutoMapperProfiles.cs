@@ -12,7 +12,8 @@ namespace GestionTicketsAPI.Helpers
       CreateMap<User, UserDto>()
           .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
           .ForMember(dest => dest.Societe, opt => opt.MapFrom(src => src.SocieteUsers.Any() ? src.SocieteUsers.First().Societe : null))
-          .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.Contrats != null && src.Contrats.Any() ? src.Contrats.First() : null));
+          .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.Contrats != null && src.Contrats.Any() ? src.Contrats.First() : null))
+          .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.Photo != null ? src.Photo.Url : null));
 
       CreateMap<UserUpdateDto, User>()
           .ForMember(dest => dest.Pays, opt => opt.MapFrom(src => int.Parse(src.Pays)))
@@ -138,7 +139,8 @@ namespace GestionTicketsAPI.Helpers
       .ForMember(dest => dest.Projets,
                  opt => opt.MapFrom(src => src.ProjetClients))    // ← map collection directly
       .ForMember(dest => dest.InitialPassword,
-                 opt => opt.Ignore());
+                 opt => opt.Ignore())
+      .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.Photo != null ? src.Photo.Url : null));
 
       CreateMap<ClientUpdateDto, Client>()
           // mappez le FK sur PaysId

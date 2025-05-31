@@ -26,6 +26,7 @@ namespace GestionTicketsAPI.Repositories
       return await _context.Users
           .Include(u => u.PaysNavigation)
           .Include(u => u.Role)
+          .Include(c => c.Photo)
           .Include(u => u.SocieteUsers)
               .ThenInclude(su => su.Societe)
           .FirstOrDefaultAsync(x => x.Email.ToLower() == email.ToLower());
@@ -78,6 +79,7 @@ namespace GestionTicketsAPI.Repositories
         {
             return await _context.Clients
                 .Include(c => c.Societe)
+                .Include(c => c.Photo)
                 .Include(c => c.PaysNavigation)
                 .FirstOrDefaultAsync(c => c.Email.ToLower() == email.ToLower());
         }

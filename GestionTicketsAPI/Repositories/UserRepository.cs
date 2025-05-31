@@ -20,6 +20,7 @@ namespace GestionTicketsAPI.Repositories
       var query = _context.Users
                   .Include(u => u.Contrats)
                   .Include(u => u.Role)
+                  .Include(u => u.Photo)
                   .Include(u => u.SocieteUsers)
                     .ThenInclude(su => su.Societe)
                   .OrderByDescending(u => u.CreatedAt)
@@ -70,6 +71,7 @@ namespace GestionTicketsAPI.Repositories
       var query = _context.Users
                   .Include(u => u.Contrats)
                   .Include(u => u.Role)
+                  .Include(u => u.Photo)
                   .Include(u => u.SocieteUsers)
                     .ThenInclude(su => su.Societe)
                   .AsQueryable();
@@ -117,6 +119,7 @@ namespace GestionTicketsAPI.Repositories
       return await _context.Users
                     .Include(u => u.Contrats)
                     .Include(u => u.Role)
+                    .Include(u => u.Photo)
                     .Include(u => u.SocieteUsers)
                       .ThenInclude(su => su.Societe)
                     .ToListAsync();
@@ -127,6 +130,7 @@ namespace GestionTicketsAPI.Repositories
       return await _context.Users
           .Include(u => u.Contrats)
           .Include(u => u.Role)
+          .Include(u => u.Photo)
           .Include(u => u.SocieteUsers)
               .ThenInclude(su => su.Societe)
           .FirstOrDefaultAsync(u => u.Id == id);
@@ -137,6 +141,7 @@ namespace GestionTicketsAPI.Repositories
       return await _context.Users
           .Include(u => u.ProjetUsers)
           .Include(u => u.Role)
+          .Include(u => u.Photo)
           .Include(u => u.SocieteUsers)
               .ThenInclude(su => su.Societe)
           .FirstOrDefaultAsync(u => u.Id == id);
@@ -282,6 +287,7 @@ namespace GestionTicketsAPI.Repositories
     {
       return await _context.Users
           .Include(u => u.Role)
+          .Include(u => u.Photo)
           .Where(u => u.Role != null && u.Role.Name.ToLower() == roleName.ToLower())
           .ToListAsync();
     }
