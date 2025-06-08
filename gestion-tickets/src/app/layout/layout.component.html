@@ -5,92 +5,113 @@
   <!-- Sidenav principal (menu) à gauche -->
   <mat-sidenav #menuSidenav [mode]="sidenavMode" [(opened)]="isSidenavOpen" position="start">
     <mat-nav-list>
-      <!-- Liens communs -->
-      <a mat-list-item [routerLink]="['/home', 'dashboard']" routerLinkActive="active-nav-item">
-        <div class="menu-item">
-          <mat-icon class="nav-icon">home</mat-icon>
-          <span class="nav-text">Tableau de bord</span>
-        </div>
-      </a>
-      <!-- Lien général Tickets (pour tous les rôles) -->
-      <a mat-list-item [routerLink]="['/home/Tickets']" routerLinkActive="active-nav-item">
-        <div class="menu-item">
-          <mat-icon class="nav-icon">confirmation_number</mat-icon>
-          <span class="nav-text">Tickets</span>
-        </div>
-      </a>
-      <!-- Affichage conditionnel pour Chef de Projet et Collaborateur -->
-      <ng-container *ngIf="isChefDeProjet() || isCollaborateur()">
-        <a mat-list-item [routerLink]="['/home/MesTickets']" routerLinkActive="active-nav-item">
-          <div class="menu-item">
-            <mat-icon class="nav-icon">assignment</mat-icon>
-            <span class="nav-text">Mes Tickets</span>
-          </div>
-        </a>
-      </ng-container>
 
-      <!-- Lien spécifique pour Super Admin -->
-      <a mat-list-item *ngIf="isSuperAdmin()" [routerLink]="['/home', 'Categories']" routerLinkActive="active-nav-item">
-        <div class="menu-item">
-          <mat-icon class="nav-icon">link</mat-icon>
-          <span class="nav-text">Catégories des Problèmes</span>
+      <!-- Section Tableau de bord + Tickets -->
+      <div class="menu-section">
+        <div class="submenu">
+          <a mat-list-item [routerLink]="['/home', 'dashboard']" routerLinkActive="active-nav-item">
+            <div class="menu-item">
+              <mat-icon class="nav-icon">home</mat-icon>
+              <span class="nav-text">Tableau de bord</span>
+            </div>
+          </a>
+          <a mat-list-item [routerLink]="['/home/Tickets']" routerLinkActive="active-nav-item">
+            <div class="menu-item">
+              <mat-icon class="nav-icon">confirmation_number</mat-icon>
+              <span class="nav-text">Tickets</span>
+            </div>
+          </a>
+          <ng-container *ngIf="isChefDeProjet() || isCollaborateur()">
+            <a mat-list-item [routerLink]="['/home/MesTickets']" routerLinkActive="active-nav-item">
+              <div class="menu-item">
+                <mat-icon class="nav-icon">assignment</mat-icon>
+                <span class="nav-text">Mes Tickets</span>
+              </div>
+            </a>
+          </ng-container>
+          <ng-container *ngIf="isSuperAdmin()">
+            <a mat-list-item [routerLink]="['/home', 'Categories']" routerLinkActive="active-nav-item">
+              <div class="menu-item">
+                <mat-icon class="nav-icon">link</mat-icon>
+                <span class="nav-text">Catégories des Problèmes</span>
+              </div>
+            </a>
+          </ng-container>
         </div>
-      </a>
-      <!-- Section Données de Base -->
+      </div>
+
       <div class="section-divider"></div>
+
+      <!-- Section Données de Base (uniquement SuperAdmin) -->
       <ng-container *ngIf="isSuperAdmin()">
         <div class="menu-section">
           <div class="submenu">
             <a mat-list-item [routerLink]="['/home','Societes']" routerLinkActive="active-nav-item">
-              <mat-icon class="nav-icon">apartment</mat-icon>
-              <span class="nav-text">Sociétés</span>
+              <div class="menu-item">
+                <mat-icon class="nav-icon">apartment</mat-icon>
+                <span class="nav-text">Sociétés</span>
+              </div>
             </a>
             <a mat-list-item [routerLink]="['/home','Projets']" routerLinkActive="active-nav-item">
-              <mat-icon class="nav-icon">work</mat-icon>
-              <span class="nav-text">Projets</span>
+              <div class="menu-item">
+                <mat-icon class="nav-icon">work</mat-icon>
+                <span class="nav-text">Projets</span>
+              </div>
             </a>
             <a mat-list-item [routerLink]="['/home','clients']" routerLinkActive="active-nav-item">
-              <mat-icon class="nav-icon">person</mat-icon>
-              <span class="nav-text">Clients</span>
+              <div class="menu-item">
+                <mat-icon class="nav-icon">person</mat-icon>
+                <span class="nav-text">Clients</span>
+              </div>
             </a>
             <a mat-list-item [routerLink]="['/home','utilisateurs']" routerLinkActive="active-nav-item">
-              <mat-icon class="nav-icon">badge</mat-icon>
-              <span class="nav-text">Personnels</span>
+              <div class="menu-item">
+                <mat-icon class="nav-icon">badge</mat-icon>
+                <span class="nav-text">Personnels</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+      </ng-container>
+
+      <!-- Section Projets (Chef de Projet & Collaborateur) -->
+      <ng-container *ngIf="isChefDeProjet() || isCollaborateur()">
+        <div class="menu-section">
+          <div class="submenu">
+            <a mat-list-item [routerLink]="['/home','Projets']" routerLinkActive="active-nav-item">
+              <div class="menu-item">
+                <mat-icon class="nav-icon">work</mat-icon>
+                <span class="nav-text">Mes Projets</span>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+      </ng-container>
+
+      <!-- Section Profil (tous rôles) -->
+      <ng-container *ngIf="isChefDeProjet() || isCollaborateur() || isSuperAdmin()">
+        <div class="menu-section">
+          <div class="submenu">
+            <a mat-list-item [routerLink]="['/home','profile']" routerLinkActive="active-nav-item">
+              <div class="menu-item">
+                <mat-icon class="nav-icon">person</mat-icon>
+                <span class="nav-text">Profil</span>
+              </div>
             </a>
           </div>
         </div>
       </ng-container>
-      <!-- Pour Chef de Projet et Collaborateur -->
-      <ng-container *ngIf="isChefDeProjet() || isCollaborateur()">
-        <div class="menu-section">
-          <div class="menu-section">
-            <div class="submenu">
-              <a mat-list-item [routerLink]="['/home','Projets']" routerLinkActive="active-nav-item">
-                <mat-icon class="nav-icon">work</mat-icon>
-                <span class="nav-text">Mes Projets</span>
-              </a>
-            </div>
-          </div>
-        </div>
-      </ng-container>
-      <!-- Section Compte -->
-      <div *ngIf="isChefDeProjet() || isCollaborateur() || isSuperAdmin()" class="section-divider"></div>
-      <div class="menu-section">
-        <div class="submenu">
-          <a mat-list-item [routerLink]="['/home','profile']" routerLinkActive="active-nav-item">
-            <mat-icon class="nav-icon">person</mat-icon>
-            <span class="nav-text">Profil</span>
-          </a>
-        </div>
-      </div>
+
     </mat-nav-list>
   </mat-sidenav>
 
   <!-- Contenu principal -->
   <mat-sidenav-content>
-    <!-- Optionnel : fond cliquable pour fermer le menu principal en mode over -->
-    <div class="sidenav-backdrop" *ngIf="sidenavMode === 'over' && isSidenavOpen" (click)="isSidenavOpen = false">
-    </div>
+    <div class="sidenav-backdrop" *ngIf="sidenavMode === 'over' && isSidenavOpen" (click)="isSidenavOpen = false"></div>
     <div class="content">
       <router-outlet></router-outlet>
     </div>

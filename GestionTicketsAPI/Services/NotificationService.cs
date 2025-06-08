@@ -40,58 +40,57 @@ namespace GestionTicketsAPI.Services
 
     public async Task NotifyAsync(int? userId, int? clientId, NotificationDto dto)
     {
-      // 1) Persister d'abord
       var notif = new Notification
       {
-        UserId = userId,
-        ClientId = clientId,
+        UserId = userId,    // null pour le client
+        ClientId = clientId,  // l’ID du client
         Message = dto.Message,
         DateEnvoi = dto.DateEnvoi,
         EntityType = dto.EntityType,
         EntityId = dto.EntityId,
-        IsRead = false // Explicitement à false
+        IsRead = false
       };
 
       _context.Notification.Add(notif);
       await _context.SaveChangesAsync();
 
-      // 2) Mettre à jour le DTO avec l'ID généré
+      // on remet à jour le dto pour le front
       dto.Id = notif.Id;
-      dto.IsRead = false; 
-      dto.UserId = userId;
+      dto.UserId = notif.UserId;
+      dto.ClientId = notif.ClientId;
+      dto.IsRead = notif.IsRead;
 
-      // 3) Envoyer via SignalR SEULEMENT si on a un userId
+      // seul un userId déclenche SignalR / push par défaut
       if (userId.HasValue)
       {
-        try
-        {
-          var groupName = userId.Value.ToString();
-          _logger.LogInformation($"Envoi notification à {groupName}: {dto.Message}");
-
-          await _hub.Clients.Group(groupName).SendAsync("ReceiveNotification", dto);
-
-          _logger.LogInformation($"Notification envoyée avec succès à {groupName}");
-        }
-        catch (Exception ex)
-        {
-          _logger.LogError(ex, $"Erreur lors de l'envoi SignalR pour userId {userId}");
-        }
-
-        // 4) Envoi push (inchangé)
+        await _hub.Clients
+                  .Group(userId.Value.ToString())
+                  .SendAsync("ReceiveNotification", dto);
         await SendPushNotification(userId.Value, dto);
       }
     }
 
+
     public async Task NotifyRealtimeAsync(int userId, NotificationDto dto)
     {
       // 1) On persiste en base :
-      var notif = new Notification { /* … */ UserId = userId, /* … */ };
+      var notif = new Notification
+      {
+        UserId = userId,
+        ClientId = dto.ClientId,
+        Message = dto.Message,
+        DateEnvoi = DateTime.UtcNow,
+        EntityType = dto.EntityType,
+        EntityId = dto.EntityId,
+        IsRead = false
+      };
       _context.Notification.Add(notif);
       await _context.SaveChangesAsync();
 
       dto.Id = notif.Id;
       dto.DateEnvoi = notif.DateEnvoi;
       dto.UserId = userId;
+      dto.IsRead = notif.IsRead;
 
       _logger.LogInformation("Envoi Notification à {userId} : ID={id}", userId, dto.Id);
       // → Ici on s’assure que la connexion avec ce userId existe

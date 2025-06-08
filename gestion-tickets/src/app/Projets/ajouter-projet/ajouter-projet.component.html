@@ -164,20 +164,58 @@
         </div>
 
         <div class="form-row">
-          <label for="pays">Pays <span class="required">*</span></label>
-          <select
-            id="pays"
-            formControlName="pays"
-            class="form-control"
-            [class.is-invalid]="clientGroup.get('pays')?.touched && clientGroup.get('pays')?.invalid"
+          <label>Pays <span class="required">*</span></label>
+          <div class="custom-select">
+            <div class="select-box" (click)="togglePaysDropdown()">
+              <div class="selected-item">
+                {{ getPaysName(clientGroup.get('pays')?.value) || 'Sélectionner un pays' }}
+              </div>
+              <span class="arrow">▼</span>
+            </div>
+        
+            <div class="dropdown-content" [class.show]="isPaysDropdownOpen">
+              <div class="search-box">
+                <input
+                  type="text"
+                  placeholder="Rechercher un pays..."
+                  [(ngModel)]="paysSearchTerm"
+                  [ngModelOptions]="{ standalone: true }"
+                  (ngModelChange)="filterPays()"
+                />
+              </div>
+              <div class="option-list">
+                <ng-container *ngIf="filteredPays.length; else noPays">
+                  <div
+                    *ngFor="let p of filteredPays"
+                    class="option-item"
+                    (click)="selectPaysClient(p.idPays)"
+                  >
+                    {{ p.nom }}
+                  </div>
+                  <div class="option-item autre" (click)="openPaysModal()">
+                    Autre…
+                  </div>
+                </ng-container>
+        
+                <ng-template #noPays>
+                  <div class="no-results">
+                    Aucun pays trouvé
+                    <div class="option-item autre" (click)="openPaysModal()">
+                      Autre…
+                    </div>
+                  </div>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+          <div
+            *ngIf="clientGroup.get('pays')?.hasError('required') &&
+                   clientGroup.get('pays')?.touched"
+            class="invalid-feedback"
           >
-            <option value="" disabled>Sélectionnez</option>
-            <option *ngFor="let p of paysList" [value]="p.idPays">{{ p.nom }}</option>
-          </select>
-          <div *ngIf="clientGroup.get('pays')?.hasError('required')" class="invalid-feedback">
             Le pays est obligatoire
           </div>
-        </div>
+        </div>        
 
         <div class="form-row">
           <label for="numTelephone">Téléphone <span class="required">*</span></label>

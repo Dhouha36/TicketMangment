@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, ValidatorFn, AbstractControl, ValidationErrors, FormsModule } from '@angular/forms';
 import { ContractDialogComponent } from '../../contract-dialog/contract-dialog.component';
 import { Pays } from '../../_models/pays';
 import { PaysService } from '../../_services/pays.service';
@@ -17,10 +17,11 @@ import { LoaderService } from '../../_services/loader.service';
 import { ConfirmModalComponent } from '../../confirm-modal/confirm-modal.component';
 import { OverlayModalService } from '../../_services/overlay-modal.service';
 import { User } from 'src/app/_models/user';
+import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
 
 @Component({
   selector: 'app-ajouter-utilisateur',
-  imports: [CommonModule, ReactiveFormsModule, MatTooltipModule],
+  imports: [CommonModule, ReactiveFormsModule, MatTooltipModule, FormsModule],
   templateUrl: './ajouter-utilisateur.component.html',
   styleUrls: ['./ajouter-utilisateur.component.scss']
 })
@@ -34,6 +35,10 @@ export class AjouterUtilisateurComponent implements OnInit {
   societesList: Societe[] = [];
   selectedCountry: Pays | undefined;
   isLoading: boolean = false;
+
+  filteredPays: Pays[] = [];
+  paysSearchTerm = '';
+  isPaysDropdownOpen = false;
 
   constructor(
     private paysService: PaysService,
@@ -116,13 +121,46 @@ export class AjouterUtilisateurComponent implements OnInit {
     });
   }
 
-  loadPays(): void {
+  private loadPays(): void {
     this.paysService.getPays().subscribe({
-      next: (pays: Pays[]) => this.paysList = pays,
-      error: (err) => {
-        console.error('Erreur lors de la récupération des pays', err);
-        this.toastr.error("Erreur lors du chargement des pays.");
-      }
+      next: (pays: Pays[]) => {
+        this.paysList     = pays;
+        this.filteredPays = pays;
+      },
+      error: () => this.toastr.error("Erreur lors du chargement des pays.")
+    });
+  }
+
+  getPaysName(id?: number): string {
+    return this.paysList.find(p => p.idPays === id)?.nom || '';
+  }
+
+  togglePaysDropdown(): void {
+    this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
+  }
+
+  filterPays(): void {
+    const term = this.paysSearchTerm.toLowerCase();
+    this.filteredPays = this.paysList.filter(p =>
+      p.nom.toLowerCase().includes(term)
+    );
+  }
+
+  selectPays(idPays: number): void {
+    this.registerForm.get('pays')!.setValue(idPays);
+    this.isPaysDropdownOpen = false;
+    this.paysSearchTerm = '';
+    this.filteredPays = this.paysList;
+  }
+
+  openPaysModal(): void {
+    const modal = this.overlayModalService.open(PaysModalComponent);
+    modal.added.subscribe(() => {
+      this.paysService.getPays().subscribe(data => {
+        this.paysList     = data;
+        this.filteredPays = data;
+      });
+      this.overlayModalService.close();
     });
   }
 

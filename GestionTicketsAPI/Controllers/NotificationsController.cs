@@ -81,7 +81,9 @@ namespace GestionTicketsAPI.Controllers
     public async Task<ActionResult<IEnumerable<NotificationDto>>> GetUserNotifications(int userId)
     {
       var entities = await _context.Notification
-          .Where(n => n.UserId == userId && !n.IsDeleted)
+           .Where(n => !n.IsDeleted &&
+                        (n.UserId   == userId ||
+                         n.ClientId == userId))
           .OrderByDescending(n => n.DateEnvoi)
           .ToListAsync();
 
@@ -93,12 +95,12 @@ namespace GestionTicketsAPI.Controllers
         IsRead = n.IsRead,
         EntityType = n.EntityType,
         EntityId = n.EntityId,
-        UserId     = n.UserId 
+        UserId = n.UserId,
+        ClientId = n.ClientId
       });
 
       return Ok(dtos);
     }
-
 
     // 4) Marquer toutes les notifications comme lues
     [HttpPost("markasread/{userId}")]

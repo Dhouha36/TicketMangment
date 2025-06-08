@@ -9,7 +9,7 @@ import { environment } from '../../environments/environment';
 })
 export class PaysService {
   private baseUrl = environment.apiUrl;
-  private REST_URL = 'https://restcountries.com/v3.1/all';
+  private REST_URL = 'https://restcountries.com/v3.1/all?fields=cca3,name,idd,flags';
 
   constructor(private http: HttpClient) {}
 

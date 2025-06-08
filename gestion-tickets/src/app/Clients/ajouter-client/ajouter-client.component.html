@@ -40,16 +40,54 @@
             </div>
 
             <div class="form-group">
-              <label for="pays">Pays <span class="required">*</span></label>
-              <select id="pays" formControlName="pays" class="form-control"
-                [class.is-invalid]="clientForm.controls['pays'].invalid && clientForm.controls['pays'].touched">
-                <option value="" disabled>Sélectionnez un pays</option>
-                <option *ngFor="let p of paysList" [value]="p.idPays">{{p.nom}}</option>
-              </select>
-              <div *ngIf="clientForm.controls['pays'].hasError('required')" class="invalid-feedback text-start">
-                Pays est obligatoire
+              <label>Pays <span class="required">*</span></label>
+              <div class="custom-select">
+                <div class="select-box" (click)="togglePaysDropdown()">
+                  <div class="selected-item">
+                    {{ getPaysName(clientForm.get('pays')?.value) || 'Sélectionner un pays' }}
+                  </div>
+                  <span class="arrow">▼</span>
+                </div>
+            
+                <div class="dropdown-content" [class.show]="isPaysDropdownOpen">
+                  <div class="search-box">
+                    <input
+                      type="text"
+                      placeholder="Rechercher un pays..."
+                      [(ngModel)]="paysSearchTerm"
+                      (ngModelChange)="filterPays()"
+                    />
+                  </div>
+                  <div class="option-list">
+                    <ng-container *ngIf="filteredPays.length; else noPays">
+                      <div
+                        *ngFor="let p of filteredPays"
+                        class="option-item"
+                        (click)="selectPays(p.idPays)"
+                      >
+                        {{ p.nom }}
+                      </div>
+                      <div class="option-item autre" (click)="openPaysModal()">
+                        Autre…
+                      </div>
+                    </ng-container>
+            
+                    <ng-template #noPays>
+                      <div class="no-results">
+                        Aucun pays trouvé
+                        <div class="option-item autre" (click)="openPaysModal()">
+                          Autre…
+                        </div>
+                      </div>
+                    </ng-template>
+                  </div>
+                </div>
               </div>
-            </div>
+              <div *ngIf="clientForm.get('pays')?.hasError('required') && clientForm.get('pays')?.touched"
+                   class="invalid-feedback text-start">
+                Le pays est obligatoire
+              </div>
+            </div>            
           </div>
 
           <div class="form-row">

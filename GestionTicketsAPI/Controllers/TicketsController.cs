@@ -158,13 +158,28 @@ namespace GestionTicketsAPI.Controllers
 
       // 6.b) Client (email uniquement)
       if (ticketFromDb.Owner is { } client)
-      {
+    {
+        // Envoi de l’email de confirmation au client
         BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
             $"{client.FirstName} {client.LastName}",
             client.Email,
             "Confirmation de création de ticket",
             $"Bonjour {client.FirstName}, votre ticket #{ticket.Id} a bien été créé."
         ));
+
+        // Notification persistée pour le client
+        var notifDto = new NotificationDto
+        {
+            Message    = $"Votre ticket #{ticket.Id} a bien été créé.",
+            DateEnvoi  = DateTime.UtcNow,
+            EntityType = "Tickets",
+            EntityId   = ticket.Id
+        };
+
+        // ⚠️ Pour un client, il faut passer userId = null et clientId = client.Id
+        BackgroundJob.Enqueue(() =>
+            _notifService.NotifyAsync(null,client.Id,notifDto)
+        );
       }
 
       // 6.c) Super-admins
@@ -242,7 +257,6 @@ namespace GestionTicketsAPI.Controllers
               "Ticket accepté",
               $"Bonjour {client.FirstName}, votre ticket #{ticket.Id} a été accepté."
           ));
-          BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(client.Id, notifDto));
           BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(client.Id, notifDto));
         }
 
@@ -303,7 +317,8 @@ namespace GestionTicketsAPI.Controllers
               "Ticket refusé",
               $"Bonjour {client.FirstName} {client.LastName}, votre ticket #{ticket.Id} a été refusé. Raison : {validationDto.Reason}"
           ));
-          BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(client.Id, notifDto));
+           BackgroundJob.Enqueue(() => _notifService.NotifyAsync(null,client.Id,notifDto)
+        );
           BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(client.Id, notifDto));
         }
       }
@@ -391,7 +406,7 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Tickets",
           EntityId = ticket.Id
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(owner.Id, notifDto));
+        BackgroundJob.Enqueue(() => _notifService.NotifyAsync(null,owner.Id, notifDto));
         BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(owner.Id, notifDto));
       }
 

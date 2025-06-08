@@ -1,7 +1,7 @@
 import { ProjetService } from './../../_services/projet.service';
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormGroup, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormGroup, FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgSelectModule } from '@ng-select/ng-select';
 import { ToastrService } from 'ngx-toastr';
@@ -16,10 +16,11 @@ import { ConfirmModalComponent } from 'src/app/confirm-modal/confirm-modal.compo
 import { ClientCreate } from 'src/app/DTOs/client-create.model';
 import { RegisterClientDto } from 'src/app/DTOs/RegisterClientDto';
 import { MatSelectModule } from '@angular/material/select';
+import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
 
 @Component({
   selector: 'app-ajouter-client',
-  imports: [CommonModule, ReactiveFormsModule, NgSelectModule, MatSelectModule ],
+  imports: [CommonModule, ReactiveFormsModule, NgSelectModule, MatSelectModule, FormsModule ],
   templateUrl: './ajouter-client.component.html',
   styleUrl: './ajouter-client.component.css'
 })
@@ -31,6 +32,10 @@ export class AjouterClientComponent implements OnInit {
   societesList: Societe[] = [];
   isLoading = false;
   isLoadingProjets = false;
+
+  filteredPays: Pays[] = [];
+  paysSearchTerm = '';
+  isPaysDropdownOpen = false;
 
   constructor(
     private fb: FormBuilder,
@@ -74,7 +79,46 @@ export class AjouterClientComponent implements OnInit {
   }
 
   private loadPays(): void {
-    this.paysService.getPays().subscribe({ next: data => this.paysList = data });
+    this.paysService.getPays().subscribe({
+      next: data => {
+        this.paysList     = data;
+        this.filteredPays = data;
+      },
+      error: () => this.toastr.error('Erreur chargement pays')
+    });
+  }
+
+  getPaysName(id?: number): string {
+    return this.paysList.find(p => p.idPays === id)?.nom || '';
+  }
+
+  togglePaysDropdown(): void {
+    this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
+  }
+
+  filterPays(): void {
+    const term = this.paysSearchTerm.toLowerCase();
+    this.filteredPays = this.paysList.filter(p =>
+      p.nom.toLowerCase().includes(term)
+    );
+  }
+
+  selectPays(idPays: number): void {
+    this.clientForm.get('pays')!.setValue(idPays);
+    this.isPaysDropdownOpen = false;
+    this.paysSearchTerm = '';
+    this.filteredPays = this.paysList;
+  }
+
+  openPaysModal(): void {
+    const modal = this.overlayModalService.open(PaysModalComponent);
+    modal.added.subscribe(() => {
+      this.paysService.getPays().subscribe(data => {
+        this.paysList     = data;
+        this.filteredPays = data;
+      });
+      this.overlayModalService.close();
+    });
   }
 
   private loadSocietes(): void {

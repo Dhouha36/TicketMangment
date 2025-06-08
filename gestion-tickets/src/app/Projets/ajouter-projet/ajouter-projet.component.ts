@@ -18,6 +18,8 @@ import { ContractDialogComponent } from 'src/app/contract-dialog/contract-dialog
 import { MatDialog } from '@angular/material/dialog';
 import { TypeContrat } from 'src/app/DTOs/type-contrat.enum';
 import { PendingChangesComponent } from 'src/app/_guards/pending-changes.guard';
+import { OverlayModalService } from 'src/app/_services/overlay-modal.service';
+import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
 
 @Component({
   selector: 'app-ajouter-projet',
@@ -43,10 +45,15 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
     client: '' as string,
   };
 
+  filteredPays: any[] = [];
+  paysSearchTerm = '';
+  isPaysDropdownOpen = false;
+
   constructor(
     private fb: FormBuilder,
     private projetService: ProjetService,
     private societeService: SocieteService,
+    private overlayModalService: OverlayModalService,
     private accountService: AccountService,
     private dialog: MatDialog,
     private clientService: ClientService,
@@ -172,10 +179,13 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
     );
   }
   private loadPays() {
-    this.paysService.getPays().subscribe(
-      data => this.paysList = data,
-      () => this.toastr.error('Erreur chargement pays')
-    );
+    this.paysService.getPays().subscribe({
+      next: data => {
+        this.paysList     = data;
+        this.filteredPays = data;
+      },
+      error: ()=> this.toastr.error('Erreur chargement pays')
+    });    
   }
 
   get projetGroup() { return this.wizardForm.get('projet') as FormGroup; }
@@ -238,30 +248,30 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
 
   submitAll(): void {
     if (this.clientGroup.invalid) return;
-  
+
     this.serverErrors = { projet: '', client: '' };
     this.loaderService.showLoader();
-  
+
     // Récupération des valeurs du projet
     const pg = this.projetGroup.value;
     const projetDto: ProjetCreate = {
-      nom:         pg.nom,
+      nom: pg.nom,
       description: '',
-      societeId:   pg.societeId,
+      societeId: pg.societeId,
       chefProjetId: pg.chefProjetId,
       // n’inclure que si hasContract est vrai
       contratProjet: pg.hasContract ? {
-        dateDebut:   pg.contratProjet.dateDebut,
-        dateFin:     pg.contratProjet.dateFin,
+        dateDebut: pg.contratProjet.dateDebut,
+        dateFin: pg.contratProjet.dateFin,
         montantTotal: pg.contratProjet.montantTotal
       } : undefined
     };
-  
+
     this.projetService.addProjet(projetDto).pipe(
       concatMap(projResp => {
         const projetId = projResp.id;
         const mode = this.clientGroup.value.modeClient;
-  
+
         if (mode === 'existant') {
           const clientId = this.clientGroup.value.clientExistantId;
           return this.clientService.addClientToProject(clientId, projetId)
@@ -269,14 +279,14 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
         } else {
           const form = this.clientGroup.value;
           const clientDto: RegisterClientDto = {
-            email:      form.email,
-            firstName:  form.firstName,
-            lastName:   form.lastName,
+            email: form.email,
+            firstName: form.firstName,
+            lastName: form.lastName,
             numTelephone: `${this.selectedCountry!.codeTel} ${form.numTelephone.trim()}`,
-            pays:        +form.pays,
-            societeId:   projetDto.societeId,
-            actif:       form.actif,
-            projetIds:  [projetId]
+            pays: +form.pays,
+            societeId: projetDto.societeId,
+            actif: form.actif,
+            projetIds: [projetId]
           };
           return this.clientService.register(clientDto).pipe(
             catchError(err =>
@@ -303,7 +313,7 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
       }
     });
   }
-  
+
   onContractChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.checked) {
@@ -331,18 +341,42 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
     });
   }
 
-  private applyClientMode(mode: string) {
-    const existCtrl = this.clientGroup.get('clientExistantId')!;
-    const newFields = ['firstName', 'lastName', 'email', 'pays', 'numTelephone'];
-
-    if (mode === 'existant') {
-      existCtrl.setValidators([Validators.required]);
-      newFields.forEach(f => this.clientGroup.get(f)!.disable());
-    } else {
-      existCtrl.clearValidators();
-      newFields.forEach(f => this.clientGroup.get(f)!.enable());
-    }
-    existCtrl.updateValueAndValidity();
+  getPaysName(id?: number): string {
+    return this.paysList.find(p => p.idPays === id)?.nom || '';
+  }
+  
+  // Ouvre / ferme la dropdown
+  togglePaysDropdown(): void {
+    this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
+  }
+  
+  // Filtre la liste en fonction du terme saisi
+  filterPays(): void {
+    const term = this.paysSearchTerm.toLowerCase();
+    this.filteredPays = this.paysList.filter(p =>
+      p.nom.toLowerCase().includes(term)
+    );
+  }
+  
+  // Quand on clique sur un pays
+  selectPaysClient(idPays: number): void {
+    this.clientGroup.get('pays')!.setValue(idPays);
+    this.isPaysDropdownOpen = false;
+    this.paysSearchTerm = '';
+    this.filteredPays = this.paysList;
+  }
+  
+  // Ouvre le modal “Autre…”
+  openPaysModal(): void {
+    const modal = this.overlayModalService.open(PaysModalComponent);
+    modal.added.subscribe(() => {
+      // on recharge la liste des pays
+      this.paysService.getPays().subscribe(data => {
+        this.paysList      = data;
+        this.filteredPays  = data;
+      });
+      this.overlayModalService.close();
+    });
   }
 
   @HostListener('window:beforeunload', ['$event'])

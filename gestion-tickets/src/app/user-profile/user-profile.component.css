@@ -57,6 +57,101 @@
   border: 2px solid var(--white);
   object-fit: cover;
   flex-shrink: 0;
+  position: relative; /* Important pour positionner le bouton d'édition */
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+/* Effet hover sur l'avatar */
+.profile-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.5);
+}
+
+/* Image dans l'avatar */
+.profile-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: all 0.3s ease;
+}
+
+/* Effet overlay sombre au hover pour mieux voir l'icône */
+.profile-avatar:hover img {
+  filter: brightness(0.7);
+}
+
+/* Initiales de l'avatar */
+.avatar-initials {
+  transition: all 0.3s ease;
+}
+
+.profile-avatar:hover .avatar-initials {
+  transform: scale(0.9);
+  opacity: 0.8;
+}
+
+/* Bouton d'édition de l'avatar */
+.avatar-edit-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--white);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  opacity: 0;
+  animation: fadeInScale 0.3s ease forwards;
+}
+
+/* Animation d'apparition du bouton */
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* Effet hover sur le bouton d'édition */
+.avatar-edit-btn:hover {
+  background: rgba(0, 0, 0, 0.8);
+  transform: translate(-50%, -50%) scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* Styles pour l'icône FontAwesome */
+.avatar-edit-btn .fa {
+  font-size: 0.8rem;
+}
+
+/* Animation de sortie (optionnelle, si vous voulez un effet de disparition) */
+.profile-avatar:not(:hover) .avatar-edit-btn {
+  animation: fadeOutScale 0.3s ease forwards;
+}
+
+@keyframes fadeOutScale {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
 }
 
 /* Détails du profil simplifiés */

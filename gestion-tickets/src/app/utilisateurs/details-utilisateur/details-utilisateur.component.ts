@@ -31,10 +31,11 @@ import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
 import { TypeContrat } from 'src/app/DTOs/type-contrat.enum';
 import { ContratUserService } from 'src/app/_services/contrat-user.service';
+import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.component';
 
 @Component({
   selector: 'app-details-utilisateur',
-  imports: [FormsModule, NgIf, NgFor, CommonModule, PipesModule, ReactiveFormsModule, DefaultPipe],
+  imports: [FormsModule, NgIf, NgFor, CommonModule, PipesModule, ReactiveFormsModule, DefaultPipe, FormsModule],
   templateUrl: './details-utilisateur.component.html',
   styleUrls: ['./details-utilisateur.component.scss']
 })
@@ -59,6 +60,10 @@ export class DetailsUtilisateurComponent implements OnInit {
   totalTickets: number = 0;
 
   paysList: Pays[] = [];
+  filteredPays: Pays[] = [];
+  paysSearchTerm = '';
+  isPaysDropdownOpen = false;
+
   societesList: Societe[] = [];
 
   roles: Role[] = [];
@@ -181,11 +186,47 @@ export class DetailsUtilisateurComponent implements OnInit {
 
   loadPays(): void {
     this.paysService.getPays().subscribe({
-      next: (pays: Pays[]) => this.paysList = pays,
+      next: (pays: Pays[]) => {
+        this.paysList     = pays;
+        this.filteredPays = pays;
+      },
       error: (err) => {
-        console.error('Erreur lors de la récupération des pays', err);
+        console.error('Erreur chargement pays', err);
         this.toastr.error("Erreur lors du chargement des pays.");
       }
+    });
+  }
+
+  getPaysName(id?: number): string {
+    return this.paysList.find(p => p.idPays === id)?.nom || '';
+  }
+
+  togglePaysDropdown(): void {
+    this.isPaysDropdownOpen = !this.isPaysDropdownOpen;
+  }
+
+  filterPays(): void {
+    const term = this.paysSearchTerm.toLowerCase();
+    this.filteredPays = this.paysList.filter(p =>
+      p.nom.toLowerCase().includes(term)
+    );
+  }
+
+  selectPays(idPays: number): void {
+    this.userForm.get('pays')!.setValue(idPays);
+    this.isPaysDropdownOpen = false;
+    this.paysSearchTerm = '';
+    this.filteredPays = this.paysList;
+  }
+
+  openPaysModal(): void {
+    const modal = this.overlayModalService.open(PaysModalComponent);
+    modal.added.subscribe(() => {
+      this.paysService.getPays().subscribe(data => {
+        this.paysList     = data;
+        this.filteredPays = data;
+      });
+      this.overlayModalService.close();
     });
   }
 
