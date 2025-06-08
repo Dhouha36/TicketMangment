@@ -1,4 +1,3 @@
-import { ContratService } from './../../_services/contrat.service';
 import { Component, OnInit, Pipe } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AccountService } from '../../_services/account.service';
@@ -31,6 +30,7 @@ import { OverlayModalService } from '../../_services/overlay-modal.service';
 import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
 import { TypeContrat } from 'src/app/DTOs/type-contrat.enum';
+import { ContratUserService } from 'src/app/_services/contrat-user.service';
 
 @Component({
   selector: 'app-details-utilisateur',
@@ -75,11 +75,11 @@ export class DetailsUtilisateurComponent implements OnInit {
     private societeService: SocieteService,
     private route: ActivatedRoute,
     private accountService: AccountService,
+    private contratUserService: ContratUserService,
     private fb: FormBuilder,
     private toastr: ToastrService,
     private router: Router,
     private projetService: ProjetService,
-    private contratService: ContratService,
     private roleService: RoleService,
     private statusService: StatusService,
     private prioriteService: PrioriteService,
@@ -146,10 +146,9 @@ export class DetailsUtilisateurComponent implements OnInit {
       }
     });
   
-    // (Optionnel) Écouter également les queryParams
+    // Écouter les queryParams
     this.route.queryParams.subscribe(queryParams => {
       console.log("QueryParams mis à jour :", queryParams);
-      // Vous pouvez ajouter ici toute logique supplémentaire si nécessaire
     });
   }
   
@@ -260,7 +259,8 @@ export class DetailsUtilisateurComponent implements OnInit {
       id: [0], // Ajoutez ce contrôle pour stocker l'identifiant du contrat
       dateDebut: ['', Validators.required],
       dateFin: ['', Validators.required],
-      type: ['', Validators.required]
+      type: ['', Validators.required],
+      salaireMensuel: [null]
     });
   }
 
@@ -288,14 +288,17 @@ export class DetailsUtilisateurComponent implements OnInit {
           numTelephone: numeroLocal,
           actif: user.actif
         });
-        if (user.contrat) {
+        if (user.contratUser) {
           this.contratForm.patchValue({
-            id: user.contrat.id,
-            dateDebut: user.contrat.dateDebut ? new Date(user.contrat.dateDebut + 'Z').toISOString().substring(0, 10) : '',
-            dateFin: user.contrat.dateFin ? new Date(user.contrat.dateFin + 'Z').toISOString().substring(0, 10) : '',
-            type: user.contrat.type 
+            id:           user.contratUser.id,
+            dateDebut:    new Date(user.contratUser.dateDebut + 'Z')
+                             .toISOString().substring(0, 10),
+            dateFin:      new Date(user.contratUser.dateFin  + 'Z')
+                             .toISOString().substring(0, 10),
+            type:         user.contratUser.type,
+            salaireMensuel: user.contratUser.salaireMensuel
           });
-        }
+        }        
         // Chargement des projets et tickets associés
         this.loadProjects();
         this.loadTickets();
@@ -442,7 +445,7 @@ export class DetailsUtilisateurComponent implements OnInit {
       this.toastr.error("Aucun utilisateur n'est chargé.");
       return;
     }
-    if (!this.user.contrat) {
+    if (!this.user.contratUser) {
       this.toastr.error("Aucun contrat trouvé pour cet utilisateur.");
       return;
     }
@@ -459,7 +462,7 @@ export class DetailsUtilisateurComponent implements OnInit {
       return;
     }
     
-    const originalContrat = this.user.contrat;
+    const originalContrat = this.user.contratUser;
     const contratToUpdate = {
       ...originalContrat,
       ...this.contratForm.value
@@ -468,11 +471,11 @@ export class DetailsUtilisateurComponent implements OnInit {
     // Affiche le loader
     this.loaderService.showLoader();
   
-    this.contratService.updateContract(contratToUpdate.id, contratToUpdate).subscribe({
+    this.contratUserService.updateContrat(contratToUpdate).subscribe({
       next: () => {
         this.toastr.success("Contrat mis à jour avec succès.");
         if (this.user) {
-          this.user.contrat = contratToUpdate;
+          this.user.contratUser = contratToUpdate;
         }
         this.loaderService.hideLoader();
       },
@@ -487,10 +490,10 @@ export class DetailsUtilisateurComponent implements OnInit {
 
 
   cancelContrat(): void {
-    if (this.user && this.user.contrat) {
+    if (this.user && this.user.contratUser) {
       this.contratForm.patchValue({
-        dateDebut: this.user.contrat.dateDebut,
-        dateFin: this.user.contrat.dateFin,
+        dateDebut: this.user.contratUser.dateDebut,
+        dateFin: this.user.contratUser.dateFin,
       });
     }
   }

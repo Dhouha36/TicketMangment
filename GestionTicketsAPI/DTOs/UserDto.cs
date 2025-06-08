@@ -16,5 +16,5 @@ public class UserDto
     public required string Token { get; set; }
     public string? InitialPassword { get; set; }
     public SocieteDto? Societe { get; set; }
-    public ContratDto? Contrat { get; set; }
+    public ContratUserDto? ContratUser { get; set; }
 }

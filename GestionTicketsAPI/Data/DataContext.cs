@@ -16,7 +16,8 @@ namespace GestionTicketsAPI.Data
     public DbSet<Commentaire> Commentaires { get; set; }
     public DbSet<Client> Clients { get; set; }
     public DbSet<Projet> Projets { get; set; }
-    public DbSet<Contrat> Contrats { get; set; }
+    public DbSet<ContratUser> ContratsUsers { get; set; }
+    public DbSet<ContratProjet> ContratsProjets { get; set; }
     public DbSet<Notification> Notification { get; set; }
     public DbSet<Photo> Photos { get; set; }
     public DbSet<ProjetUser> ProjetUser { get; set; }
@@ -138,13 +139,6 @@ namespace GestionTicketsAPI.Data
           .HasForeignKey(u => u.Pays)
           .OnDelete(DeleteBehavior.Restrict);
 
-      // Contrat ↔ Client et Contrat ↔ SocietePartenaire
-      modelBuilder.Entity<Contrat>()
-          .HasOne(c => c.User)
-          .WithMany(u => u.Contrats)
-          .HasForeignKey(c => c.UserId)
-          .OnDelete(DeleteBehavior.Cascade);
-
       // Ticket relations
       modelBuilder.Entity<Ticket>()
           .HasOne(t => t.Priority)
@@ -192,11 +186,6 @@ namespace GestionTicketsAPI.Data
           .HasForeignKey(c => c.Pays)
           .OnDelete(DeleteBehavior.Restrict);
 
-      modelBuilder.Entity<Projet>()
-          .HasMany(p => p.Contrats)
-          .WithOne(c => c.Projet)
-          .HasForeignKey(c => c.ProjetId)
-          .OnDelete(DeleteBehavior.SetNull);
     }
   }
 }

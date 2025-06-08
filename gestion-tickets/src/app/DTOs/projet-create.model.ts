@@ -1,3 +1,4 @@
+import { ContratProjet } from "../_models/contrat-projet";
 import { TypeContrat } from "./type-contrat.enum";
 
 export interface ProjetCreate {
@@ -5,10 +6,5 @@ export interface ProjetCreate {
   description?: string;
   chefProjetId: number;
   societeId: number;
-  contract?: {
-    dateDebut: string;        // ISO 8601
-    dateFin?:   string;       // ISO 8601 ou null
-    type:      TypeContrat;   // 'CDD' | 'CDI' | 'Projet'
-    projetId?: number;        // si type === 'Projet'
-  };
+  contratProjet?: Omit<ContratProjet, 'id' | 'projetId'>;
 }

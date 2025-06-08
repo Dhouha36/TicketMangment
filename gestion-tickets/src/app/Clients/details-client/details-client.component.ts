@@ -210,9 +210,6 @@ export class DetailsClientComponent implements OnInit {
     this.activeTab = tab;
   }
 
-  getStatusName(id: number): string { return ''; }
-  getPriorityName(id: number): string { return ''; }
-
   openAttachProjectDialog(): void {
     const dialogRef = this.dialog.open(AttachProjectDialogComponent, {
       data: {}

@@ -669,6 +669,10 @@ h3 {
   color: #4caf50;
 }
 
+.status.inactive {
+  color: #f44336;
+}
+
 .custom-select {
   position: relative;
   width: 100%;

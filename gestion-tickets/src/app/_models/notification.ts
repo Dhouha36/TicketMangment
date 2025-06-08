@@ -5,4 +5,5 @@ export interface AppNotification {
   isRead: boolean;
   entityType: string; 
   entityId:   number;
+  userId:     number;
 }

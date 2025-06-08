@@ -21,7 +21,7 @@ export const routes: Routes = [
   // Layout principal : header + sidenav
   {
     path: 'home',
-    component: LayoutComponent,       // <-- Le composant parent (layout)
+    component: LayoutComponent,     
     runGuardsAndResolvers: 'always',
     canActivate: [authGuard],
     children: [
@@ -36,7 +36,7 @@ export const routes: Routes = [
         path: 'Tickets',
         loadChildren: () =>
           import('./Tickets/tickets.module').then(m => m.TicketsModule),
-        data: { filterType: '' }
+        data: { filterType: 'projetUser' }
       },
       {
         path: 'profile',
@@ -54,11 +54,6 @@ export const routes: Routes = [
           import('./Clients/clients.module').then(m => m.ClientsModule),
       },
       {
-        path: 'Pays',
-        loadChildren: () =>
-          import('./PaysFile/pays.module').then(m => m.PaysModule),
-      },
-      {
         path: 'Projets',
         loadChildren: () =>
           import('./Projets/projets.module').then(m => m.ProjetsModule),
@@ -73,18 +68,19 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./Categoriess/categories.module').then(m => m.CategoriesModule),
       },
-      // Route par défaut quand on tape /home
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
+      // Par défaut sous /home → dashboard
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+
+      // wildcard ** uniquement DANS /home → affiche NotFoundComponent
+      { path: '**', redirectTo: '/not-found' },
     ]
   },
 
-  // Routes d'erreur
   { path: 'errors', component: TestErrorsComponent },
   { path: 'not-found', component: NotFoundComponent },
   { path: 'server-error', component: ServerErrorComponent },
 
-  // Wildcard : tout chemin inconnu redirige vers login ou vers 'not-found'
-  { path: '**', redirectTo: '' }
+  { path: '**', redirectTo: '' },
 ];
 
 @NgModule({

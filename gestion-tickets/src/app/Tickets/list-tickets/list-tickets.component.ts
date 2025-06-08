@@ -80,22 +80,26 @@ export class ListTicketsComponent implements OnInit {
   }
   
   ngOnInit(): void {
-    // Récupérer le filtre passé par la route
-    this.route.data.subscribe(data => {
-      this.currentFilters.filterType = data['filterType'] || '';
-      if (this.currentFilters.filterType === 'associated') {
-        this.baseRoute = '/home/MesTickets';
-      } else {
-        this.baseRoute = '/home/Tickets';
-      }
-      this.getTickets();
-    });
+    // 1) Lire filterType depuis la route parente
+    const parentData = this.route.parent?.snapshot.data || {};
+    this.currentFilters.filterType = parentData['filterType'] || '';
+
+    // 2) Définir baseRoute pour les liens "details" / "ajouter", en fonction du filterType
+    if (this.currentFilters.filterType === 'associated') {
+      this.baseRoute = '/home/MesTickets';
+    } else if (this.currentFilters.filterType === 'projetUser') {
+      this.baseRoute = '/home/Tickets';
+    } else {
+      // Cas par défaut (vous pouvez décider d’une route fallback)
+      this.baseRoute = '/home/Tickets';
+    }
     
     this.currentUser = this.accountService.currentUser();
     this.loadQualifications();
     this.loadPriorities();
     this.loadStatuses();
-
+    this.getTickets();
+    
     // Gestion du paramètre newTicket
     this.route.queryParams.subscribe(params => {
       const newTicket = params['newTicket'];
@@ -143,15 +147,15 @@ export class ListTicketsComponent implements OnInit {
     ...this.currentFilters,
     searchTerm: this.ticketsSearchTerm,
     clientId: panelClientId,
-    userId,                               // name it userId so it maps to FilterParams.UserId
-    role,       // nouveau champ
+    userId,                              
+    role,       
   };
 
-  console.log('Envoi HTTP /tickets/paged avec :', {
-    pageNumber: this.pageNumber,
-    pageSize: this.pageSize,
-    ...filters
-  });
+  //console.log('Envoi HTTP /tickets/paged avec :', {
+  //  pageNumber: this.pageNumber,
+  //  pageSize: this.pageSize,
+  //  ...filters
+  //});
     
     // Afficher le loader global avant le début de la requête
     this.globalLoaderService.showGlobalLoader();
@@ -281,7 +285,7 @@ export class ListTicketsComponent implements OnInit {
   }
 
   onApplyFilter(filterValues: any): void {
-    console.log('Filters reçus par ListTickets :', filterValues);
+    //console.log('Filters reçus par ListTickets :', filterValues);
     this.currentFilters = filterValues;
     this.pageNumber = 1;
     this.getTickets();

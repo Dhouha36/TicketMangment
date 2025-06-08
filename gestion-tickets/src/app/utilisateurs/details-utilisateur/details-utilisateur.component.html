@@ -302,7 +302,7 @@
           </div>
           <div class="form-group">
             <label for="type">Type de contrat</label>
-            <select id="type" formControlName="type" class="form-control" readonly>
+            <select id="type" formControlName="type" class="form-control" >
               <option value="">Sélectionnez un type</option>
               <option [value]="TypeContrat.CDD">{{ TypeContrat.CDD }}</option>
               <option [value]="TypeContrat.CDI">{{ TypeContrat.CDI }}</option>
@@ -310,6 +310,10 @@
             <div *ngIf="contratForm.get('type')?.hasError('required')" class="invalid-feedback text-start">
               Type de contrat est obligatoire
             </div>
+          </div>
+          <div class="form-group">
+            <label for="salaireMensuel">Salaire mensuel</label>
+            <input type="number" formControlName="salaireMensuel" placeholder="Salaire mensuel">
           </div>
         </div>
         <div class="form-actions">

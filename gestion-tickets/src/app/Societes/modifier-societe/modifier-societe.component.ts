@@ -2,10 +2,8 @@ import { Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { SocieteService } from '../../_services/societe.service';
-import { ContratService } from '../../_services/contrat.service';
 import { ToastrService } from 'ngx-toastr';
 import { Societe } from '../../_models/societe';
-import { Contrat } from '../../_models/contrat';
 import { ProjetService } from '../../_services/projet.service';
 import { AccountService } from '../../_services/account.service';
 import { PaginatedResult } from '../../_models/pagination';
@@ -95,7 +93,6 @@ export class ModifierSocieteComponent implements OnInit {
     private fb: FormBuilder,
     private societeService: SocieteService,
     private paysService: PaysService,
-    private contratService: ContratService,
     private projetsService: ProjetService,
     private clientService: ClientService,
     public accountService: AccountService,

@@ -1,4 +1,4 @@
-import { Contrat } from "./contrat";
+import { ContratProjet } from "./contrat-projet";
 import { User } from "./user";
 
 export interface Projet {
@@ -15,6 +15,6 @@ export interface Projet {
   nomPays?: string;    
   selected?: boolean; 
   utilisateurs?: User[];
-  contrat?: Contrat;
+  contratProjet?: ContratProjet;
 }
 

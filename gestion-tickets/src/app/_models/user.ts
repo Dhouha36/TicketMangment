@@ -1,4 +1,4 @@
-import { Contrat } from "./contrat";
+import { ContratUser } from "./contrat-user";
 import { ProjetMember } from "./projet-member"; // Assurez-vous du bon chemin
 import { Societe } from "./societe";
 
@@ -11,7 +11,7 @@ export interface User {
   email: string;
   role: string;
   actif: boolean;
-  contrat?: Contrat;
+  contratUser?: ContratUser;
   dateDebut?: Date;
   dateFin?: Date;
   selected?: boolean;
@@ -21,4 +21,6 @@ export interface User {
   projetMembers?: ProjetMember[]; 
   createdAt?: Date;
   photoUrl?: string;
+  ticketsTraites?: number;
+  ticketsEnCours?: number;
 }

@@ -3,8 +3,7 @@ export interface TicketFilterRequest {
   ownerId?: number;
   personnelId?: number;
   projetId?: number; 
-  start?: string;       // ISO (ex. "2025-04-29")
+  start?: string;    
   end?: string;
   granularity: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'none';
-  
 }

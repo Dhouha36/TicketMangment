@@ -49,133 +49,147 @@ namespace GestionTicketsAPI.Repositories
 
 
     public async Task<PagedList<Ticket>> GetTicketsPagedAsync(TicketFilterParams filterParams)
-{
-    // Construction de la requête de base avec les includes nécessaires
-    var query = _context.Tickets
-        .Include(t => t.Owner)
-        .Include(t => t.ProblemCategory)
-        .Include(t => t.Projet)
-            .ThenInclude(p => p.ChefProjet)
-        .Include(t => t.Projet)
-            .ThenInclude(p => p.Societe)
-        .Include(t => t.Responsible)
-        .Include(t => t.Priority)
-        .Include(t => t.Qualification)
-        .Include(t => t.Statut)
-        .OrderByDescending(t => t.CreatedAt)
-        .AsQueryable();
+    {
+      var query = _context.Tickets
+          .Include(t => t.Owner)
+          .Include(t => t.ProblemCategory)
+          .Include(t => t.Projet)
+              .ThenInclude(p => p.ChefProjet)
+          .Include(t => t.Projet)
+              .ThenInclude(p => p.Societe)
+          .Include(t => t.Responsible)
+          .Include(t => t.Priority)
+          .Include(t => t.Qualification)
+          .Include(t => t.Statut)
+          .OrderByDescending(t => t.CreatedAt)
+          .AsQueryable();
 
-    // 1) Filtrage par ClientId si fourni (plus restrictif)
-    if (filterParams.ClientId.HasValue)
-    {
+      // 1) Filtre explicite par ClientId (si défini) = tickets du client
+      if (filterParams.ClientId.HasValue)
+      {
         query = query.Where(t => t.OwnerId == filterParams.ClientId.Value);
-    }
-    // 2) Sinon, filtrage par rôle pour les non-superadmins
-    else if (!(filterParams.Role?.Replace(" ", "").Equals("superadmin", StringComparison.OrdinalIgnoreCase) ?? false))
-    {
-        // Cas Chef de projet / Collaborateur
-        if (string.Equals(filterParams.Role, "chef de projet", StringComparison.OrdinalIgnoreCase) ||
-            string.Equals(filterParams.Role, "collaborateur", StringComparison.OrdinalIgnoreCase))
+      }
+      // 2) Sinon, si l'utilisateur n'est pas superadmin
+      else if (!(filterParams.Role?
+                  .Replace(" ", "")
+                  .Equals("superadmin", StringComparison.OrdinalIgnoreCase)
+                ?? false))
+      {
+        bool isChefOrCollab =
+            string.Equals(filterParams.Role, "chef de projet", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(filterParams.Role, "collaborateur", StringComparison.OrdinalIgnoreCase);
+
+        if (isChefOrCollab)
         {
-            if (!string.IsNullOrEmpty(filterParams.FilterType) &&
-                filterParams.FilterType.Equals("associated", StringComparison.OrdinalIgnoreCase))
-            {
-                query = query.Where(t =>
-                    t.OwnerId == filterParams.UserId ||
-                    t.ResponsibleId == filterParams.UserId ||
-                    (t.Projet != null && t.Projet.ChefProjetId == filterParams.UserId)
-                );
-            }
-            else if (!string.IsNullOrEmpty(filterParams.FilterType) &&
-                     filterParams.FilterType.Equals("projetUser", StringComparison.OrdinalIgnoreCase))
-            {
-                query = query.Where(t => _context.ProjetUser
-                    .Any(pu => pu.ProjetId == t.Projet.Id && pu.UserId == filterParams.UserId));
-            }
-            else
-            {
-                query = query.Where(t =>
-                    t.OwnerId == filterParams.UserId ||
-                    t.ResponsibleId == filterParams.UserId ||
-                    (t.Projet != null && t.Projet.ChefProjetId == filterParams.UserId) ||
-                    _context.ProjetUser.Any(pu => pu.ProjetId == t.Projet.Id && pu.UserId == filterParams.UserId)
-                );
-            }
+          // a) Si filterType == "associated" → tickets dont il est Responsible
+          if (!string.IsNullOrEmpty(filterParams.FilterType)
+              && filterParams.FilterType.Equals("associated", StringComparison.OrdinalIgnoreCase))
+          {
+            query = query.Where(t => t.ResponsibleId == filterParams.UserId);
+          }
+          // b) Si filterType == "projetUser" → tickets où il est membre de projet
+          else if (!string.IsNullOrEmpty(filterParams.FilterType)
+         && filterParams.FilterType.Equals("projetUser", StringComparison.OrdinalIgnoreCase))
+          {
+            query = query.Where(t =>
+                t.Projet != null &&
+                (
+                    // a) soit l’utilisateur est Chef de projet
+                    t.Projet.ChefProjetId == filterParams.UserId
+
+                    // b) soit l’utilisateur est membre du projet (table ProjetUser)
+                    || _context.ProjetUser.Any(pu =>
+                          pu.ProjetId == t.Projet.Id &&
+                          pu.UserId == filterParams.UserId)
+                )
+            );
+          }
+          // c) Si filterType invalide ou vide → aucun ticket
+          else
+          {
+            query = query.Where(t => false);
+          }
         }
-        // Cas client sans ClientId explicite -> ne voir que ses propres tickets
+        // 3) Si ce n'est ni chef ni collaborateur → c'est un client ou autre
         else
         {
-            query = query.Where(t => t.OwnerId == filterParams.UserId);
+          query = query.Where(t => t.OwnerId == filterParams.UserId);
         }
-    }
+      }
+      // 4) Si superadmin, on ne filtre rien (voit tout)
 
-    // 3) Filtres avancés "texte"
-    if (!string.IsNullOrEmpty(filterParams.Client))
-    {
+      // 5) Appliquer les autres filtres textes (Client, Catégorie, Priorité, Statut, Qualification, Projet, Société, SearchTerm)
+      if (!string.IsNullOrEmpty(filterParams.Client))
+      {
         var lowerClient = filterParams.Client.Trim().ToLower();
         query = query.Where(t =>
-            (t.Owner.FirstName + " " + t.Owner.LastName).ToLower().Contains(lowerClient) ||
-            (t.Owner.LastName  + " " + t.Owner.FirstName).ToLower().Contains(lowerClient)
+            (t.Owner.FirstName + " " + t.Owner.LastName).ToLower().Contains(lowerClient)
+            || (t.Owner.LastName + " " + t.Owner.FirstName).ToLower().Contains(lowerClient)
         );
-    }
-    if (!string.IsNullOrEmpty(filterParams.Categorie))
-    {
+      }
+      if (!string.IsNullOrEmpty(filterParams.Categorie))
+      {
         var lowerCategorie = filterParams.Categorie.ToLower();
-        query = query.Where(t => t.ProblemCategory.Nom.ToLower().Contains(lowerCategorie));
-    }
-    if (!string.IsNullOrEmpty(filterParams.Priorite))
-    {
+        query = query.Where(t =>
+            t.ProblemCategory.Nom.ToLower().Contains(lowerCategorie));
+      }
+      if (!string.IsNullOrEmpty(filterParams.Priorite))
+      {
         var lowerPriorite = filterParams.Priorite.ToLower();
         query = query.Where(t => t.Priority.Name.ToLower().Contains(lowerPriorite));
-    }
-    if (!string.IsNullOrEmpty(filterParams.Statut))
-    {
+      }
+      if (!string.IsNullOrEmpty(filterParams.Statut))
+      {
         var lowerStatut = filterParams.Statut.ToLower();
         query = query.Where(t => t.Statut.Name.ToLower().Contains(lowerStatut));
-    }
-    if (!string.IsNullOrEmpty(filterParams.Qualification))
-    {
+      }
+      if (!string.IsNullOrEmpty(filterParams.Qualification))
+      {
         var lowerQualif = filterParams.Qualification.ToLower();
         query = query.Where(t => t.Qualification.Name.ToLower().Contains(lowerQualif));
-    }
-    if (!string.IsNullOrEmpty(filterParams.Projet))
-    {
+      }
+      if (!string.IsNullOrEmpty(filterParams.Projet))
+      {
         var lowerProjet = filterParams.Projet.ToLower();
         query = query.Where(t => t.Projet.Nom.ToLower().Contains(lowerProjet));
-    }
-    if (!string.IsNullOrEmpty(filterParams.Societe))
-    {
+      }
+      if (!string.IsNullOrEmpty(filterParams.Societe))
+      {
         var lowerSociete = filterParams.Societe.ToLower();
         query = query.Where(t => t.Projet.Societe.Nom.ToLower().Contains(lowerSociete));
-    }
-    if (!string.IsNullOrEmpty(filterParams.SearchTerm))
-    {
+      }
+      if (!string.IsNullOrEmpty(filterParams.SearchTerm))
+      {
         var lowerSearchTerm = filterParams.SearchTerm.ToLower();
         query = query.Where(t =>
-            t.Title.ToLower().Contains(lowerSearchTerm) ||
-            t.Description.ToLower().Contains(lowerSearchTerm)
+            t.Title.ToLower().Contains(lowerSearchTerm)
+            || t.Description.ToLower().Contains(lowerSearchTerm)
         );
-    }
+      }
 
-    // 4) Filtrage par dates
-    if (filterParams.StartDate.HasValue && filterParams.EndDate.HasValue)
-    {
+      // 6) Filtres de dates (StartDate / EndDate)
+      if (filterParams.StartDate.HasValue && filterParams.EndDate.HasValue)
+      {
         query = query.Where(t =>
-            t.CreatedAt >= filterParams.StartDate.Value &&
-            t.CreatedAt <= filterParams.EndDate.Value
+            t.CreatedAt >= filterParams.StartDate.Value
+            && t.CreatedAt <= filterParams.EndDate.Value
         );
-    }
-    else
-    {
+      }
+      else
+      {
         if (filterParams.StartDate.HasValue)
-            query = query.Where(t => t.CreatedAt >= filterParams.StartDate.Value);
+        {
+          query = query.Where(t => t.CreatedAt >= filterParams.StartDate.Value);
+        }
         if (filterParams.EndDate.HasValue)
-            query = query.Where(t => t.CreatedAt <= filterParams.EndDate.Value);
-    }
+        {
+          query = query.Where(t => t.CreatedAt <= filterParams.EndDate.Value);
+        }
+      }
 
-    // Exécution et pagination
-    return await PagedList<Ticket>.CreateAsync(query, filterParams.PageNumber, filterParams.PageSize);
-}
+      // 7) Retourner la page demandée
+      return await PagedList<Ticket>.CreateAsync(query, filterParams.PageNumber, filterParams.PageSize);
+    }
 
 
     public async Task AddTicketAsync(Ticket ticket)

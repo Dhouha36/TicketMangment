@@ -279,8 +279,8 @@
               <td>
                 <span class="status active">✔</span>
               </td>
-              <td>{{ projet.contrat?.dateDebut | date:'yyyy-MM-dd' }}</td>
-              <td>{{ projet.contrat?.dateFin   | date:'yyyy-MM-dd' }}</td>
+              <td>{{ projet.contratProjet?.dateDebut | date:'yyyy-MM-dd' }}</td>
+              <td>{{ projet.contratProjet?.dateFin   | date:'yyyy-MM-dd' }}</td>
               <td class="actions">
                 <button class="view-btn" (click)="viewProjet(projet.id)">
                   <span class="material-icons">visibility</span>

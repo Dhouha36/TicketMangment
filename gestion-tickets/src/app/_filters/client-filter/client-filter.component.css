@@ -1,0 +1,296 @@
+/* Style principal du panneau de filtre */
+.filter-panel {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Style des groupes de formulaire */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #555;
+  font-size: 0.9rem;
+}
+
+/* Style du sélecteur personnalisé */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.select-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.select-box:hover {
+  border-color: #d0d0d0;
+  background-color: #f9f9f9;
+}
+
+.selected-item {
+  font-size: 0.9rem;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Style pour l'élément sélectionné vide */
+.selected-item:empty::before,
+.selected-item:contains('Sélectionnez') {
+  color: #888;
+}
+
+/* Style de la flèche */
+.arrow {
+  font-size: 0.7rem;
+  color: #888;
+  transition: transform 0.2s ease;
+}
+
+.custom-select:hover .arrow {
+  color: #666;
+}
+
+/* Rotation de la flèche quand le dropdown est ouvert */
+.dropdown-content.show + .select-box .arrow {
+  transform: rotate(180deg);
+}
+
+/* Style du contenu dropdown */
+.dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 0;
+  overflow: hidden;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  transition: all 0.3s ease;
+  margin-top: 4px;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.dropdown-content.show {
+  max-height: 280px;
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Style de la boîte de recherche */
+.search-box {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 2px rgba(245, 124, 0, 0.1);
+}
+
+.search-box input::placeholder {
+  color: #aaa;
+}
+
+/* Style de la liste d'options */
+.option-list {
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #d0d0d0 #f5f5f5;
+}
+
+.option-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.option-list::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+.option-list::-webkit-scrollbar-thumb {
+  background-color: #d0d0d0;
+  border-radius: 3px;
+}
+
+/* Style des éléments d'option */
+.option-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+  transition: background-color 0.2s ease;
+}
+
+.option-item:hover {
+  background-color: #f5f5f5;
+  color: #f57c00;
+}
+
+/* Message quand aucun résultat n'est trouvé */
+.no-results {
+  padding: 12px 14px;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  font-size: 0.9rem;
+}
+
+/* Style des boutons d'action */
+.btn {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  margin-right: 10px;
+}
+
+.btn-primary {
+  background-color: #f57c00;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #e65100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:active {
+  transform: translateY(1px);
+}
+
+.btn-secondary {
+  background-color: #f5f5f5;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+/* Disposition des boutons */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+form > :last-child {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+/* États actifs */
+.select-box.active {
+  border-color: #f57c00;
+  box-shadow: 0 0 0 2px rgba(245, 124, 0, 0.1);
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 5px;
+  margin-top: 5px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Adaptations responsives */
+@media (max-width: 768px) {
+  .form-group {
+    margin-bottom: 12px;
+  }
+  
+  .select-box, 
+  .option-item {
+    padding: 8px 12px;
+  }
+  
+  .dropdown-content.show {
+    max-height: 240px;
+  }
+  
+  .btn {
+    padding: 8px 14px;
+    font-size: 0.85rem;
+  }
+  
+  form > :last-child {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .btn {
+    flex: 1;
+    min-width: 120px;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .filter-panel {
+    padding: 12px;
+  }
+  
+  .select-box, 
+  .option-item,
+  .search-box input {
+    font-size: 0.85rem;
+  }
+  
+  .dropdown-content.show {
+    max-height: 200px;
+  }
+  
+  form > :last-child {
+    flex-direction: column;
+  }
+  
+  .btn {
+    width: 100%;
+    margin-bottom: 8px;
+  }
+}

@@ -14,17 +14,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { UserFilterComponent } from '../../_filters/user-filter/user-filter.component';
 import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
+import { DashboardService } from 'src/app/_services/dashboard.service';
+import { TicketService } from 'src/app/_services/ticket.service';
 
 @Component({
-    selector: 'app-list-utilisateurs',
-    imports: [NgFor, NgIf, NgClass, FormsModule, RouterLink, CommonModule,
-      MatMenuModule,
-      MatIconModule,
-      MatButtonModule,
-      UserFilterComponent
-    ],
-    templateUrl: './list-utilisateurs.component.html',
-    styleUrls: ['./list-utilisateurs.component.css']
+  selector: 'app-list-utilisateurs',
+  imports: [NgFor, NgIf, NgClass, FormsModule, RouterLink, CommonModule,
+    MatMenuModule,
+    MatIconModule,
+    MatButtonModule,
+    UserFilterComponent
+  ],
+  templateUrl: './list-utilisateurs.component.html',
+  styleUrls: ['./list-utilisateurs.component.css']
 })
 export class ListUtilisateursComponent implements OnInit {
 
@@ -43,25 +45,21 @@ export class ListUtilisateursComponent implements OnInit {
   // Variables de chargement spécifiques
   isExportLoading: boolean = false;
   isDeleteLoading: boolean = false;
-  
+
+  currentUserId: number | null = null;
 
   constructor(
     public accountService: AccountService,
     private route: ActivatedRoute,
     private router: Router,
     private toastr: ToastrService,
+    private ticketService: TicketService,
     private overlayModalService: OverlayModalService,
-    private loaderService: LoaderService,
     private globalLoaderService: GlobalLoaderService
-  ) {
-    // Vous pouvez toujours conserver la souscription globale si nécessaire,
-    // mais ici nous gérons les loaders spécifiques par action.
-    // this.loaderService.isLoading$.subscribe((loading) => {
-    //   this.isLoading = loading;
-    // });
-  } 
+  ) { }
 
   ngOnInit(): void {
+    this.loadCurrentUser();
     this.route.queryParams.subscribe(params => {
       const newUser = params['newUser'];
       if (newUser) {
@@ -87,28 +85,64 @@ export class ListUtilisateursComponent implements OnInit {
     this.accountService.setCurrentUser(user);
   }
 
+  private loadCurrentUser(): void {
+    const userString = localStorage.getItem('user');
+    if (userString) {
+      const user = JSON.parse(userString);
+      this.currentUserId = user.id;
+      this.accountService.setCurrentUser(user);
+    }
+  }
+  
+  private addStats(): void {
+    const pageNumber = 1;
+    // Ici on prend arbitrairement 1000 tickets max par utilisateur.
+    const pageSize = 1000;
+
+    this.paginatedResult?.items?.forEach(u => {
+      this.accountService
+        .getUserTickets(u.id, pageNumber, pageSize)
+        .subscribe(paged => {
+          const tickets = paged.items ?? [];
+
+          u.ticketsTraites = tickets
+            .filter(t =>
+              t.statut?.name === 'Résolu' ||
+              t.statut?.name === 'Non Résolu'
+            )
+            .length;
+
+          u.ticketsEnCours = tickets
+            .filter(t => t.statut?.name === 'En cours')
+            .length;
+        }, err => {
+          console.error(`Erreur récupération tickets pour ${u.id}`, err);
+        });
+    });
+  }
+
   getUsers(): void {
     this.globalLoaderService.showGlobalLoader();
     const searchTerm = this.usersSearchTerm || '';
     this.accountService.getUsers(this.pageNumber, this.pageSize, searchTerm, this.filterParams)
       .subscribe({
-        next: (response) => {
-          const updatedItems = (response.items ?? []).map(user => {
-            return { ...user, selected: false };
-          });
+        next: response => {
+          // Map and filter out the connected user
+          const items = (response.items ?? [])
+            .filter(user => user.id !== this.currentUserId)
+            .map(user => ({ ...user, selected: false }));
+
           const result: PaginatedResult<User[]> = {
-            items: updatedItems || [],
+            items,
             pagination: response.pagination
           };
+
           this.accountService.paginatedResult.set(result);
           this.paginatedResult = result;
+          this.addStats();
         },
-        error: (error) => {
-          console.error('Erreur lors du chargement des utilisateurs paginés', error);
-        },
-        complete: () => {
-          this.globalLoaderService.hideGlobalLoader();
-        }
+        error: error => console.error('Erreur lors du chargement des utilisateurs paginés', error),
+        complete: () => this.globalLoaderService.hideGlobalLoader()
       });
   }
 
@@ -179,7 +213,7 @@ export class ListUtilisateursComponent implements OnInit {
   deleteUser(user: User): void {
     const modalInstance = this.overlayModalService.open(ConfirmModalComponent);
     modalInstance.message = `Voulez-vous vraiment supprimer l'utilisateur ${user.firstName} ${user.lastName} ?`;
-  
+
     modalInstance.confirmed.subscribe(() => {
       this.isDeleteLoading = true;
       this.accountService.deleteUser(user.id).subscribe({
@@ -195,7 +229,7 @@ export class ListUtilisateursComponent implements OnInit {
       });
       this.overlayModalService.close();
     });
-  
+
     modalInstance.cancelled.subscribe(() => {
       this.overlayModalService.close();
     });
@@ -221,5 +255,5 @@ export class ListUtilisateursComponent implements OnInit {
           this.isExportLoading = false;
         }
       });
-  }  
+  }
 }

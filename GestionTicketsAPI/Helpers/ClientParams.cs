@@ -20,5 +20,6 @@ public class ClientParams
   // Filtres spécifiques aux clients
   public bool? Actif { get; set; }
   public int? SocieteId { get; set; }
+  public int? ProjetId { get; set; }
   public string? Pays { get; set; }
 }

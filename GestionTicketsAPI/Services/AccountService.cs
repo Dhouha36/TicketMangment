@@ -13,6 +13,7 @@ namespace GestionTicketsAPI.Services
   {
     private readonly IAccountRepository _accountRepository;
     private readonly ISocieteRepository _societeRepository;
+    private readonly IContratUserService _contratUserService;
     private readonly IUserRepository _userRepository;
     private readonly ITokenService _tokenService;
     private readonly IMapper _mapper;
@@ -21,11 +22,13 @@ namespace GestionTicketsAPI.Services
         IUserRepository userRepository,
         IAccountRepository accountRepository,
         ISocieteRepository societeRepository,
+        IContratUserService contratUserService,
         ITokenService tokenService,
         IMapper mapper)
     {
       _accountRepository = accountRepository;
       _societeRepository = societeRepository;
+      _contratUserService = contratUserService;
       _userRepository = userRepository;
       _tokenService = tokenService;
       _mapper = mapper;
@@ -78,32 +81,15 @@ namespace GestionTicketsAPI.Services
       // À présent, user.Id contient l'ID généré
 
       // 6. Gérer le contrat si fourni
-      if (registerDto.Contract != null)
+      if (registerDto.ContratUser != null)
       {
-        var dto = registerDto.Contract;
+        var dto = registerDto.ContratUser;
+        if (dto.Type != TypeContrat.CDD && dto.Type != TypeContrat.CDI)
+          throw new ArgumentException("Le contrat utilisateur doit être de type CDD ou CDI.");
 
-        // Valider la cohérence du type de contrat
-        if ((dto.Type == TypeContrat.CDD || dto.Type == TypeContrat.CDI) && dto.UserId != null)
-          throw new Exception("Vous ne devez pas passer UserId pour un contrat employé.");
-        if (dto.Type == TypeContrat.Projet && dto.ProjetId == null)
-          throw new Exception("Un contrat de projet doit spécifier un ProjetId.");
-
-        var contrat = new Contrat
-        {
-          DateDebut = dto.DateDebut,
-          DateFin = dto.DateFin,
-          Type = dto.Type,
-          // On met l'ID du user pour CDD/CDI, ou null si contrat de projet
-          UserId = (dto.Type != TypeContrat.Projet) ? user.Id : null,
-          // On met l'ID du projet si contrat de projet, sinon null
-          ProjetId = (dto.Type == TypeContrat.Projet) ? dto.ProjetId : null
-        };
-
-        await _accountRepository.AddContractAsync(contrat);
-        if (!await _accountRepository.SaveAllAsync())
-        {
-          throw new Exception("Erreur lors de l'enregistrement du contrat.");
-        }
+        dto.UserId = user.Id;
+        var created = await _contratUserService.CreateAsync(dto);
+        // Optionnel : injecter created dans userDto.ContratUser
       }
 
       // 7. Mapper et retourner le DTO

@@ -50,9 +50,8 @@
         <th>Email</th>
         <th>Rôle</th>
         <th>Actif</th>
-        <th>Contrat</th>
-        <th>Date Début</th>
-        <th>Date fin</th>
+        <th>Tickets traités</th>
+        <th>Tickets en cours</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -79,20 +78,16 @@
           <span *ngIf="!user.actif" class="status inactive">✘</span>
         </td>
         <td>
-          <span *ngIf="user.contrat; else noContrat" class="status active">✔</span>
-          <ng-template #noContrat>
-            <span class="status inactive">✘</span>
-          </ng-template>
+          {{ user.role === 'Super Admin'
+             ? '-'
+             : (user.ticketsTraites ?? 0) 
+          }}
         </td>
         <td>
-          <ng-container *ngIf="user.contrat">
-            {{ user.contrat.dateDebut | date:'dd/MM/yyyy' }}
-          </ng-container>
-        </td>
-        <td>
-          <ng-container *ngIf="user.contrat">
-            {{ user.contrat.dateFin | date:'dd/MM/yyyy' }}
-          </ng-container>
+          {{ user.role === 'Super Admin'
+             ? '-'
+             : (user.ticketsEnCours ?? 0) 
+          }}
         </td>
         <td class="actions">
           <button class="edit-btn" [routerLink]="['/home/utilisateurs/details', user.id]"

@@ -117,8 +117,11 @@ export class TicketFilterComponent implements OnInit {
     qualification: [''],
     projet:    [''],
     societe:   [''],
-    startDate: [ new Date() ],
-    endDate:   [ new Date() ],
+    startDate: [ null ],
+    endDate:   [ null ],
+    filterType:  [ this.isChefDeProjet() ? 'projetUser'
+                  : this.isCollaborateur() ? 'associated'
+                  : '' ]
   });
 
     // Chargement des données depuis la base via les services
@@ -328,7 +331,6 @@ export class TicketFilterComponent implements OnInit {
 
   onSubmit(): void {
     this.loaderService.showLoader();
-    console.log('Filters envoyés :', this.filterForm.value);
     this.applyFilter.emit(this.filterForm.value);
     this.loaderService.hideLoader();
   }

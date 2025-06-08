@@ -1,5 +1,4 @@
 export enum TypeContrat {
   CDD = 'CDD',
-  CDI = 'CDI',
-  Projet = 'Projet'
+  CDI = 'CDI'
 }

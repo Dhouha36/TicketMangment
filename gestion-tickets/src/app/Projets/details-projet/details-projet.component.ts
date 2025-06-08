@@ -24,9 +24,9 @@ import { LoaderService } from '../../_services/loader.service';
 import { GlobalLoaderService } from '../../_services/global-loader.service';
 import { ClientDto } from 'src/app/DTOs/ClientDto';
 import { ClientService } from 'src/app/_services/client.service';
-import { ContratService } from 'src/app/_services/contrat.service';
-import { Contrat } from 'src/app/_models/contrat';
 import { TypeContrat } from 'src/app/DTOs/type-contrat.enum';
+import { ContratProjet } from 'src/app/_models/contrat-projet';
+import { ContratProjetService } from 'src/app/_services/contrat-projet.service';
 
 @Component({
   selector: 'app-details-projet',
@@ -86,11 +86,11 @@ export class DetailsProjetComponent implements OnInit {
   contratForm!: FormGroup;
 
   // Variables de pagination et recherche pour clients
-clientPageNumber: number = 1;
-clientPageSize: number = 9;
-clientJumpPage: number = 1;
-clientTotalPages: number = 1;
-clientSearchTerm: string = '';
+  clientPageNumber: number = 1;
+  clientPageSize: number = 9;
+  clientJumpPage: number = 1;
+  clientTotalPages: number = 1;
+  clientSearchTerm: string = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -98,10 +98,10 @@ clientSearchTerm: string = '';
     public accountService: AccountService,
     private paysService: PaysService,
     private societeService: SocieteService,
+    private contratProjetService: ContratProjetService,
     private toastr: ToastrService,
     public router: Router,
     private dialog: MatDialog,
-    private contratService: ContratService,
     private fb: FormBuilder,
     private clientService: ClientService,
     private overlayModalService: OverlayModalService,
@@ -139,19 +139,20 @@ clientSearchTerm: string = '';
         if (this.activeTab === 'clients') {
           this.loadProjectClients();
         }
-        if (this.projet.contrat) {
-          const rawDeb = this.projet.contrat.dateDebut as string;
-          const rawFin = this.projet.contrat.dateFin  as string;
-          const isoDeb = rawDeb.split('T')[0];
-          const isoFin = rawFin.split('T')[0];
+        if (data.contratProjet) {
+          const cd = data.contratProjet;
+          // formate en "YYYY-MM-DD"
+          const debutStr = new Date(cd.dateDebut).toISOString().substring(0, 10);
+          const finStr = cd.dateFin
+            ? new Date(cd.dateFin).toISOString().substring(0, 10)
+            : '';
           this.contratForm.patchValue({
-            id:        this.projet.contrat.id,
-            dateDebut: isoDeb,
-            dateFin:   isoFin,
-            type:      this.projet.contrat.type 
+            id: cd.id,
+            dateDebut: debutStr,
+            dateFin: finStr,
+            montantTotal: cd.montantTotal
           });
         }
-        
 
       },
       error: (err) => {
@@ -592,7 +593,7 @@ clientSearchTerm: string = '';
       return;
     }
     // Vérifier qu'un contrat de projet est chargé
-    if (!this.projet.contrat) {
+    if (!this.projet.contratProjet) {
       this.toastr.error("Aucun contrat de projet n'est chargé.");
       return;
     }
@@ -609,23 +610,26 @@ clientSearchTerm: string = '';
       return;
     }
 
-    // Construire l'objet à soumettre
-    const updated: Contrat = {
+    const dateDebutStr = this.contratForm.value.dateDebut; // "2025-06-08"
+    const dateDebutWithTime = dateDebutStr + 'T12:00:00';  // évite le shift UTC
+
+    const updated: ContratProjet = {
       id: this.contratForm.value.id,
-      dateDebut: this.contratForm.value.dateDebut,
-      dateFin: this.contratForm.value.dateFin,
-      type: this.contratForm.value.type as TypeContrat,
-      societePartenaireId: this.projet.societeId ?? undefined,
-      clientId: this.projet.contrat.clientId ?? undefined
+      dateDebut: dateDebutWithTime,
+      dateFin: this.contratForm.value.dateFin
+        ? this.contratForm.value.dateFin + 'T12:00:00'
+        : undefined,
+      montantTotal: this.contratForm.value.montantTotal,
+      projetId: this.projet.id
     };
 
     this.loaderService.showLoader();
-    this.contratService.updateContract(updated.id, updated)
+    this.contratProjetService.update(updated.id, updated)
       .subscribe({
         next: () => {
           this.toastr.success("Contrat de projet mis à jour avec succès.");
           // mettre à jour localement
-          this.projet.contrat = updated;
+          this.projet.contratProjet = updated;
           this.loaderService.hideLoader();
         },
         error: (err) => {
@@ -637,10 +641,10 @@ clientSearchTerm: string = '';
   }
 
   cancelContrat(): void {
-    if (this.projet && this.projet.contrat) {
+    if (this.projet && this.projet.contratProjet) {
       this.contratForm.patchValue({
-        dateDebut: this.projet.contrat.dateDebut,
-        dateFin: this.projet.contrat.dateFin,
+        dateDebut: this.projet.contratProjet.dateDebut,
+        dateFin: this.projet.contratProjet.dateFin,
       });
     }
   }
@@ -649,10 +653,10 @@ clientSearchTerm: string = '';
   }
   initContratForm(): void {
     this.contratForm = this.fb.group({
-      id: [0],
+      id: [null, Validators.required],
       dateDebut: ['', Validators.required],
       dateFin: [''],
-      type: [TypeContrat.Projet, Validators.required]
+      montantTotal: [null, [Validators.min(0)]]
     });
   }
 
@@ -687,87 +691,87 @@ clientSearchTerm: string = '';
   }
 
   // Sélection de clients
-selectAllClients(event: any): void {
-  const checked = event.target.checked;
-  this.projectClients.forEach(c => (c as any).selected = checked);
-}
-
-toggleClientSelection(client: any): void {
-  // Optionnel : actions lors de la sélection/désélection
-}
-
-get displayedClients(): any[] {
-  let filtered = this.projectClients;
-  if (this.clientSearchTerm.trim()) {
-    const term = this.clientSearchTerm.toLowerCase();
-    filtered = filtered.filter(c => (c.firstName + ' ' + c.lastName).toLowerCase().includes(term));
+  selectAllClients(event: any): void {
+    const checked = event.target.checked;
+    this.projectClients.forEach(c => (c as any).selected = checked);
   }
-  this.clientTotalPages = Math.ceil(filtered.length / this.clientPageSize) || 1;
-  const start = (this.clientPageNumber - 1) * this.clientPageSize;
-  return filtered.slice(start, start + this.clientPageSize);
-}
 
-onClientSearch(): void { this.clientPageNumber = 1; }
-
-onClientPageChange(page: number): void {
-  this.clientPageNumber = Math.min(Math.max(page, 1), this.clientTotalPages);
-  this.clientJumpPage = this.clientPageNumber;
-}
-
-jumpToClientPage(): void {
-  if (this.clientJumpPage >= 1 && this.clientJumpPage <= this.clientTotalPages) {
-    this.clientPageNumber = this.clientJumpPage;
+  toggleClientSelection(client: any): void {
+    // Optionnel : actions lors de la sélection/désélection
   }
-}
 
-deleteSelectedClients(): void {
-  const ids = this.projectClients.filter((c: any) => c.selected).map(c => c.id);
-  if (!ids.length) {
-    this.toastr.warning('Aucun client sélectionné pour la suppression.');
-    return;
-  }
-  const modal = this.overlayModalService.open(ConfirmModalComponent);
-  modal.message = 'Confirmer la suppression des clients sélectionnés ?';
-  modal.confirmed.subscribe(() => {
-    ids.forEach(id => this.clientService.detachProjectFromClient(id, this.projet.id).subscribe(() => {
-      this.projectClients = this.projectClients.filter(c => !ids.includes(c.id));
-    }));
-    this.overlayModalService.close();
-  });
-  modal.cancelled.subscribe(() => this.overlayModalService.close());
-}
-
-// Méthode pour ouvrir le sélecteur de clients
-openClientSelector(): void {
-  this.clientService.getAll().subscribe({
-    next: (clients) => {
-      const dialogRef = this.dialog.open(UserSelectorDialogComponent, {
-        data: { availableUsers: clients }
-      });
-      dialogRef.afterClosed().subscribe((selectedClient: ClientDto) => {
-        if (selectedClient && this.projet && this.projet.id) {
-          this.clientService.addClientToProject(selectedClient.id, this.projet.id)
-          .subscribe(
-            () => {
-              this.toastr.success('Client ajouté avec succès');
-              this.loadProjectClients();
-            },
-            (err) => {
-              console.error('Erreur lors de l’ajout du client', err);
-              if (err.status === 409) {
-                //this.toastr.error(err.error, 'Erreur 409');
-              } else {
-                const message = err.error || 'Une erreur est survenue lors de l\'ajout du client.';
-                this.toastr.error(message, 'Erreur');
-              }
-            }
-          );          
-        }
-      });
-    },
-    error: (err) => {
-      console.error('Erreur lors de la récupération des clients', err);
+  get displayedClients(): any[] {
+    let filtered = this.projectClients;
+    if (this.clientSearchTerm.trim()) {
+      const term = this.clientSearchTerm.toLowerCase();
+      filtered = filtered.filter(c => (c.firstName + ' ' + c.lastName).toLowerCase().includes(term));
     }
-  });
-}
+    this.clientTotalPages = Math.ceil(filtered.length / this.clientPageSize) || 1;
+    const start = (this.clientPageNumber - 1) * this.clientPageSize;
+    return filtered.slice(start, start + this.clientPageSize);
+  }
+
+  onClientSearch(): void { this.clientPageNumber = 1; }
+
+  onClientPageChange(page: number): void {
+    this.clientPageNumber = Math.min(Math.max(page, 1), this.clientTotalPages);
+    this.clientJumpPage = this.clientPageNumber;
+  }
+
+  jumpToClientPage(): void {
+    if (this.clientJumpPage >= 1 && this.clientJumpPage <= this.clientTotalPages) {
+      this.clientPageNumber = this.clientJumpPage;
+    }
+  }
+
+  deleteSelectedClients(): void {
+    const ids = this.projectClients.filter((c: any) => c.selected).map(c => c.id);
+    if (!ids.length) {
+      this.toastr.warning('Aucun client sélectionné pour la suppression.');
+      return;
+    }
+    const modal = this.overlayModalService.open(ConfirmModalComponent);
+    modal.message = 'Confirmer la suppression des clients sélectionnés ?';
+    modal.confirmed.subscribe(() => {
+      ids.forEach(id => this.clientService.detachProjectFromClient(id, this.projet.id).subscribe(() => {
+        this.projectClients = this.projectClients.filter(c => !ids.includes(c.id));
+      }));
+      this.overlayModalService.close();
+    });
+    modal.cancelled.subscribe(() => this.overlayModalService.close());
+  }
+
+  // Méthode pour ouvrir le sélecteur de clients
+  openClientSelector(): void {
+    this.clientService.getAll().subscribe({
+      next: (clients) => {
+        const dialogRef = this.dialog.open(UserSelectorDialogComponent, {
+          data: { availableUsers: clients }
+        });
+        dialogRef.afterClosed().subscribe((selectedClient: ClientDto) => {
+          if (selectedClient && this.projet && this.projet.id) {
+            this.clientService.addClientToProject(selectedClient.id, this.projet.id)
+              .subscribe(
+                () => {
+                  this.toastr.success('Client ajouté avec succès');
+                  this.loadProjectClients();
+                },
+                (err) => {
+                  console.error('Erreur lors de l’ajout du client', err);
+                  if (err.status === 409) {
+                    //this.toastr.error(err.error, 'Erreur 409');
+                  } else {
+                    const message = err.error || 'Une erreur est survenue lors de l\'ajout du client.';
+                    this.toastr.error(message, 'Erreur');
+                  }
+                }
+              );
+          }
+        });
+      },
+      error: (err) => {
+        console.error('Erreur lors de la récupération des clients', err);
+      }
+    });
+  }
 }

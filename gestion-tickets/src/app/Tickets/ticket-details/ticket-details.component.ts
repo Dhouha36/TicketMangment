@@ -268,9 +268,13 @@ export class TicketDetailsComponent implements OnInit {
     const isProjectChef = this.currentUser.id === this.ticket.projet.chefProjetId;
     const isCurrentResponsible = this.currentUser.id === this.ticket.responsibleId;
   
+    // Statut non final
+    const statusName = this.ticket.statut?.name?.toLowerCase();
+    const invalidStatuses = ['—', 'résolu', 'non résolu', 'refusé'];
+
     // Autoriser : super admin, chef du projet, OU responsable actuel
     return (isSuperAdmin || isProjectChef || isCurrentResponsible) 
-      && !!this.ticket.approvedAt; // Ticket doit être validé
+      && !!this.ticket.approvedAt && !(statusName && invalidStatuses.includes(statusName)); // Ticket doit être validé
   }
 
 

@@ -31,7 +31,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     userId: null as number | null,
     clientId: null as number | null,
     personnelId: null as number | null,
-    projectId:   null as number|null,
+    projectId: null as number | null,
     start: null as string | null,
     end: null as string | null,
     granularity: 'daily' as 'daily' | 'weekly' | 'monthly' | 'yearly' | 'none'
@@ -88,6 +88,9 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
   clientUsers: ClientDto[] = [];
   personnelUsers: User[] = [];
 
+  responsibleTicketsCount: number = 0;
+  projectMemberTicketsCount: number = 0;
+
   myTicketsCount: number = 0;
 
   projects: Projet[] = [];
@@ -109,14 +112,42 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     this.currentUser = this.accountService.currentUser();
     if (this.currentUser) {
       this.userInitials = this.currentUser.firstName.charAt(0) + this.currentUser.lastName.charAt(0);
+      if (this.isClient()) {
+        // 1) On force le filtre clientId sur l’ID du client connecté
+        this.filter.clientId = (this.currentUser as ClientDto).id;
+        // 2) On appelle directement updateProjectList() pour charger SES projets
+        this.updateProjectList();
+      }
+
       this.loadTicketCounts();
       this.loadDashboardCounts();
       this.dashboardService.getMyTicketsCount()
         .subscribe(count => this.myTicketsCount = count);
       this.loadClientUsers();
       this.loadPersonnelUsers();
-      this.updateProjectList();
+
+      if (!this.isClient()) {
+        this.updateProjectList();
+      }
       this.applyFilters();
+      forkJoin({
+        asResponsible: this.dashboardService.getTicketsCountAsResponsible(this.currentUser.id),
+        asProjectMember: this.dashboardService.getTicketsCountAsProjectMember(this.currentUser.id)
+      }).subscribe({
+        next: results => {
+          this.responsibleTicketsCount = results.asResponsible;
+          this.projectMemberTicketsCount = results.asProjectMember;
+        },
+        error: err => {
+          console.error('Erreur lors du chargement des compteurs de tickets', err);
+          // en cas d’erreur, on laisse 0 par défaut
+          this.responsibleTicketsCount = 0;
+          this.projectMemberTicketsCount = 0;
+        },
+        complete: () => {
+          this.globalLoaderService.hideGlobalLoader();
+        }
+      });
     }
     // Définition initiale de la taille du graphique
     this.setChartSize();
@@ -146,7 +177,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     return this.ticketCounts.length === 1
       && this.ticketCounts[0].name === 'Aucune donnée';
   }
-  
+
   loadTicketCounts() {
     this.ticketService.getTicketCountByStatus().subscribe({
       next: (data: any[]) => {
@@ -296,7 +327,7 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
         userId: undefined,
         ownerId: clientId,
         personnelId: personnelId,
-        projetId:  this.filter.projectId ?? undefined,
+        projetId: this.filter.projectId ?? undefined,
         start: start,
         end: end,
         granularity: gran
@@ -328,8 +359,14 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
         .subscribe({
           next: status => {
             if (status.length) {
-              this.statusSeries = status.map(s => ({ name: s.key, value: s.count }));
-              this.ticketCounts = status.map(s => ({ id: 0, name: s.key, value: s.count }));
+            // 1) Séries bar en brut
+          this.statusSeries = status.map(s => ({ name: s.key, value: s.count }));
+
+          this.ticketCounts = status.map(s => ({
+            id: 0,
+            name: s.key,     
+            value: s.count   
+          }));
             } else {
               this.statusSeries = [{ name: 'Aucune donnée', value: 0 }];
               this.ticketCounts = [{ id: 0, name: 'Aucune donnée', value: 1 }];
@@ -343,6 +380,16 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
         });
     }
   }
+
+  public percentTooltip = (entry: any): string => {
+    // ngx-charts vous passe un objet { data: { name, value }, label, value, ... }
+    const name  = entry.data.name;
+    const value = entry.data.value;
+    const total = this.ticketCounts.reduce((sum, d) => sum + d.value, 0) || 1;
+    const pct   = (value / total) * 100;
+    return `${name} : ${pct.toFixed(1)} %`;
+  };    
+  
   openPaysModal() {
     const modalRef = this.overlayModalService.open(PaysModalComponent);
     // modalRef est ici l'instance de PaysModalComponent
@@ -352,22 +399,36 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
     });
   }
   updateProjectList(): void {
+    const currentUser = this.accountService.currentUser();
+    if (!currentUser) return;
+
+    // ── NOUVEAU : Si l’utilisateur connecté est un Client, on charge ses propres projets et on sort
+    if (this.isClient()) {
+      const clientId = (currentUser as ClientDto).id;
+      this.clientService.getClientProjects(clientId)
+        .subscribe(plist => {
+          this.projects = plist ?? [];
+        });
+      return;
+    }
+
+    // ── CAS “classique” : l’utilisateur n’est pas client  
     const cId = this.filter.clientId;
     const pId = this.filter.personnelId;
-  
-    // 1) Aucun filtre → on charge tous les projets
+
+    // 1) Aucun filtre → tous les projets
     if (cId == null && pId == null) {
       this.projetService.getProjets({}).subscribe(all => this.projects = all ?? []);
       return;
     }
-  
-    // 2) Seulement client
+
+    // 2) Seulement client (filtré depuis le select “Client” → superadmin)
     if (cId != null && pId == null) {
       this.clientService.getClientProjects(cId)
         .subscribe(plist => this.projects = plist ?? []);
       return;
     }
-  
+
     // 3) Seulement personnel
     if (cId == null && pId != null) {
       this.accountService.getUserProjects(pId, 1, 100).pipe(
@@ -375,8 +436,8 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
       ).subscribe(plist => this.projects = plist);
       return;
     }
-  
-    // 4) Les deux → forkJoin puis intersection
+
+    // 4) Les deux à la fois → intersection
     forkJoin({
       byClient: this.clientService.getClientProjects(cId!),
       byUser: this.accountService

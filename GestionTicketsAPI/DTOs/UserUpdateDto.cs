@@ -17,6 +17,6 @@ namespace GestionTicketsAPI.DTOs
 
     public string? NouveauPassword { get; set; }
 
-    public ContratDto? Contrat { get; set; }
+    public ContratUserDto? ContratUser { get; set; }
   }
 }

@@ -109,7 +109,7 @@ export class AppComponent implements OnInit {
 
       // 6) S’abonner aux notifications reçues en temps réel
       this.notificationService.notification$.subscribe(msg => {
-        console.log('Notification reçue:', msg);
+        //console.log('Notification reçue:', msg);
         // Ici vous pourriez déclencher un toast, etc.
       });
     }

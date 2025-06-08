@@ -4,4 +4,5 @@ export interface ClientParams {
   searchTerm?: string;
   actif?: boolean;
   societeId?: number;
+  projetId?: number;
 }

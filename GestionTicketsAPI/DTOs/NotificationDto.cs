@@ -12,4 +12,5 @@ public class NotificationDto
 
   public string? EntityType { get; set; }
   public int? EntityId { get; set; }
+  public int? UserId { get; set; }
 }

@@ -37,6 +37,17 @@
           Le type de contrat est obligatoire.
         </div>
       </div>
+
+      <div *ngIf="!isProject" class="form-group">
+        <label for="salaireMensuel">Salaire mensuel<span class="required">*</span></label>
+        <input type="number" formControlName="salaireMensuel" placeholder="Salaire mensuel">
+      </div>
+
+      <div class="form-group" *ngIf="isProject">
+        <!-- on affiche juste MontantTotal -->
+        <label for="montantTotal">Montant total</label>
+        <input id="montantTotal" type="number" formControlName="montantTotal" />
+      </div>
       
     </div>
   

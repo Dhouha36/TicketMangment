@@ -18,7 +18,7 @@ namespace GestionTicketsAPI.Repositories
     public async Task<PagedList<User>> GetUsersAsync(UserParams userParams)
     {
       var query = _context.Users
-                  .Include(u => u.Contrats)
+                  .Include(u => u.ContratUser)
                   .Include(u => u.Role)
                   .Include(u => u.Photo)
                   .Include(u => u.SocieteUsers)
@@ -54,12 +54,12 @@ namespace GestionTicketsAPI.Repositories
         if (userParams.HasContract.Value)
         {
           // Utilisateurs possédant au moins un contrat
-          query = query.Where(u => u.Contrats != null && u.Contrats.Any());
+          query = query.Where(u => u.ContratUser != null);
         }
         else
         {
           // Utilisateurs sans contrat
-          query = query.Where(u => u.Contrats == null || !u.Contrats.Any());
+          query = query.Where(u => u.ContratUser == null);
         }
       }
 
@@ -69,7 +69,7 @@ namespace GestionTicketsAPI.Repositories
     public async Task<IEnumerable<User>> GetUsersFilteredAsync(UserParams userParams)
     {
       var query = _context.Users
-                  .Include(u => u.Contrats)
+                  .Include(u => u.ContratUser)
                   .Include(u => u.Role)
                   .Include(u => u.Photo)
                   .Include(u => u.SocieteUsers)
@@ -103,11 +103,11 @@ namespace GestionTicketsAPI.Repositories
       {
         if (userParams.HasContract.Value)
         {
-          query = query.Where(u => u.Contrats != null && u.Contrats.Any());
+          query = query.Where(u => u.ContratUser != null);
         }
         else
         {
-          query = query.Where(u => u.Contrats == null || !u.Contrats.Any());
+          query = query.Where(u => u.ContratUser == null );
         }
       }
 
@@ -117,7 +117,7 @@ namespace GestionTicketsAPI.Repositories
     public async Task<IEnumerable<User>> GetUsersNoPaginationAsync()
     {
       return await _context.Users
-                    .Include(u => u.Contrats)
+                    .Include(u => u.ContratUser)
                     .Include(u => u.Role)
                     .Include(u => u.Photo)
                     .Include(u => u.SocieteUsers)
@@ -128,7 +128,7 @@ namespace GestionTicketsAPI.Repositories
     public async Task<User?> GetUserByIdAsync(int id)
     {
       return await _context.Users
-          .Include(u => u.Contrats)
+          .Include(u => u.ContratUser)
           .Include(u => u.Role)
           .Include(u => u.Photo)
           .Include(u => u.SocieteUsers)
@@ -238,9 +238,6 @@ namespace GestionTicketsAPI.Repositories
     public async Task<PagedList<Ticket>> GetUserTicketsAsync(int userId, UserParams userParams)
     {
       // Récupérer d'abord les identifiants des tickets
-      var ownerTicketIds = _context.Tickets
-          .Where(t => t.OwnerId == userId)
-          .Select(t => t.Id);
 
       var responsibleTicketIds = _context.Tickets
           .Where(t => t.ResponsibleId == userId)
@@ -254,8 +251,7 @@ namespace GestionTicketsAPI.Repositories
           .Where(t => _context.ProjetUser.Any(pu => pu.ProjetId == t.ProjetId && pu.UserId == userId))
           .Select(t => t.Id);
 
-      var combinedIds = ownerTicketIds
-          .Union(responsibleTicketIds)
+      var combinedIds = responsibleTicketIds
           .Union(chefTicketIds)
           .Union(associatedTicketIds);
 
@@ -265,6 +261,8 @@ namespace GestionTicketsAPI.Repositories
           .Include(t => t.Owner)
           .Include(t => t.Responsible)
           .Include(t => t.ProblemCategory)
+          .Include(t => t.Statut)
+          .Include(t => t.Priority)
           .Where(t => combinedIds.Contains(t.Id));
 
       if (!string.IsNullOrEmpty(userParams.SearchTerm))

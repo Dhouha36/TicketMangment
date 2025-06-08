@@ -31,15 +31,12 @@ export class NotificationsComponent implements OnInit {
     const storedUser = localStorage.getItem('user');
     if (!storedUser) { return; }
     this.userId = JSON.parse(storedUser).id.toString();
-  
+
     // Historique + fusion
     this.notifSvc.getNotifications(this.userId).subscribe({
       error: err => console.error('Erreur chargement notifs', err)
     });
-  
-    // Lancement Live dès maintenant (sans écraser la liste)
-    this.notifSvc.startConnection(this.userId);
-  
+
     // Affichage : on se met à jour quand la liste change
     this.notifSvc.notifications$.subscribe(list => {
       this.notifications = list;
@@ -65,24 +62,24 @@ export class NotificationsComponent implements OnInit {
       console.warn('Notification sans entityType, on ne navigue pas', n);
       return;
     }
-  
+
     // 2) Mapping entityType → segment de route
-    const routeMap: Record<string,string> = {
+    const routeMap: Record<string, string> = {
       Projets: 'Projets',
       Societe: 'Societes',
-      Tickets:  'Tickets',
+      Tickets: 'Tickets',
     };
     const segment = routeMap[n.entityType];
     if (!segment) {
       console.warn(`Pas de route configurée pour entityType='${n.entityType}'`);
       return;
     }
-  
+
     // 3) Construction du tableau de segments
     const commands = n.entityId
       ? ['/home', segment, 'details', n.entityId.toString()]
       : ['/home', segment];
-  
+
     // 4) Vérification si on est déjà sur cette URL exacte
     const targetTree = this.router.createUrlTree(commands);
     if (this.router.isActive(targetTree, true)) {
@@ -91,7 +88,7 @@ export class NotificationsComponent implements OnInit {
       this.closeSidenav.emit();
       return;
     }
-  
+
     // 5) Navigation si on n’était pas déjà dessus
     this.router.navigate(commands).then(success => {
       if (success) {
@@ -99,7 +96,7 @@ export class NotificationsComponent implements OnInit {
         this.closeSidenav.emit();
       }
     });
-  }  
+  }
 
   openConfirm(n: AppNotification): void {
     // 1) Ouvre le ConfirmModalComponent dans un overlay centré
@@ -126,9 +123,10 @@ export class NotificationsComponent implements OnInit {
     this.notifSvc.hideNotification(n.id).subscribe({
       next: () => {
         this.notifications = this.notifications.filter(x => x.id !== n.id);
+        this.notifSvc.getNotifications(this.userId).subscribe(); // Rafraîchissement
       },
       error: err => console.error('Erreur masquage notification', err)
     });
   }
-  
+
 }

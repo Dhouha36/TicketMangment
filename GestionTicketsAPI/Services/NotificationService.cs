@@ -1,4 +1,3 @@
-// GestionTicketsAPI/Services/NotificationService.cs
 using GestionTicketsAPI.Data;
 using GestionTicketsAPI.Entities;
 using Microsoft.AspNetCore.SignalR;
@@ -26,6 +25,7 @@ namespace GestionTicketsAPI.Services
     private readonly DataContext _context;
     private readonly PushServiceClient _pushClient;
     private readonly ILogger<NotificationService> _logger;
+
     public NotificationService(
         IHubContext<NotificationHub> hub,
         DataContext context,
@@ -38,9 +38,9 @@ namespace GestionTicketsAPI.Services
       _logger = logger;
     }
 
-
     public async Task NotifyAsync(int? userId, int? clientId, NotificationDto dto)
     {
+      // 1) Persister d'abord
       var notif = new Notification
       {
         UserId = userId,
@@ -48,20 +48,70 @@ namespace GestionTicketsAPI.Services
         Message = dto.Message,
         DateEnvoi = dto.DateEnvoi,
         EntityType = dto.EntityType,
-        EntityId = dto.EntityId
+        EntityId = dto.EntityId,
+        IsRead = false // Explicitement à false
       };
+
+      _context.Notification.Add(notif);
+      await _context.SaveChangesAsync();
+
+      // 2) Mettre à jour le DTO avec l'ID généré
+      dto.Id = notif.Id;
+      dto.IsRead = false; 
+      dto.UserId = userId;
+
+      // 3) Envoyer via SignalR SEULEMENT si on a un userId
+      if (userId.HasValue)
+      {
+        try
+        {
+          var groupName = userId.Value.ToString();
+          _logger.LogInformation($"Envoi notification à {groupName}: {dto.Message}");
+
+          await _hub.Clients.Group(groupName).SendAsync("ReceiveNotification", dto);
+
+          _logger.LogInformation($"Notification envoyée avec succès à {groupName}");
+        }
+        catch (Exception ex)
+        {
+          _logger.LogError(ex, $"Erreur lors de l'envoi SignalR pour userId {userId}");
+        }
+
+        // 4) Envoi push (inchangé)
+        await SendPushNotification(userId.Value, dto);
+      }
+    }
+
+    public async Task NotifyRealtimeAsync(int userId, NotificationDto dto)
+    {
+      // 1) On persiste en base :
+      var notif = new Notification { /* … */ UserId = userId, /* … */ };
       _context.Notification.Add(notif);
       await _context.SaveChangesAsync();
 
       dto.Id = notif.Id;
+      dto.DateEnvoi = notif.DateEnvoi;
+      dto.UserId = userId;
 
-      if (userId.HasValue)
+      _logger.LogInformation("Envoi Notification à {userId} : ID={id}", userId, dto.Id);
+      // → Ici on s’assure que la connexion avec ce userId existe
+      await _hub.Clients.Group(userId.ToString()).SendAsync("ReceiveNotification", dto);
+      _logger.LogInformation("Notification envoyée au groupe {groupName}", userId);
+    }
+
+    private async Task SendPushNotification(int userId, NotificationDto dto)
+    {
+      try
       {
-        await _hub.Clients.Group(userId.Value.ToString()).SendAsync("ReceiveNotification", dto);
-
         var subs = await _context.PushSubscriptions
-            .Where(s => s.UserId == userId.Value.ToString())
+            .Where(s => s.UserId == userId.ToString())
             .ToListAsync();
+
+        if (!subs.Any())
+        {
+          _logger.LogInformation($"Aucun abonnement push trouvé pour userId {userId}");
+          return;
+        }
 
         var title = dto.EntityType != null && dto.EntityId.HasValue
             ? $"Nouvel {dto.EntityType} #{dto.EntityId.Value}"
@@ -70,7 +120,7 @@ namespace GestionTicketsAPI.Services
             ? $"https://votre-client/#/{dto.EntityType.ToLower()}/{dto.EntityId.Value}"
             : null;
 
-        var payload = System.Text.Json.JsonSerializer.Serialize(new { title, message = dto.Message, url });
+        var payload = JsonSerializer.Serialize(new { title, message = dto.Message, url });
         var pushMessage = new PushMessage(payload) { Urgency = PushMessageUrgency.High };
 
         foreach (var sub in subs)
@@ -84,6 +134,7 @@ namespace GestionTicketsAPI.Services
                             { PushEncryptionKeyName.Auth.ToString().ToLower(), sub.Auth }
                         }
           };
+
           try
           {
             await _pushClient.RequestPushMessageDeliveryAsync(pushSub, pushMessage);
@@ -94,84 +145,16 @@ namespace GestionTicketsAPI.Services
           }
         }
       }
-    }
-
-    public async Task NotifyRealtimeAsync(int userId, NotificationDto dto)
-    {
-      // 1) Persister
-      var notif = new Notification
+      catch (Exception ex)
       {
-        UserId = userId,
-        Message = dto.Message,
-        DateEnvoi = dto.DateEnvoi,
-        IsRead = false,
-        EntityType = dto.EntityType,
-        EntityId = dto.EntityId
-      };
-      _context.Notification.Add(notif);
-      await _context.SaveChangesAsync();
-
-      // 2) Récupérer l’ID généré
-      dto.Id = notif.Id;
-
-      // 3) Envoyer via SignalR
-      await _hub
-          .Clients
-          .Group(userId.ToString())
-          .SendAsync("ReceiveNotification", dto);
+        _logger.LogError(ex, $"Erreur lors de l'envoi push pour userId {userId}");
+      }
     }
 
     public async Task NotifyPushAsync(int userId, NotificationDto dto)
     {
-      var subs = await _context
-          .PushSubscriptions
-          .Where(s => s.UserId == userId.ToString())
-          .ToListAsync();
-
-      // Génération du titre et de l'URL
-      var title = dto.EntityType is not null && dto.EntityId.HasValue
-          ? $"Nouvel {dto.EntityType} #{dto.EntityId}"
-          : "Nouvelle notification";
-      var url = dto.EntityType is not null && dto.EntityId.HasValue
-          ? $"https://votre-client/#/{dto.EntityType.ToLower()}/{dto.EntityId}"
-          : null;
-
-      var payload = JsonSerializer.Serialize(new
-      {
-        title,
-        message = dto.Message,
-        url
-      });
-
-      var webPushMessage = new PushMessage(payload)
-      {
-        Urgency = PushMessageUrgency.High
-      };
-
-      foreach (var sub in subs)
-      {
-        var pushSubscription = new PushSubscription
-        {
-          Endpoint = sub.Endpoint,
-          Keys = new Dictionary<string, string>
-      {
-        { PushEncryptionKeyName.P256DH.ToString().ToLower(), sub.P256DH },
-        { PushEncryptionKeyName.Auth.ToString().ToLower(),    sub.Auth   }
-      }
-        };
-
-        try
-        {
-          await _pushClient.RequestPushMessageDeliveryAsync(pushSubscription, webPushMessage);
-        }
-        catch (Exception ex)
-        {
-          _logger.LogError(ex, "Échec de l’envoi push à {Endpoint}", sub.Endpoint);
-        }
-      }
+      await SendPushNotification(userId, dto);
     }
-
-
 
     public async Task MarkAllAsReadAsync(int userId)
     {
@@ -204,6 +187,5 @@ namespace GestionTicketsAPI.Services
       notif.IsDeleted = true;
       await _context.SaveChangesAsync();
     }
-
   }
 }

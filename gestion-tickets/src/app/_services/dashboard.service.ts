@@ -30,5 +30,12 @@ export class DashboardService {
     return this.http.get<number>(`${this.baseUrl}/my-tickets-count`);
   }
   
+  getTicketsCountAsResponsible(userId: number): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/count/responsible/${userId}`);
+  }
+
+  getTicketsCountAsProjectMember(userId: number): Observable<number> {
+    return this.http.get<number>(`${this.baseUrl}/count/projectmember/${userId}`);
+  }
 
 }

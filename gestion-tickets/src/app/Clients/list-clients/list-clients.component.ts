@@ -14,6 +14,7 @@ import { ClientDto } from 'src/app/DTOs/ClientDto';
 import { ClientParams } from 'src/app/DTOs/ClientParams';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelect, MatSelectModule    } from '@angular/material/select';
+import { ClientFilterComponent } from 'src/app/_filters/client-filter/client-filter.component';
 
 @Component({
   selector: 'app-list-clients',
@@ -22,7 +23,8 @@ import { MatSelect, MatSelectModule    } from '@angular/material/select';
     MatIconModule,
     MatButtonModule,
     MatFormFieldModule,
-    MatSelectModule,],
+    MatSelectModule,
+    ClientFilterComponent],
   templateUrl: './list-clients.component.html',
   styleUrl: './list-clients.component.css'
 })

@@ -95,7 +95,7 @@ namespace GestionTicketsAPI.Controllers
     [HttpPost]
     public async Task<ActionResult<TicketDto>> CreateTicket(
     [FromForm] string ticketJson,
-    [FromForm] IFormFile file)
+    [FromForm] IFormFile? file)
     {
       // Deserialize the JSON string into DTO
       var dto = JsonConvert.DeserializeObject<TicketCreateDto>(ticketJson);

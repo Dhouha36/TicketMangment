@@ -92,7 +92,8 @@ namespace GestionTicketsAPI.Controllers
         DateEnvoi = n.DateEnvoi,
         IsRead = n.IsRead,
         EntityType = n.EntityType,
-        EntityId = n.EntityId
+        EntityId = n.EntityId,
+        UserId     = n.UserId 
       });
 
       return Ok(dtos);

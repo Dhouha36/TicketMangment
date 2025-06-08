@@ -38,9 +38,9 @@ namespace GestionTicketsAPI.Repositories
     }
 
     // Ajout de la méthode pour ajouter un contrat
-    public async Task AddContractAsync(Contrat contrat)
+    public async Task AddContractAsync(ContratUser contrat)
     {
-      await _context.Contrats.AddAsync(contrat);
+      await _context.ContratsUsers.AddAsync(contrat);
     }
 
     public async Task<bool> SaveAllAsync()

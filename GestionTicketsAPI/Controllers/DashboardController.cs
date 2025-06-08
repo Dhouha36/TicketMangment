@@ -37,15 +37,27 @@ namespace GestionTicketsAPI.Controllers
     [HttpGet("my-tickets-count")]
     public ActionResult<int> GetMyTicketsCount()
     {
-        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-        if (userIdClaim == null)
-            return BadRequest("Claim NameIdentifier manquant.");
+      var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+      if (userIdClaim == null)
+        return BadRequest("Claim NameIdentifier manquant.");
 
-        int userId = int.Parse(userIdClaim.Value);
-        int count = _dashboardService.GetMyTicketsCount(userId);
-        return Ok(count);
+      int userId = int.Parse(userIdClaim.Value);
+      int count = _dashboardService.GetTicketsCountAsResponsible(userId);
+      return Ok(count);
     }
 
+    [HttpGet("count/responsible/{userId}")]
+    public ActionResult<int> GetTicketsCountAsResponsible(int userId)
+    {
+      var count = _dashboardService.GetTicketsCountAsResponsible(userId);
+      return Ok(count);
+    }
+    [HttpGet("count/projectmember/{userId}")]
+    public ActionResult<int> GetTicketsCountAsProjectMember(int userId)
+    {
+      var count = _dashboardService.GetTicketsCountAsProjectMember(userId);
+      return Ok(count);
+    }
     [HttpPost("tickets-by-user")]
     public ActionResult<IEnumerable<TicketStatDto>> GetTicketsByUser([FromBody] TicketFilterRequest req)
     {
@@ -60,7 +72,7 @@ namespace GestionTicketsAPI.Controllers
           req.End,
           req.Granularity,
           req.UserId,              // <— filtre éventuel sur un autre utilisateur
-          req.ProjetId 
+          req.ProjetId
       );
 
       return Ok(data);
@@ -80,7 +92,7 @@ namespace GestionTicketsAPI.Controllers
           req.Granularity,
           req.OwnerId,
           req.PersonnelId,
-          req.ProjetId  
+          req.ProjetId
       );
 
       return Ok(data);

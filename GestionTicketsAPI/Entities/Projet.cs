@@ -45,6 +45,6 @@ namespace GestionTicketsAPI.Entities
     public ICollection<Ticket>? Tickets { get; set; }
     public ICollection<ProjetUser> ProjetUsers { get; set; } = new List<ProjetUser>();
     public ICollection<ProjetClient> ProjetClients { get; set; } = new List<ProjetClient>();
-    public ICollection<Contrat> Contrats { get; set; } = new List<Contrat>();
+    public ContratProjet? ContratProjet { get; set; }
   }
 }

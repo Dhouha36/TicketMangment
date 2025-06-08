@@ -43,8 +43,10 @@ namespace GestionTicketsAPI.Extensions
       services.AddScoped<IProjetService, ProjetService>();
       services.AddScoped<ISocieteRepository, SocieteRepository>();
       services.AddScoped<ISocieteService, SocieteService>();
-      services.AddScoped<IContratRepository, ContratRepository>();
-      services.AddScoped<IContratService, ContratService>();
+      services.AddScoped<IContratProjetRepository, ContratProjetRepository>();
+      services.AddScoped<IContratProjetService, ContratProjetService>();
+      services.AddScoped<IContratUserRepository, ContratUserRepository>();
+      services.AddScoped<IContratUserService, ContratUserService>();
       services.AddScoped<ITicketRepository, TicketRepository>();
       services.AddScoped<ITicketService, TicketService>();
       services.AddScoped<ICategorieProblemeRepository, CategorieProblemeRepository>();

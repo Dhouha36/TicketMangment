@@ -28,17 +28,10 @@ export class ContractDialogComponent implements OnInit {
       this.data.contractForm = new FormGroup({
         dateDebut: new FormControl('', Validators.required),
         dateFin:   new FormControl('', Validators.required),
-        type:      new FormControl(
-                      this.isProject ? TypeContrat.Projet : null,
-                      Validators.required
-                    )
+        type:      new FormControl('', Validators.required)
       });
     }
 
-    if (this.isProject) {
-      // on fixe automatiquement le type sur Projet et on masque le champ
-      this.data.contractForm.get('type')!.setValue(TypeContrat.Projet);
-    }
   }
 
   onSave(): void {

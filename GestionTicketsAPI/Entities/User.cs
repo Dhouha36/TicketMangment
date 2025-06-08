@@ -33,8 +33,7 @@ namespace GestionTicketsAPI.Entities
     // Autres relations (tickets, commentaires, etc.)
     public ICollection<ProjetUser> ProjetUsers { get; set; } = new List<ProjetUser>();
 
-    [InverseProperty("User")]
-    public ICollection<Contrat>? Contrats { get; set; }
+    public ContratUser? ContratUser { get; set; }
     public int? PhotoId { get; set; }
     public Photo? Photo { get; set; }
 

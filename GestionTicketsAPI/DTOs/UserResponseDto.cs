@@ -12,6 +12,6 @@ namespace GestionTicketsAPI.DTOs
         public required bool Actif { get; set; }
         public ICollection<SocieteDto> Societes { get; set; } = new List<SocieteDto>();
         
-        public ContratDto? Contrat { get; set; }
+        public ContratUserDto? ContratUser { get; set; }
     }
 }

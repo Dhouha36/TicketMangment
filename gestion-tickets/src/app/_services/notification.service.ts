@@ -18,38 +18,57 @@ export class NotificationService {
   public notification$ = new Subject<AppNotification>();
 
   private baseUrl = `${environment.apiUrl}notifications/`;
+  private userId!: string;
 
   constructor(private http: HttpClient) { }
 
   public startConnection(userId: string): void {
+    this.userId = userId;
+  
+    // Si hubConnection existe et qu’elle est déjà connectée ou en cours de reconnexion,
+    // on ne relance pas une nouvelle instance.
+    if (this.hubConnection &&
+        (this.hubConnection.state === signalR.HubConnectionState.Connected
+         || this.hubConnection.state === signalR.HubConnectionState.Reconnecting)) {
+      //console.log('SignalR déjà connecté ou en cours de reconnexion, on ne relance pas.');
+      return;
+    }
+  
+    // Si hubConnection existe mais est en état "Disconnected", on arrête la connexion précédente
+    if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Disconnected) {
+      this.hubConnection.off('ReceiveNotification');
+      // Note : .stop() est asynchrone mais on ne bloque pas ici
+      this.hubConnection.stop().catch(err => console.error('Erreur arrêt SignalR :', err));
+    }
+  
+    // On (re)crée la connexion
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${environment.signalRHubUrl}?userId=${userId}`, { withCredentials: true })
       .withAutomaticReconnect()
       .build();
+  
+    this.hubConnection.on('ReceiveNotification', (dto: AppNotification) => {
 
-      this.hubConnection.on('ReceiveNotification', (dto: AppNotification) => {
-        console.log('[SignalR] reçu:', dto);
-        dto.isRead = false;
-        console.log('[SignalR] forcé isRead →', dto.isRead);
-        // 1) si on a déjà cet id, on ignore
-        if (this.notifications.some(n => n.id === dto.id)) {
-          return;
-        }
-        
-      
-        // 2) sinon on ajoute
-        this.notifications.unshift(dto);
-        this.notifications$.next(this.notifications);
-      
-        // 3) et on émet aussi sur le flux individuel
-        this.notification$.next(dto);
-      });
-
+  
+      if (dto.userId !== +this.userId) {
+        console.warn('Notification ignorée (userId incorrect)', dto);
+        return;
+      }
+  
+      dto.isRead = false;
+      if (this.notifications.some(n => n.id === dto.id)) return;
+  
+      this.notifications.unshift(dto);
+      this.notifications$.next(this.notifications);
+      this.notification$.next(dto);
+    });
+  
     this.hubConnection
       .start()
       .then(() => console.log('SignalR connecté'))
       .catch(err => console.error('Erreur SignalR :', err));
   }
+  
 
   public getNotifications(userId: string) {
     return this.http

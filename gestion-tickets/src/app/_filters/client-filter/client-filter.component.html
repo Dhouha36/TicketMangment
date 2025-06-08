@@ -1,0 +1,133 @@
+<div class="filter-panel">
+  <form [formGroup]="filterForm" (ngSubmit)="onSubmit()">
+    <!-- ======== DROPDOWN ACTIF ======== -->
+    <div class="form-group">
+      <label for="actif">Actif</label>
+      <div id="actif" class="custom-select">
+        <div class="select-box" (click)="toggleDropdown('actif', $event)">
+          <div class="selected-item">{{ selectedActifLabel }}</div>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="dropdown-content" [class.show]="isActifDropdownOpen">
+          <div class="search-box">
+            <input
+              type="text"
+              placeholder="Rechercher..."
+              [(ngModel)]="actifSearchTerm"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="filterActifs()"
+              (click)="$event.stopPropagation()"
+            />
+          </div>
+          <div class="option-list">
+            <ng-container *ngIf="filteredActifs.length > 0; else noActifResults">
+              <div
+                *ngFor="let actif of filteredActifs"
+                class="option-item"
+                (click)="selectItem('actif', actif); $event.stopPropagation()"
+              >
+                {{ actif }}
+              </div>
+            </ng-container>
+            <ng-template #noActifResults>
+              <div class="no-results">Aucun état trouvé</div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== DROPDOWN SOCIÉTÉ ======== -->
+    <div class="form-group">
+      <label for="societe">Société</label>
+      <div id="societe" class="custom-select">
+        <div class="select-box" (click)="toggleDropdown('societe', $event)">
+          <div class="selected-item">
+            {{ selectedSociete?.nom || 'Sélectionnez une société' }}
+          </div>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="dropdown-content" [class.show]="isSocieteDropdownOpen">
+          <div class="search-box">
+            <input
+              type="text"
+              placeholder="Rechercher une société..."
+              [(ngModel)]="societeSearchTerm"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="filterSocietes()"
+              (click)="$event.stopPropagation()"
+            />
+          </div>
+          <div class="option-list">
+            <ng-container *ngIf="filteredSocietes.length > 0; else noSocieteResults">
+              <div
+                *ngFor="let soc of filteredSocietes"
+                class="option-item"
+                (click)="selectItem('societe', soc); $event.stopPropagation()"
+              >
+                {{ soc.nom }}
+              </div>
+            </ng-container>
+            <ng-template #noSocieteResults>
+              <div class="no-results">Aucune société trouvée</div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== DROPDOWN PROJET ======== -->
+    <div class="form-group">
+      <label for="projet">Projet</label>
+      <div id="projet" class="custom-select">
+        <div class="select-box" (click)="toggleDropdown('projet', $event)">
+          <div class="selected-item">
+            {{ selectedProjet?.nom || 'Sélectionnez un projet' }}
+          </div>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="dropdown-content" [class.show]="isProjetDropdownOpen">
+          <div class="search-box">
+            <input
+              type="text"
+              placeholder="Rechercher un projet..."
+              [(ngModel)]="projetSearchTerm"
+              [ngModelOptions]="{ standalone: true }"
+              (ngModelChange)="filterProjets()"
+              (click)="$event.stopPropagation()"
+            />
+          </div>
+          <div class="option-list">
+            <ng-container *ngIf="filteredProjets.length > 0; else noProjetResults">
+              <div
+                *ngFor="let proj of filteredProjets"
+                class="option-item"
+                (click)="selectItem('projet', proj); $event.stopPropagation()"
+              >
+                {{ proj.nom }}
+              </div>
+            </ng-container>
+            <ng-template #noProjetResults>
+              <div class="no-results">Aucun projet trouvé</div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======== BOUTONS ======== -->
+    <div class="form-group action-buttons">
+      <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+        <ng-container *ngIf="!isLoading; else loadingTpl">
+          Appliquer les filtres
+        </ng-container>
+        <ng-template #loadingTpl>
+          <span class="spinner"></span> Appliquer les filtres
+        </ng-template>
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="onReset()">
+        Réinitialiser
+      </button>
+    </div>
+  </form>
+</div>

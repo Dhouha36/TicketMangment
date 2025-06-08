@@ -12,13 +12,17 @@ public class ProjetService : IProjetService
   private readonly IProjetRepository _projetRepository;
   private readonly ISocieteRepository _societeRepository;
   private readonly IAccountRepository _accountRepository;
+  private readonly IContratProjetService _contratProjetService;
   private readonly IMapper _mapper;
 
-  public ProjetService(IProjetRepository projetRepository, IMapper mapper, ISocieteRepository societeRepository, IAccountRepository accountRepository)
+  public ProjetService(IProjetRepository projetRepository, IMapper mapper, ISocieteRepository societeRepository,
+   IAccountRepository accountRepository,
+   IContratProjetService contratProjetService)
   {
     _projetRepository = projetRepository;
     _societeRepository = societeRepository;
     _accountRepository = accountRepository;
+    _contratProjetService = contratProjetService;
     _mapper = mapper;
   }
 
@@ -57,47 +61,37 @@ public class ProjetService : IProjetService
   }
 
   public async Task<ProjetDto> AddProjetAsync(ProjetDto projetDto)
-  {
-    if (projetDto.SocieteId == null)
-      throw new ArgumentException("Un projet doit être associé à une société.");
-
-    // 1. Mapper et charger la société
-    var projet = _mapper.Map<Projet>(projetDto);
-    var societe = await _societeRepository.GetSocieteByIdAsync(projet.SocieteId.Value);
-    if (societe == null)
-      throw new Exception("La société associée n'a pas été trouvée.");
-    projet.Societe = societe;
-
-    // 2. Enregistrer le projet
-    await _projetRepository.AddProjetAsync(projet);
-    if (!await _projetRepository.SaveAllAsync())
-      throw new Exception("Erreur lors de l'enregistrement du projet.");
-    // À ce stade, projet.Id a été généré
-
-    // 3. Gérer le contrat de projet s’il est fourni
-    if (projetDto.Contrat != null)
     {
-      var dto = projetDto.Contrat;
-      if (dto.Type != TypeContrat.Projet)
-        throw new Exception("Pour AddProjetAsync, le contrat doit être de type Projet.");
+        if (projetDto.SocieteId == null)
+            throw new ArgumentException("Un projet doit être associé à une société.");
 
-      var contrat = new Contrat
-      {
-        DateDebut = dto.DateDebut,
-        DateFin = dto.DateFin,
-        Type = dto.Type,
-        ProjetId = projet.Id,    // on utilise l’ID fraîchement généré
-        UserId = null          // pas de user ici
-      };
-      await _accountRepository.AddContractAsync(contrat);
-      if (!await _projetRepository.SaveAllAsync())
-        throw new Exception("Erreur lors de l'enregistrement du contrat de projet.");
+        // 1. Mapper et charger la société
+        var projet = _mapper.Map<Projet>(projetDto);
+        var societe = await _societeRepository.GetSocieteByIdAsync(projet.SocieteId.Value);
+        if (societe == null)
+            throw new Exception("La société associée n'a pas été trouvée.");
+        projet.Societe = societe;
+
+        // 2. Enregistrer le projet
+        await _projetRepository.AddProjetAsync(projet);
+        if (!await _projetRepository.SaveAllAsync())
+            throw new Exception("Erreur lors de l'enregistrement du projet.");
+        // => projet.Id est généré
+
+        // 3. Créer le contrat de projet s’il est fourni
+        if (projetDto.ContratProjet != null)
+        {
+            var dto = projetDto.ContratProjet;
+
+            // on fixe le ProjetId fraîchement généré
+            dto.ProjetId = projet.Id;
+            var created = await _contratProjetService.CreateAsync(dto);
+            // Optionnel : vous pouvez réinjecter created dans projetDto si nécessaire
+        }
+
+        // 4. Retourner le DTO mis à jour
+        return _mapper.Map<ProjetDto>(projet);
     }
-
-    // 4. Retourner le DTO mis à jour
-    var resultDto = _mapper.Map<ProjetDto>(projet);
-    return resultDto;
-  }
 
 
 

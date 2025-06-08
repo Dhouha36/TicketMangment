@@ -32,6 +32,7 @@ namespace GestionTicketsAPI.Repositories
 
     public async Task<PagedList<Client>> GetClientsAsync(ClientParams clientParams)
     {
+      // 1) On part toujours de la table Clients en incluant Societe, PaysNavigation et ProjetClients→Projet
       var query = _context.Clients
           .Include(c => c.Societe)
           .Include(c => c.PaysNavigation)
@@ -39,16 +40,44 @@ namespace GestionTicketsAPI.Repositories
               .ThenInclude(pc => pc.Projet)
           .AsQueryable();
 
+      // 2) Filtre par SearchTerm (nom ou prénom)
       if (!string.IsNullOrEmpty(clientParams.SearchTerm))
       {
         var term = clientParams.SearchTerm.ToLower();
-        query = query.Where(c => c.FirstName.ToLower().Contains(term) || c.LastName.ToLower().Contains(term));
+        query = query.Where(c =>
+          c.FirstName.ToLower().Contains(term) ||
+          c.LastName.ToLower().Contains(term) ||
+          c.Email.ToLower().Contains(term));
       }
 
+      // 3) Filtre par Actif (true/false)
       if (clientParams.Actif.HasValue)
+      {
         query = query.Where(c => c.Actif == clientParams.Actif.Value);
+      }
 
-      return await PagedList<Client>.CreateAsync(query.OrderByDescending(c => c.CreatedAt), clientParams.PageNumber, clientParams.PageSize);
+      // 4) FILTRE PAR SOCIÉTÉ
+      if (clientParams.SocieteId.HasValue)
+      {
+        query = query.Where(c => c.SocieteId == clientParams.SocieteId.Value);
+      }
+
+      // 5) FILTRE PAR PROJET (relation many-to-many via ProjetClients)
+      if (clientParams.ProjetId.HasValue)
+      {
+        query = query.Where(c =>
+          c.ProjetClients.Any(pc => pc.ProjetId == clientParams.ProjetId.Value));
+      }
+
+      // 6) Tri (exemple : ordre descendant sur CreatedAt)
+      query = query.OrderByDescending(c => c.CreatedAt);
+
+      // 7) Pagination
+      return await PagedList<Client>.CreateAsync(
+        query,
+        clientParams.PageNumber,
+        clientParams.PageSize
+      );
     }
 
     public async Task<IEnumerable<Client>> GetClientsNoPaginationAsync()
@@ -85,7 +114,7 @@ namespace GestionTicketsAPI.Repositories
           .Include(c => c.Societe)
           .Include(c => c.ProjetClients)
               .ThenInclude(pc => pc.Projet)
-                .ThenInclude(p => p.Contrats)
+                .ThenInclude(p => p.ContratProjet)
           .Where(c => c.SocieteId == societeId)
           .ToListAsync();
     }
@@ -127,7 +156,7 @@ namespace GestionTicketsAPI.Repositories
           .Include(pc => pc.Projet)
               .ThenInclude(p => p.Pays)
           .Include(pc => pc.Projet)
-              .ThenInclude(p => p.Contrats)
+              .ThenInclude(p => p.ContratProjet)
           .Include(pc => pc.Projet)
               .ThenInclude(p => p.Societe)
           .Include(pc => pc.Projet)

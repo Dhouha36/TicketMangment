@@ -64,10 +64,11 @@ export class AjouterUtilisateurComponent implements OnInit {
       ]],
       actif: [false],
       contrat: [false],
-      contract: this.fb.group({
-        dateDebut: ['', Validators.required],
-        dateFin: ['', Validators.required],
-        type: [null, Validators.required]
+      contratUser: this.fb.group({
+        dateDebut:      ['', Validators.required],
+        dateFin:        ['', Validators.required],
+        type:           [null, Validators.required],
+        salaireMensuel: [null]
       })
     });
   }
@@ -85,7 +86,7 @@ export class AjouterUtilisateurComponent implements OnInit {
 
     // Initialisation du groupe 'contract' selon la case 'contrat'
     const contratControl = this.registerForm.get('contrat');
-    const contractGroup = this.registerForm.get('contract');
+    const contractGroup = this.registerForm.get('contratUser');
 
     if (!contratControl?.value) {
       contractGroup?.disable();
@@ -157,7 +158,7 @@ export class AjouterUtilisateurComponent implements OnInit {
   openContractDialog(): void {
     const dialogRef = this.dialog.open(ContractDialogComponent, {
       data: {
-        contractForm: this.registerForm.get('contract'),
+        contractForm: this.registerForm.get('contratUser'),
         isProject: false
       }
     });
@@ -190,10 +191,12 @@ export class AjouterUtilisateurComponent implements OnInit {
       };
 
       if (formValue.contrat) {
-        userForRegister.contract = {
-          dateDebut: formValue.contract.dateDebut,
-          dateFin: formValue.contract.dateFin,
-          type: formValue.contract.type
+        const cu = formValue.contratUser;
+        userForRegister.contratUser = {
+          dateDebut:      cu.dateDebut,
+          dateFin:        cu.dateFin,
+          type:           cu.type,
+          salaireMensuel: cu.salaireMensuel 
         };
       }
 

@@ -16,6 +16,6 @@ public class ProjectFilterParams
   public string? Societe { get; set; }
   public string? Pays { get; set; }
   public string? SearchTerm { get; set; }
-  public ICollection<Contrat>? Contrats { get; set; } = new List<Contrat>();
+  public ICollection<ContratProjet>? Contrats { get; set; } = new List<ContratProjet>();
 }
 

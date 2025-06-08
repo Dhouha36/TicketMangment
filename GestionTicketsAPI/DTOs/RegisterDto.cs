@@ -26,6 +26,6 @@ namespace GestionTicketsAPI.DTOs
         public bool Actif { get; set; } = true;
         
         // Informations du contrat (optionnel)
-        public ContractRegistrationDto? Contract { get; set; }
+        public ContratUserDto? ContratUser { get; set; }
     }
 }

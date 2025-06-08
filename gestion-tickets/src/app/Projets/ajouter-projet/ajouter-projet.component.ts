@@ -10,7 +10,6 @@ import { ToastrService } from 'ngx-toastr';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { LoaderService } from '../../_services/loader.service';
 import { ProjetCreate } from 'src/app/DTOs/projet-create.model';
-import { ClientCreate } from 'src/app/DTOs/client-create.model';
 import { RegisterClientDto } from 'src/app/DTOs/RegisterClientDto';
 import { ClientService } from 'src/app/_services/client.service';
 import { catchError, concatMap } from 'rxjs/operators';
@@ -97,17 +96,15 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
 
       // toggle obligatoire
       hasContract: [false, Validators.requiredTrue],
-
-      // données du contrat
-      contract: this.fb.group({
+      contratProjet: this.fb.group({
         dateDebut: ['', Validators.required],
         dateFin: ['', Validators.required],
-        type: [TypeContrat.Projet, Validators.required]
+        montantTotal: [null]
       })
     });
 
     // 2) Désactivation initiale du sous-groupe contract
-    const contractGroup = projetGroup.get('contract') as FormGroup;
+    const contractGroup = projetGroup.get('contratProjet') as FormGroup;
     contractGroup.disable({ emitEvent: false });
 
     // 3) Réaction au changement de hasContract
@@ -118,7 +115,7 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
         this.openContractDialogForProject();
       } else {
         // on vide et désactive le sous-groupe
-        contractGroup.reset({ dateDebut: '', dateFin: '', type: TypeContrat.Projet });
+        contractGroup.reset({ dateDebut: '', dateFin: '', montantTotal: null });
         contractGroup.disable();
       }
     });
@@ -241,54 +238,48 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
 
   submitAll(): void {
     if (this.clientGroup.invalid) return;
-
-    this.serverErrors = { projet: '', client: '' }; // si vous gérez des messages
+  
+    this.serverErrors = { projet: '', client: '' };
     this.loaderService.showLoader();
-
-    // 1) Préparation du DTO Projet
-    const projetCtrl = this.projetGroup.value;
-
+  
+    // Récupération des valeurs du projet
+    const pg = this.projetGroup.value;
     const projetDto: ProjetCreate = {
-      nom: projetCtrl.nom,
+      nom:         pg.nom,
       description: '',
-      societeId: projetCtrl.societeId,
-      chefProjetId: projetCtrl.chefProjetId,
-      contract: {
-        dateDebut: projetCtrl.contract.dateDebut,
-        dateFin: projetCtrl.contract.dateFin,
-        type: projetCtrl.contract.type,
-      }
+      societeId:   pg.societeId,
+      chefProjetId: pg.chefProjetId,
+      // n’inclure que si hasContract est vrai
+      contratProjet: pg.hasContract ? {
+        dateDebut:   pg.contratProjet.dateDebut,
+        dateFin:     pg.contratProjet.dateFin,
+        montantTotal: pg.contratProjet.montantTotal
+      } : undefined
     };
-
-    // 2) Pipeline RxJS : addProjet → register(client) avec rollback
+  
     this.projetService.addProjet(projetDto).pipe(
       concatMap(projResp => {
         const projetId = projResp.id;
         const mode = this.clientGroup.value.modeClient;
-
+  
         if (mode === 'existant') {
-          // 1) rattacher client existant
           const clientId = this.clientGroup.value.clientExistantId;
-          return this.clientService.addClientToProject(clientId, projetId).pipe(
-            // Pas de rollback si échec rattachement ? selon besoin
-            catchError(err => throwError(() => err))
-          );
+          return this.clientService.addClientToProject(clientId, projetId)
+            .pipe(catchError(err => throwError(() => err)));
         } else {
-          // 2) création d’un nouveau client
           const form = this.clientGroup.value;
           const clientDto: RegisterClientDto = {
-            email: form.email,
-            firstName: form.firstName,
-            lastName: form.lastName,
-            numTelephone: this.selectedCountry!.codeTel + ' ' + form.numTelephone.trim(),
-            pays: +form.pays,
-            societeId: projetDto.societeId,
-            actif: form.actif,
-            projetIds: [projetId]
+            email:      form.email,
+            firstName:  form.firstName,
+            lastName:   form.lastName,
+            numTelephone: `${this.selectedCountry!.codeTel} ${form.numTelephone.trim()}`,
+            pays:        +form.pays,
+            societeId:   projetDto.societeId,
+            actif:       form.actif,
+            projetIds:  [projetId]
           };
           return this.clientService.register(clientDto).pipe(
             catchError(err =>
-              // rollback : suppression projet si la création client échoue
               this.projetService.deleteProjet(projetId).pipe(
                 concatMap(() => throwError(() => err))
               )
@@ -298,27 +289,21 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
       })
     ).subscribe({
       next: () => {
-        // 5) Tout s’est bien passé
-        this.isCompleted = true;             // pour votre guard
+        this.isCompleted = true;
         this.toastr.success('Projet et client créés avec succès');
         this.loaderService.hideLoader();
         this.router.navigate(['/home/Projets']);
       },
       error: (err: any) => {
-        // 1) Récupérer le message d’erreur (string ou payload)
         const msg = typeof err === 'string'
           ? err
           : (err.error?.message || err.error || err.message || 'Échec de la création');
-
-        // 2) Affecter à serverErrors.client
         this.serverErrors.client = msg;
-
-        // 3) Masquer le loader (sinon il reste bloqué)
         this.loaderService.hideLoader();
       }
     });
   }
-
+  
   onContractChange(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.checked) {
@@ -330,7 +315,7 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
     // passez directement le FormGroup existing
     const dialogRef = this.dialog.open(ContractDialogComponent, {
       data: {
-        contractForm: this.projetGroup.get('contract'),
+        contractForm: this.projetGroup.get('contratProjet'),
         isProject: true
       }
     });
@@ -339,9 +324,9 @@ export class AjouterProjetComponent implements OnInit, PendingChangesComponent {
       if (result) {
         // result contient { dateDebut, dateFin, type }
         // on met à jour le FormGroup (ça le rend valide)
-        this.projetGroup.get('contract')!.setValue(result);
+        this.projetGroup.get('contratProjet')!.setValue(result);
         // on peut marquer comme touched pour montrer les erreurs éventuelles
-        this.projetGroup.get('contract')!.markAllAsTouched();
+        this.projetGroup.get('contratProjet')!.markAllAsTouched();
       }
     });
   }

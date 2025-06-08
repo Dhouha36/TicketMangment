@@ -45,7 +45,7 @@ export class AccountService {
   }
 
   login(credentials: { email: string; password: string }) {
-    return this.http.post<User>('/api/account/login', credentials).pipe(
+    return this.http.post<User>(`${this.baseUrl}account/login`, credentials).pipe(
       tap(user => {
         localStorage.setItem('token', user.token);
         this.setCurrentUser(user); 

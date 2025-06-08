@@ -5,7 +5,7 @@
   <!-- Statistiques -->
   <div class="stats-container">
     <!-- Tickets : visible pour tous -->
-    <div class="stat-box" *ngIf="isSuperAdmin() || isChefDeProjet() || isCollaborateur() || isClient()">
+    <div class="stat-box" *ngIf="isSuperAdmin() || isClient()">
       <a [routerLink]="['/home', 'Tickets']" class="stat-content">
         <div class="stat-title">Tickets</div>
         <div class="stat-value">{{ ticketsCount || 0 }}</div>
@@ -19,17 +19,42 @@
     </div>
 
     <!-- Mes tickets : uniquement pour Chef de Projet -->
-    <div class="stat-box" *ngIf="isChefDeProjet()|| isCollaborateur()">
-      <a [routerLink]="['/home', 'Tickets']" class="stat-content">
-        <div class="stat-title">Mes tickets</div>
-        <div class="stat-value">{{ myTicketsCount || 0 }}</div>
+    <div class="stat-box" *ngIf="isChefDeProjet() || isCollaborateur()">
+      <a [routerLink]="['/home', 'MesTickets']" [queryParams]="{ filterType: 'associated', personnelId: currentUser?.id }" class="stat-content">
+        <div class="stat-title">Mes Tickets</div>
+        <div class="stat-value">{{ responsibleTicketsCount || 0 }}</div>
         <div class="stat-icon">
-          <!-- icône adaptée, par ex. user-account -->
+          <!-- icône "responsable" (par ex. head-outline) -->
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12
-                 A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14
-                 C16.42,14 20,15.79 20,18V20H4V18
-                 C4,15.79 7.58,14 12,14Z" />
+            <path d="M16,11C18.21,11 20,9.21 20,7
+                     S18.21,3 16,3 12,4.79 12,7
+                     13.79,11 16,11M8,11
+                     C10.21,11 12,9.21 12,7
+                     S10.21,3 8,3 4,4.79 4,7
+                     5.79,11 8,11M8,13
+                     C5.33,13 0,14.34 0,17
+                     V20H16V17
+                     C16,14.34 10.67,13 8,13M16,13
+                     C15.67,13 15.33,13.02 15,13.05
+                     C15.38,13.71 15.5,14.43 15.5,15.25
+                     C15.5,16.22 15.3,17.22 14.88,18.22
+                     C17.4,17.73 20,16.39 20,14
+                     V11H16V13Z" />
+          </svg>
+        </div>
+      </a>
+    </div>
+
+    <!-- 3) Tickets de projets dont l'utilisateur est membre -->
+    <div class="stat-box" *ngIf="isChefDeProjet() || isCollaborateur()">
+      <a [routerLink]="['/home', 'Tickets']" [queryParams]="{ filterType: 'projetUser', userId: currentUser?.id }" class="stat-content">
+        <div class="stat-title">Tickets</div>
+        <div class="stat-value">{{ projectMemberTicketsCount || 0 }}</div>
+        <div class="stat-icon">
+          <!-- icône "membre de projet" (par ex. group) -->
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M15.58,16.8L12,14.5L8.42,16.8L9.5,12.68L6.21,10L10.46,9.74L12,5.8L13.54,9.74L17.79,10L14.5,12.68M20,12C20,10.89 20.9,10 22,10V6C22,4.89 21.1,4 20,4H4A2,2 0 0,0 2,6V10C3.11,10 4,10.9 4,12A2,2 0 0,1 2,14V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V14A2,2 0 0,1 20,12Z" />
           </svg>
         </div>
       </a>
@@ -73,7 +98,7 @@
       </div>
 
       <!-- 2) zone cliquable pour la valeur + icône -->
-      <a [routerLink]="['/home', 'Pays']" class="stat-content">
+      <a class="stat-content">
         <div class="stat-value">{{ paysCount || 0 }}</div>
         <div class="stat-icon">
           <!-- Globe icon -->
@@ -228,9 +253,16 @@
 
       <!-- Ligne 2 -->
       <div class="chart-box">
-        <ngx-charts-pie-chart [view]="view" [scheme]=" isPieNoData() ? noDataScheme : colorScheme "
-          [results]="ticketCounts" [legend]="true" [legendPosition]="LegendPosition.Below" [legendTitle]="'Légende'"
-          [explodeSlices]="false" [labels]="true">
+        <ngx-charts-pie-chart
+          [view]="view"
+          [scheme]=" isPieNoData() ? noDataScheme : colorScheme "
+          [results]="ticketCounts"
+          [legend]="true"
+          [legendPosition]="LegendPosition.Below"
+          [legendTitle]="'Légende'"
+          [explodeSlices]="false"
+          [labels]="true"
+          [tooltipText]="percentTooltip" >
         </ngx-charts-pie-chart>
       </div>
     </div>

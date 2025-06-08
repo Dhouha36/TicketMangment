@@ -12,7 +12,7 @@ namespace GestionTicketsAPI.Helpers
       CreateMap<User, UserDto>()
           .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
           .ForMember(dest => dest.Societe, opt => opt.MapFrom(src => src.SocieteUsers.Any() ? src.SocieteUsers.First().Societe : null))
-          .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.Contrats != null && src.Contrats.Any() ? src.Contrats.First() : null))
+          .ForMember(dest => dest.ContratUser, opt => opt.MapFrom(src => src.ContratUser))
           .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.Photo != null ? src.Photo.Url : null));
 
       CreateMap<UserUpdateDto, User>()
@@ -30,10 +30,7 @@ namespace GestionTicketsAPI.Helpers
           .ForMember(dest => dest.NomSociete, opt => opt.MapFrom(src => src.Societe.Nom))
           .ForMember(dest => dest.ChefProjetId, opt => opt.MapFrom(src => src.ChefProjetId))
           .ForMember(dest => dest.ChefProjet, opt => opt.MapFrom(src => src.ChefProjet))
-          .ForMember(dest => dest.Contrat,
-              opt => opt.MapFrom(src =>
-                    src.Contrats.FirstOrDefault(c => c.Type == TypeContrat.Projet)
-                ));
+          .ForMember(dest => dest.ContratProjet,  opt => opt.MapFrom(src => src.ContratProjet));
       CreateMap<ProjetDto, Projet>()
           .ForMember(dest => dest.IdPays, opt => opt.Ignore())
           .ForMember(dest => dest.ChefProjetId, opt => opt.MapFrom(src => src.ChefProjetId));
@@ -52,7 +49,6 @@ namespace GestionTicketsAPI.Helpers
           .ForMember(dest => dest.PaysId, opt => opt.MapFrom(src => src.PaysId))
           .ForMember(dest => dest.Pays, opt => opt.MapFrom(src => src.Pays));
 
-      CreateMap<Contrat, ContratDto>().ReverseMap();
 
       // Mise à jour pour l'entité Ticket et ses DTOs :
       CreateMap<Ticket, TicketDto>()
@@ -103,16 +99,16 @@ namespace GestionTicketsAPI.Helpers
            .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
            .ForMember(dest => dest.Actif, opt => opt.MapFrom(src => src.Actif ? "Oui" : "Non"))
-           .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.Contrats != null && src.Contrats.Any() ? "Oui" : "Non"))
-           .ForMember(dest => dest.DateDebut, opt => opt.MapFrom(src => src.Contrats != null && src.Contrats.Any() ? src.Contrats.First().DateDebut : (DateTime?)null))
-           .ForMember(dest => dest.DateFin, opt => opt.MapFrom(src => src.Contrats != null && src.Contrats.Any() ? src.Contrats.First().DateFin : (DateTime?)null));
+           .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.ContratUser != null ? "Oui" : "Non"))
+           .ForMember(dest => dest.DateDebut, opt => opt.MapFrom(src => src.ContratUser != null ? src.ContratUser.DateDebut : (DateTime?)null))
+           .ForMember(dest => dest.DateFin, opt => opt.MapFrom(src => src.ContratUser != null ? src.ContratUser.DateFin : (DateTime?)null));
       CreateMap<UserDto, UserExportDto>()
           .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
           .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role))
           .ForMember(dest => dest.Actif, opt => opt.MapFrom(src => src.Actif ? "Oui" : "Non"))
-          .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.Contrat != null ? "Oui" : "Non"))
-          .ForMember(dest => dest.DateDebut, opt => opt.MapFrom(src => src.Contrat != null ? src.Contrat.DateDebut : (DateTime?)null))
-          .ForMember(dest => dest.DateFin, opt => opt.MapFrom(src => src.Contrat != null ? src.Contrat.DateFin : (DateTime?)null));
+          .ForMember(dest => dest.Contrat, opt => opt.MapFrom(src => src.ContratUser != null ? "Oui" : "Non"))
+          .ForMember(dest => dest.DateDebut, opt => opt.MapFrom(src => src.ContratUser != null ? src.ContratUser.DateDebut : (DateTime?)null))
+          .ForMember(dest => dest.DateFin, opt => opt.MapFrom(src => src.ContratUser != null ? src.ContratUser.DateFin : (DateTime?)null));
 
       // Mapping à partir de l'entité Societe
       CreateMap<Societe, SocieteExportDto>()
@@ -168,6 +164,21 @@ namespace GestionTicketsAPI.Helpers
       CreateMap<ProjetClient, ProjetMiniDto>()
            .ForMember(d => d.Id, o => o.MapFrom(s => s.Projet.Id))
            .ForMember(d => d.Nom, o => o.MapFrom(s => s.Projet.Nom));
+
+      CreateMap<ClientDto, ClientExportDto>()
+        .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+        .ForMember(dest => dest.Nom, opt => opt.MapFrom(src => $"{src.FirstName} {src.LastName}"))
+        .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email))
+        .ForMember(dest => dest.Telephone, opt => opt.MapFrom(src => src.NumTelephone))
+        .ForMember(dest => dest.Societe, opt => opt.MapFrom(src => src.Societe != null ? src.Societe.Nom : string.Empty))
+        .ForMember(dest => dest.Actif, opt => opt.MapFrom(src => src.Actif))
+        .ForMember(dest => dest.Projets,
+                   opt => opt.MapFrom(src => src.Projets != null
+                       ? string.Join(", ", src.Projets.Select(p => p.Nom))
+                       : string.Empty));
+                       
+        CreateMap<ContratUser, ContratUserDto>().ReverseMap();
+        CreateMap<ContratProjet, ContratProjetDto>().ReverseMap();
 
     }
   }
