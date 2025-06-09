@@ -60,7 +60,6 @@ namespace GestionTicketsAPI.Services
       dto.ClientId = notif.ClientId;
       dto.IsRead = notif.IsRead;
 
-      // seul un userId déclenche SignalR / push par défaut
       if (userId.HasValue)
       {
         await _hub.Clients
@@ -68,6 +67,18 @@ namespace GestionTicketsAPI.Services
                   .SendAsync("ReceiveNotification", dto);
         await SendPushNotification(userId.Value, dto);
       }
+
+      // AJOUTER: Notification pour les clients aussi
+      if (clientId.HasValue)
+      {
+        await _hub.Clients
+                  .Group($"client_{clientId.Value}")  // Préfixe pour différencier
+                  .SendAsync("ReceiveNotification", dto);
+
+        // Optionnel: Push notifications pour les clients aussi
+        await SendPushNotificationForClient(clientId.Value, dto);
+      }
+
     }
 
 
@@ -186,5 +197,58 @@ namespace GestionTicketsAPI.Services
       notif.IsDeleted = true;
       await _context.SaveChangesAsync();
     }
+
+    private async Task SendPushNotificationForClient(int clientId, NotificationDto dto)
+{
+    try
+    {
+        // Adapter la logique existante pour les clients
+        var subs = await _context.PushSubscriptions
+            .Where(s => s.UserId == $"client_{clientId}") // Adapter selon votre structure
+            .ToListAsync();
+
+        if (!subs.Any())
+        {
+            _logger.LogInformation($"Aucun abonnement push trouvé pour clientId {clientId}");
+            return;
+        }
+
+        var title = dto.EntityType != null && dto.EntityId.HasValue
+            ? $"Nouvel {dto.EntityType} #{dto.EntityId.Value}"
+            : "Nouvelle notification";
+        var url = dto.EntityType != null && dto.EntityId.HasValue
+            ? $"https://votre-client/#/{dto.EntityType.ToLower()}/{dto.EntityId.Value}"
+            : null;
+
+        var payload = JsonSerializer.Serialize(new { title, message = dto.Message, url });
+        var pushMessage = new PushMessage(payload) { Urgency = PushMessageUrgency.High };
+
+        foreach (var sub in subs)
+        {
+            var pushSub = new PushSubscription
+            {
+                Endpoint = sub.Endpoint,
+                Keys = new Dictionary<string, string>
+                {
+                    { PushEncryptionKeyName.P256DH.ToString().ToLower(), sub.P256DH },
+                    { PushEncryptionKeyName.Auth.ToString().ToLower(), sub.Auth }
+                }
+            };
+
+            try
+            {
+                await _pushClient.RequestPushMessageDeliveryAsync(pushSub, pushMessage);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Échec de l'envoi push à {Endpoint}", sub.Endpoint);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, $"Erreur lors de l'envoi push pour clientId {clientId}");
+    }
+}
   }
 }

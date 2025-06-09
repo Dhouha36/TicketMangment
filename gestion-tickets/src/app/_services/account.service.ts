@@ -85,6 +85,9 @@ export class AccountService {
       localStorage.removeItem('token');
     }
   }
+  public getJwtToken(): string | null {
+    return localStorage.getItem('token');
+  }
 
   public currentUser(): User | ClientDto | null {
     return this.currentUserSubject.value;

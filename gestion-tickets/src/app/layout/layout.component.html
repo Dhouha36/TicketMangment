@@ -93,7 +93,7 @@
       </ng-container>
 
       <!-- Section Profil (tous rôles) -->
-      <ng-container *ngIf="isChefDeProjet() || isCollaborateur() || isSuperAdmin()">
+      <ng-container>
         <div class="menu-section">
           <div class="submenu">
             <a mat-list-item [routerLink]="['/home','profile']" routerLinkActive="active-nav-item">

@@ -24,11 +24,13 @@ namespace GestionTicketsAPI.Controllers
     private readonly IUserService _userService;
     private readonly ICommentService _commentService;
     private readonly ExcelExportServiceClosedXML _excelExportService;
-    private readonly NotificationService _notifService;
+    private readonly IUserNotificationService _userNotifService;
+    private readonly IClientNotificationService _clientNotifService;
     private readonly IWebHostEnvironment _env;
 
     public TicketsController(IWebHostEnvironment env, ExcelExportServiceClosedXML excelExportService, ITicketService ticketService, IMapper mapper, IPhotoService photoService, IUserService userService, EmailService emailService, ICommentService commentService,
-    NotificationService notifService)
+    IUserNotificationService userNotifService,
+    IClientNotificationService clientNotifService)
     {
       _ticketService = ticketService;
       _mapper = mapper;
@@ -38,7 +40,8 @@ namespace GestionTicketsAPI.Controllers
       _commentService = commentService;
       _excelExportService = excelExportService;
       _env = env;
-      _notifService = notifService;
+      _userNotifService = userNotifService;
+      _clientNotifService = clientNotifService;
     }
 
     // GET api/tickets?...
@@ -152,13 +155,15 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Tickets",
           EntityId = ticket.Id
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(chef.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(chef.Id, notifDto));
+        BackgroundJob.Enqueue(() =>
+            _userNotifService.NotifyRealtimeAsync(chef.Id, notifDto));
+        BackgroundJob.Enqueue(() =>
+            _userNotifService.SendPushNotification(chef.Id, notifDto));
       }
 
       // 6.b) Client (email uniquement)
       if (ticketFromDb.Owner is { } client)
-    {
+      {
         // Envoi de l’email de confirmation au client
         BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
             $"{client.FirstName} {client.LastName}",
@@ -170,15 +175,15 @@ namespace GestionTicketsAPI.Controllers
         // Notification persistée pour le client
         var notifDto = new NotificationDto
         {
-            Message    = $"Votre ticket #{ticket.Id} a bien été créé.",
-            DateEnvoi  = DateTime.UtcNow,
-            EntityType = "Tickets",
-            EntityId   = ticket.Id
+          Message = $"Votre ticket #{ticket.Id} a bien été créé.",
+          DateEnvoi = DateTime.UtcNow,
+          EntityType = "Tickets",
+          EntityId = ticket.Id
         };
 
         // ⚠️ Pour un client, il faut passer userId = null et clientId = client.Id
         BackgroundJob.Enqueue(() =>
-            _notifService.NotifyAsync(null,client.Id,notifDto)
+             _clientNotifService.NotifyClientAsync(client.Id, notifDto)
         );
       }
 
@@ -200,8 +205,8 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Tickets",
           EntityId = ticket.Id
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(admin.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(admin.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(admin.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(admin.Id, notifDto));
       }
 
       // 7) Retour
@@ -257,7 +262,7 @@ namespace GestionTicketsAPI.Controllers
               "Ticket accepté",
               $"Bonjour {client.FirstName}, votre ticket #{ticket.Id} a été accepté."
           ));
-          BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(client.Id, notifDto));
+          BackgroundJob.Enqueue(() => _clientNotifService.NotifyClientAsync(client.Id, notifDto));
         }
 
         // Si on assigne un responsable en même temps
@@ -287,8 +292,8 @@ namespace GestionTicketsAPI.Controllers
                   "Nouveau ticket assigné",
                   $"Bonjour {resp.FirstName} {resp.LastName}, vous êtes responsable du ticket #{ticket.Id}."
               ));
-              BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(resp.Id, notifDto));
-              BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(resp.Id, notifDto));
+              BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(resp.Id, notifDto));
+              BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(resp.Id, notifDto));
             }
           }
         }
@@ -317,9 +322,8 @@ namespace GestionTicketsAPI.Controllers
               "Ticket refusé",
               $"Bonjour {client.FirstName} {client.LastName}, votre ticket #{ticket.Id} a été refusé. Raison : {validationDto.Reason}"
           ));
-           BackgroundJob.Enqueue(() => _notifService.NotifyAsync(null,client.Id,notifDto)
-        );
-          BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(client.Id, notifDto));
+          BackgroundJob.Enqueue(() => _clientNotifService.NotifyClientAsync(client.Id, notifDto)
+       );
         }
       }
 
@@ -406,8 +410,7 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Tickets",
           EntityId = ticket.Id
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyAsync(null,owner.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(owner.Id, notifDto));
+        BackgroundJob.Enqueue(() => _clientNotifService.NotifyClientAsync(owner.Id, notifDto));
       }
 
       // 2) Notification au chef de projet si différent
@@ -420,8 +423,8 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Tickets",
           EntityId = ticket.Id
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(chefProj.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(chefProj.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(chefProj.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(chefProj.Id, notifDto));
       }
 
       // 3) Notification au responsable si différent
@@ -434,8 +437,8 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Tickets",
           EntityId = ticket.Id
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(resp.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(resp.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(resp.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(resp.Id, notifDto));
       }
 
       // 4) Commentaire interne
@@ -499,8 +502,8 @@ namespace GestionTicketsAPI.Controllers
             "Nouveau responsable de ticket",
             $"Bonjour {newResp.FirstName} {newResp.LastName}, vous êtes désormais responsable du ticket #{ticket.Id}."
         ));
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(newResp.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(newResp.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(newResp.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(newResp.Id, notifDto));
       }
 
       return NoContent();

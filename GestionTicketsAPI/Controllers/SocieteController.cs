@@ -22,16 +22,16 @@ namespace GestionTicketsAPI.Controllers
     private readonly ExcelExportServiceClosedXML _excelExportService;
     private readonly IMapper _mapper;
     private readonly IUserService _userService;
-    private readonly NotificationService _notifService;
+    private readonly IUserNotificationService _userNotifService;
 
     public SocieteController(ExcelExportServiceClosedXML excelExportService, IMapper mapper, ISocieteService societeService,
-    NotificationService notifService,
+    IUserNotificationService userNotifService,
     IUserService userService)
     {
       _societeService = societeService;
       _mapper = mapper;
       _excelExportService = excelExportService;
-      _notifService = notifService;
+      _userNotifService = userNotifService;
       _userService = userService;
     }
 
@@ -165,8 +165,8 @@ namespace GestionTicketsAPI.Controllers
             EntityType = "Societes",
             EntityId = societeId
           };
-          BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(user.Id, notif));
-          BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(user.Id, notif));
+          BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(user.Id, notif));
+          BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(user.Id, notif));
         }
 
         return Ok("Utilisateur attaché à la société avec succès.");
@@ -200,8 +200,8 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Societes",
           EntityId = societeId
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(user.Id, notif));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(user.Id, notif));
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(user.Id, notif));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(user.Id, notif));
       }
 
       return Ok("Utilisateur détaché de la société avec succès.");

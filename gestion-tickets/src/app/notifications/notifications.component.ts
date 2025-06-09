@@ -28,24 +28,15 @@ export class NotificationsComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    const storedUser = localStorage.getItem('user');
-    if (!storedUser) { return; }
-    this.userId = JSON.parse(storedUser).id.toString();
-
-    // Historique + fusion
-    this.notifSvc.getNotifications(this.userId).subscribe({
+    // 1) Charger l’historique des notifications
+    this.notifSvc.getNotifications().subscribe({
+      next: list => this.notifications = list,
       error: err => console.error('Erreur chargement notifs', err)
     });
 
-    // Affichage : on se met à jour quand la liste change
+    // 2) Écouter le flux temps réel et mettre à jour la liste
     this.notifSvc.notifications$.subscribe(list => {
       this.notifications = list;
-    });
-  }
-
-  markAllAsRead(): void {
-    this.notifSvc.markAllAsRead(this.userId).subscribe(() => {
-      this.notifications.forEach(n => n.isRead = true);
     });
   }
 
@@ -123,7 +114,7 @@ export class NotificationsComponent implements OnInit {
     this.notifSvc.hideNotification(n.id).subscribe({
       next: () => {
         this.notifications = this.notifications.filter(x => x.id !== n.id);
-        this.notifSvc.getNotifications(this.userId).subscribe(); // Rafraîchissement
+        this.notifSvc.getNotifications().subscribe(); // Rafraîchissement
       },
       error: err => console.error('Erreur masquage notification', err)
     });

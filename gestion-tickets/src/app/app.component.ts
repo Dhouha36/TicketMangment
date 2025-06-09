@@ -73,10 +73,10 @@ export class AppComponent implements OnInit {
 
 
   async ngOnInit(): Promise<void> {
-    // 1) On va charger la version à jour de l’utilisateur avant toute autre logique
+    // 1) Charger la version à jour de l’utilisateur
     await this.loadCurrentUserFromApi();
 
-    // 2) Valider le token (s’il est encore valide) et forcer logout si besoin
+    // 2) Valider le token et forcer logout si invalide
     setTimeout(() => {
       this.accountService.validateToken().subscribe({
         error: () => {
@@ -86,31 +86,30 @@ export class AppComponent implements OnInit {
       });
     }, 0);
 
-    // 3) Mise en place du Service Worker (optionnel)
+    // 3) Service Worker (optionnel)
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(reg => 
+      navigator.serviceWorker.ready.then(reg =>
         console.log('SW ready, scope=', reg.scope)
       );
     }
 
-    // 4) Démarrer la connexion aux notifications (WebSocket ou SignalR)
+    // 4) Démarrer SignalR pour notifications temps réel
     const current = this.accountService.currentUser();
-    if (current && current.id) {
-      const uid = current.id.toString();
-      this.notificationService.startConnection(uid);
+    if (current?.id != null) {
+      this.notificationService.startConnection();
 
-      // 5) Demander la permission pour les notifications push
+      // 5) Demander permission pour Push API
       const granted = await this.ensurePermission();
       if (granted) {
-        this.pushSubService.subscribeToPush(uid);
+        this.pushSubService.subscribeToPush(current.id.toString());
       } else {
         console.warn('Push notifications non autorisées');
       }
 
-      // 6) S’abonner aux notifications reçues en temps réel
-      this.notificationService.notification$.subscribe(msg => {
-        //console.log('Notification reçue:', msg);
-        // Ici vous pourriez déclencher un toast, etc.
+      // 6) Optionnel : souscrire pour toasts ou traitements personnalisés
+      this.notificationService.notification$.subscribe(dto => {
+        // ex. afficher un toast
+        console.log('Notification reçue en temps réel :', dto);
       });
     }
   }

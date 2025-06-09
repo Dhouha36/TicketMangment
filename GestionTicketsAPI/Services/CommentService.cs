@@ -15,7 +15,8 @@ public class CommentService : ICommentService
 {
   private readonly DataContext _context;
   private readonly EmailService _emailService;
-  private readonly INotificationService _notifService;
+  private readonly IUserNotificationService _userNotifService;
+private readonly IClientNotificationService _clientNotifService;
   private readonly IUserService _userService;
   private readonly IClientService _clientService;
   private readonly IMapper _mapper;
@@ -28,7 +29,8 @@ public class CommentService : ICommentService
     EmailService emailService,
     IUserService userService,
     IClientService clientService,
-    INotificationService notifService,
+    IUserNotificationService userNotifService,
+    IClientNotificationService clientNotifService,
     IPhotoService photoService,
     IHttpContextAccessor httpContextAccessor)
   {
@@ -37,7 +39,8 @@ public class CommentService : ICommentService
     _emailService = emailService;
     _userService = userService;
     _clientService = clientService;
-    _notifService = notifService;
+    _userNotifService = userNotifService;
+    _clientNotifService = clientNotifService;
     _photoService = photoService;
     _httpContextAccessor = httpContextAccessor;
   }
@@ -228,11 +231,11 @@ public class CommentService : ICommentService
 
         if (IsClientRecipient)
         {
-          BackgroundJob.Enqueue(() => _notifService.NotifyAsync(null,Id, notifDto));
+          BackgroundJob.Enqueue(() => _clientNotifService.NotifyClientAsync(Id, notifDto));
         }
         else
         {
-          BackgroundJob.Enqueue(() => _notifService.NotifyAsync(Id, null, notifDto));
+          BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(Id, notifDto));
         }
     }
 

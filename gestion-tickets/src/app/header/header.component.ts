@@ -23,6 +23,7 @@ import { ClientDto } from '../DTOs/ClientDto';
   styleUrls: ['./header.component.scss']
 })
 export class HeaderComponent implements OnInit {
+  private audio = new Audio('assets/sounds/just-saying-593.mp3');
   currentUser: User | ClientDto | null = null;
   userInitials = "";
   isMenuOpen: boolean = false;
@@ -51,6 +52,7 @@ export class HeaderComponent implements OnInit {
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe(q => this.executeSearch(q));
+    this.audio.load();
   }
 
   private isUser(u: User | ClientDto | null): u is User {
@@ -73,10 +75,9 @@ export class HeaderComponent implements OnInit {
           user.firstName.charAt(0).toUpperCase() +
           user.lastName.charAt(0).toUpperCase();
         // On (re)lance la connexion aux notifications si besoin
-        const uid = user.id.toString();
-        this.notifSvc.startConnection(uid);
+        this.notifSvc.startConnection();
         this.notifSvc
-          .getNotifications(uid)
+          .getNotifications()
           .subscribe((notifs) => {
             this.notifications = notifs;
             this.unreadCount = notifs.filter((n) => !n.isRead).length;
@@ -85,6 +86,7 @@ export class HeaderComponent implements OnInit {
         this.notifSvc.notification$.subscribe((dto: AppNotification) => {
           this.notifications.unshift(dto);
           this.unreadCount++;
+          this.audio.play().catch(err => console.error('Audio play failed:', err));
         });
       } else {
         // Cas logout : on vide les notifications
@@ -99,8 +101,7 @@ export class HeaderComponent implements OnInit {
     this.isNotifOpen = !this.isNotifOpen;
     if (!this.isNotifOpen && this.notifications.length) {
       // on marque en lu seulement à la fermeture
-      const uid = this.accountService.currentUser()!.id.toString();
-      this.notifSvc.markAllAsRead(uid).subscribe(() => {
+      this.notifSvc.markAllAsRead().subscribe(() => {
         this.notifications.forEach(n => n.isRead = true);
         this.unreadCount = 0;
       });
@@ -211,6 +212,5 @@ export class HeaderComponent implements OnInit {
     }
     return '';
   }
-
 
 }

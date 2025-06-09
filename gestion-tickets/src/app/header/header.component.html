@@ -61,7 +61,7 @@
         <i class="fas fa-bell"></i>
         <span *ngIf="unreadCount" class="badge">{{ unreadCount }}</span>
       </button>
-
+      
       <!-- Bouton affichant la photo (ou les initiales) -->
       <button class="action-item user-button" (click)="toggleMenu()">
         <ng-container *ngIf="currentUser?.photoUrl; else initialsBtn">

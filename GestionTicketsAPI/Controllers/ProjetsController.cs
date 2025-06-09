@@ -16,21 +16,19 @@ namespace GestionTicketsAPI.Controllers
   public class ProjetsController : BaseApiController
   {
     private readonly IProjetService _projetService;
-    private readonly EmailService _emailService;
     private readonly ExcelExportServiceClosedXML _excelExportService;
     private readonly IMapper _mapper;
-    private readonly NotificationService _notifService;
+    private readonly IUserNotificationService _userNotifService;
     private readonly IUserService _userService;
 
-    public ProjetsController(ExcelExportServiceClosedXML excelExportService, IMapper mapper, IProjetService projetService, EmailService emailService,
-        NotificationService notifService,
+    public ProjetsController(ExcelExportServiceClosedXML excelExportService, IMapper mapper, IProjetService projetService,
+        IUserNotificationService userNotifService,
         IUserService userService)
     {
       _projetService = projetService;
-      _emailService = emailService;
       _mapper = mapper;
       _excelExportService = excelExportService;
-      _notifService = notifService;
+      _userNotifService = userNotifService;
       _userService = userService;
     }
 
@@ -100,8 +98,8 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Projets",
           EntityId = createdProjetDto.Id
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(cp.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(cp.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(cp.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(cp.Id, notifDto));
       }
 
       return CreatedAtAction(nameof(GetProjet), new { id = createdProjetDto.Id }, createdProjetDto);
@@ -143,8 +141,8 @@ namespace GestionTicketsAPI.Controllers
             EntityType = "Projets",
             EntityId = projetUpdateDto.Id
           };
-          BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(nouveauCp.Id, dto));
-          BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(nouveauCp.Id, dto));
+          BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(nouveauCp.Id, dto));
+          BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(nouveauCp.Id, dto));
         }
 
         // Ancien chef
@@ -160,8 +158,8 @@ namespace GestionTicketsAPI.Controllers
               EntityType = "Projets",
               EntityId = projetUpdateDto.Id
             };
-            BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(ancienCp.Id, dto));
-            BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(ancienCp.Id, dto));
+            BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(ancienCp.Id, dto));
+            BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(ancienCp.Id, dto));
           }
         }
       }
@@ -212,8 +210,8 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Projets",
           EntityId = projetId
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(user.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(user.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(user.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(user.Id, notifDto));
       }
 
       return Ok();
@@ -246,8 +244,8 @@ namespace GestionTicketsAPI.Controllers
           EntityType = "Projets",
           EntityId = projetId
         };
-        BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(user.Id, notifDto));
-        BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(user.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(user.Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(user.Id, notifDto));
       }
       return NoContent();
     }
@@ -279,8 +277,8 @@ namespace GestionTicketsAPI.Controllers
             EntityType = "Projets",
             EntityId = deleteDto.ProjetId
           };
-          BackgroundJob.Enqueue(() => _notifService.NotifyRealtimeAsync(user.Id, dto));
-          BackgroundJob.Enqueue(() => _notifService.NotifyPushAsync(user.Id, dto));
+          BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(user.Id, dto));
+          BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(user.Id, dto));
         }
       }
 

@@ -102,6 +102,7 @@ namespace GestionTicketsAPI.Controllers
       return Ok(dtos);
     }
 
+
     // 4) Marquer toutes les notifications comme lues
     [HttpPost("markasread/{userId}")]
     public async Task<IActionResult> MarkAllAsRead(int userId)
