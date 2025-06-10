@@ -17,14 +17,6 @@
 <body>
   <app-root></app-root>
   <noscript>Please enable JavaScript to continue using this application.</noscript> 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker
-        .register('/sw-custom.js', { scope: '/' })
-        .then(reg => console.log('Custom SW enregistré :', reg))
-        .catch(err => console.error('Erreur SW custom :', err));
-    }
-  </script>
   
 </body>
 </html>

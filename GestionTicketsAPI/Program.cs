@@ -83,6 +83,7 @@ app.UseAuthorization();
 app.MapHub<NotificationHub>("/hubs/notifications")
    .RequireCors("AllowClient");
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 app.MapGet("/", () => "Bienvenue dans l'API GestionTicketsAPI !");
 
 app.Run();

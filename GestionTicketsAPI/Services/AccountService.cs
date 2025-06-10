@@ -6,6 +6,7 @@ using AutoMapper;
 using GestionTicketsAPI.DTOs;
 using GestionTicketsAPI.Entities;
 using GestionTicketsAPI.Interfaces;
+using GestionTicketsAPI.Repositories;
 
 namespace GestionTicketsAPI.Services
 {
@@ -15,11 +16,14 @@ namespace GestionTicketsAPI.Services
     private readonly ISocieteRepository _societeRepository;
     private readonly IContratUserService _contratUserService;
     private readonly IUserRepository _userRepository;
+    
+    private readonly IClientRepository _clientRepository;
     private readonly ITokenService _tokenService;
     private readonly IMapper _mapper;
 
     public AccountService(
         IUserRepository userRepository,
+        IClientRepository clientRepository,
         IAccountRepository accountRepository,
         ISocieteRepository societeRepository,
         IContratUserService contratUserService,
@@ -27,6 +31,7 @@ namespace GestionTicketsAPI.Services
         IMapper mapper)
     {
       _accountRepository = accountRepository;
+      _clientRepository = clientRepository;
       _societeRepository = societeRepository;
       _contratUserService = contratUserService;
       _userRepository = userRepository;
@@ -141,7 +146,7 @@ namespace GestionTicketsAPI.Services
     }
 
 
-    public async Task SaveResetTokenAsync(int userId, string token, DateTime expires)
+    public async Task SaveResetTokenForUserAsync(int userId, string token, DateTime expires)
     {
       // Récupérer l'utilisateur concerné
       var user = await _userRepository.GetUserByIdAsync(userId);
@@ -248,5 +253,21 @@ namespace GestionTicketsAPI.Services
       return clientDto;
     }
 
+    public async Task SaveResetTokenForClientAsync(int clientId, string token, DateTime expires)
+    {
+      var client = await _clientRepository.GetClientByIdAsync(clientId);
+      if (client == null) throw new Exception("Client non trouvé.");
+
+      client.PasswordResetToken = token;
+      client.PasswordResetTokenExpires = expires;
+
+      if (!await _accountRepository.SaveAllAsync())
+        throw new Exception("Erreur lors de la sauvegarde du token.");
+    }
+
+    public async Task<Client> GetClientByResetTokenAsync(string token)
+    {
+      return await _accountRepository.GetClientByResetTokenAsync(token);
+    }
   }
 }

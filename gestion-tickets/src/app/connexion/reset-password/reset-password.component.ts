@@ -48,11 +48,18 @@ export class ResetPasswordComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Récupérer et décoder le token depuis les query params de l'URL
-    this.route.queryParams.subscribe(params => {
-      this.token = decodeURIComponent(params['token'] || '').trim();
+    // ← au lieu de route.queryParams
+    this.route.queryParamMap.subscribe(params => {
+      const t = params.get('token');
+      if (!t) {
+        // pas de token → on renvoie au login
+        this.router.navigate(['/']);
+        return;
+      }
+      // on stocke le token et on peut préremplir (ou décocher le bouton submit, etc.)
+      this.token = t.trim();
     });
-  }
+  }  
   
   // Bascule de l'affichage du mot de passe pour le champ newPassword
   togglePasswordVisibility(): void {

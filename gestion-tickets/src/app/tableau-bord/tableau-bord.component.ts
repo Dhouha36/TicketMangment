@@ -95,6 +95,10 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
 
   projects: Projet[] = [];
 
+  // Série pour le graphe "temps passé"
+  timeSpentSeries: { name: string; series: { name: string; value: number }[] }[] = [];
+
+
   constructor(
     private ticketService: TicketService,
     private accountService: AccountService,
@@ -359,14 +363,14 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
         .subscribe({
           next: status => {
             if (status.length) {
-            // 1) Séries bar en brut
-          this.statusSeries = status.map(s => ({ name: s.key, value: s.count }));
+              // 1) Séries bar en brut
+              this.statusSeries = status.map(s => ({ name: s.key, value: s.count }));
 
-          this.ticketCounts = status.map(s => ({
-            id: 0,
-            name: s.key,     
-            value: s.count   
-          }));
+              this.ticketCounts = status.map(s => ({
+                id: 0,
+                name: s.key,
+                value: s.count
+              }));
             } else {
               this.statusSeries = [{ name: 'Aucune donnée', value: 0 }];
               this.ticketCounts = [{ id: 0, name: 'Aucune donnée', value: 1 }];
@@ -378,18 +382,42 @@ export class TableauBordComponent implements OnInit, AfterViewInit {
             this.ticketCounts = [{ id: 0, name: 'Erreur', value: 0 }];
           }
         });
+      // ─── COURBE "Temps passé" (même pattern que les autres) ───
+      const reqTime: TicketFilterRequest = {
+        ownerId: this.filter.clientId ?? undefined,
+        personnelId: this.filter.userId ?? this.filter.personnelId ?? undefined, 
+        projetId: this.filter.projectId ?? undefined,
+        start: this.filter.start ?? undefined,
+        end: this.filter.end ?? undefined,
+        granularity: this.filter.granularity
+      };
+      this.dashboardService.getTimeSpent(reqTime)
+        .subscribe({
+          next: data => {
+            this.timeSpentSeries = data.length
+              ? [{ name: 'Temps passé', series: data.map(d => ({ name: d.key, value: d.value ?? 0 })) }]
+              : [{ name: 'Aucune donnée', series: [{ name: '', value: 0 }] }];
+          },
+          error: err => {
+            console.error('Erreur getTimeSpent', err);
+            this.timeSpentSeries = [{ name: 'Erreur', series: [{ name: '', value: 0 }] }];
+          }
+        });
+
     }
+
   }
+
 
   public percentTooltip = (entry: any): string => {
     // ngx-charts vous passe un objet { data: { name, value }, label, value, ... }
-    const name  = entry.data.name;
+    const name = entry.data.name;
     const value = entry.data.value;
     const total = this.ticketCounts.reduce((sum, d) => sum + d.value, 0) || 1;
-    const pct   = (value / total) * 100;
+    const pct = (value / total) * 100;
     return `${name} : ${pct.toFixed(1)} %`;
-  };    
-  
+  };
+
   openPaysModal() {
     const modalRef = this.overlayModalService.open(PaysModalComponent);
     // modalRef est ici l'instance de PaysModalComponent

@@ -265,6 +265,24 @@
           [tooltipText]="percentTooltip" >
         </ngx-charts-pie-chart>
       </div>
+      <div class="chart-box">
+            <ngx-charts-line-chart
+              [view]="view"
+              [scheme]="colorScheme"
+              [results]="timeSpentSeries"
+              [legend]="false"
+              [xAxis]="true"
+              [yAxis]="true"
+              [showGridLines]="true"
+              [autoScale]="true"
+              [curve]="curve"
+              [showXAxisLabel]="true"
+              [xAxisLabel]="'Période'"
+              [showYAxisLabel]="true"
+              [yAxisLabel]="'Heures passées'"
+              [animations]="true">
+            </ngx-charts-line-chart>
+          </div>
     </div>
     <!-- Tableau récapitulatif -->
     <table class="table-stats">

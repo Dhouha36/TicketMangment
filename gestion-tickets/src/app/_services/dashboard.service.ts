@@ -38,4 +38,8 @@ export class DashboardService {
     return this.http.get<number>(`${this.baseUrl}/count/projectmember/${userId}`);
   }
 
+  getTimeSpent(req: TicketFilterRequest): Observable<TicketStatDto[]> {
+    return this.http.post<TicketStatDto[]>(`${this.baseUrl}/timespent`, req);
+  }
+
 }

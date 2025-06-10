@@ -91,12 +91,12 @@ export class DetailsUtilisateurComponent implements OnInit {
     private dialog: MatDialog,
     private overlayModalService: OverlayModalService,
     private loaderService: LoaderService,
-    private globalLoaderService: GlobalLoaderService 
+    private globalLoaderService: GlobalLoaderService
   ) {
     this.loaderService.isLoading$.subscribe((loading) => {
       this.isLoading = loading;
     });
-   }
+  }
 
   // Getter pour exposer l'utilisateur dans le template sous le nom "userDetails"
   get userDetails(): User | null {
@@ -117,7 +117,7 @@ export class DetailsUtilisateurComponent implements OnInit {
     this.loadRoles();
     this.loadStatuses();
     this.loadPriorities();
-  
+
     this.userForm.get('role')?.valueChanges.subscribe(role => {
       const societeControl = this.userForm.get('societeId');
       if (role === 'Client') {
@@ -126,12 +126,12 @@ export class DetailsUtilisateurComponent implements OnInit {
         societeControl?.disable();
       }
     });
-    
+
     // Souscription aux changements du champ 'pays' du formulaire utilisateur
     this.userForm.get('pays')?.valueChanges.subscribe(value => {
       this.selectedCountry = this.paysList.find(p => p.idPays === +value);
     });
-  
+
     // Souscription à la recherche sur les tickets avec débounce
     this.ticketSearchSubject.pipe(
       debounceTime(300),
@@ -141,7 +141,7 @@ export class DetailsUtilisateurComponent implements OnInit {
       this.ticketPageNumber = 1;
       this.loadTickets();
     });
-  
+
     // Écouter les changements dans les paramètres de la route
     this.route.params.subscribe(params => {
       const userId = params['id'];
@@ -150,13 +150,13 @@ export class DetailsUtilisateurComponent implements OnInit {
         this.loadUserDetails(+userId);
       }
     });
-  
+
     // Écouter les queryParams
     this.route.queryParams.subscribe(queryParams => {
       console.log("QueryParams mis à jour :", queryParams);
     });
   }
-  
+
 
 
   openAttachProjectDialog(): void {
@@ -182,12 +182,12 @@ export class DetailsUtilisateurComponent implements OnInit {
       }
     });
   }
-  
+
 
   loadPays(): void {
     this.paysService.getPays().subscribe({
       next: (pays: Pays[]) => {
-        this.paysList     = pays;
+        this.paysList = pays;
         this.filteredPays = pays;
       },
       error: (err) => {
@@ -223,7 +223,7 @@ export class DetailsUtilisateurComponent implements OnInit {
     const modal = this.overlayModalService.open(PaysModalComponent);
     modal.added.subscribe(() => {
       this.paysService.getPays().subscribe(data => {
-        this.paysList     = data;
+        this.paysList = data;
         this.filteredPays = data;
       });
       this.overlayModalService.close();
@@ -331,15 +331,15 @@ export class DetailsUtilisateurComponent implements OnInit {
         });
         if (user.contratUser) {
           this.contratForm.patchValue({
-            id:           user.contratUser.id,
-            dateDebut:    new Date(user.contratUser.dateDebut + 'Z')
-                             .toISOString().substring(0, 10),
-            dateFin:      new Date(user.contratUser.dateFin  + 'Z')
-                             .toISOString().substring(0, 10),
-            type:         user.contratUser.type,
+            id: user.contratUser.id,
+            dateDebut: new Date(user.contratUser.dateDebut + 'Z')
+              .toISOString().substring(0, 10),
+            dateFin: new Date(user.contratUser.dateFin + 'Z')
+              .toISOString().substring(0, 10),
+            type: user.contratUser.type,
             salaireMensuel: user.contratUser.salaireMensuel
           });
-        }        
+        }
         // Chargement des projets et tickets associés
         this.loadProjects();
         this.loadTickets();
@@ -352,7 +352,7 @@ export class DetailsUtilisateurComponent implements OnInit {
       }
     });
   }
-  
+
 
 
 
@@ -401,7 +401,7 @@ export class DetailsUtilisateurComponent implements OnInit {
     formData.append('FirstName', raw.firstName);
     formData.append('LastName', raw.lastName);
     formData.append('Email', raw.email);
-    formData.append('Pays', raw.pays);   
+    formData.append('Pays', raw.pays);
     formData.append('Role', raw.role);
     formData.append('SocieteId', raw.societeId ? raw.societeId.toString() : '');
     formData.append('NumTelephone', internationalNumber);
@@ -421,12 +421,18 @@ export class DetailsUtilisateurComponent implements OnInit {
             if (current.token) {
               (updatedUser as any).token = current.token;
             }
-          } catch {}
+          } catch { }
         }
 
-        // 7) Mettre à jour le signal et le localStorage
-        this.accountService.setCurrentUser(updatedUser);
-        localStorage.setItem('user', JSON.stringify(updatedUser));
+        const paysId = +updatedUser.pays;
+        const pays = this.paysList.find(p => p.idPays === paysId);
+        const codeTel = pays ? pays.codeTel : '';
+        let localNum = updatedUser.numTelephone || '';
+
+        // 2) si la chaîne commence par le codeTel, on l'enlève
+        if (codeTel && localNum.startsWith(codeTel)) {
+          localNum = localNum.substring(codeTel.length).trim();
+        }
 
         // 8) Mettre à jour la variable locale 'user' et la réafficher dans le formulaire
         this.user = updatedUser;
@@ -439,7 +445,7 @@ export class DetailsUtilisateurComponent implements OnInit {
           role: updatedUser.role,
           pays: updatedUser.pays,
           societeId: updatedUser.societe ? updatedUser.societe.id : null,
-          numTelephone: updatedUser.numTelephone,
+          numTelephone: localNum,
           actif: updatedUser.actif
         });
 
@@ -458,25 +464,35 @@ export class DetailsUtilisateurComponent implements OnInit {
         this.loaderService.hideLoader();
       }
     });
-  }  
-
-  onCancel(): void {
-    // Réinitialiser le formulaire avec les valeurs initiales si nécessaire
-    if (this.user) {
-      this.userForm.patchValue({
-        lastName: this.user.lastName,
-        firstName: this.user.firstName,
-        email: this.user.email,
-        pays: this.user.pays,
-        role: this.user.role,
-        societe: this.user.societeId,
-        numTelephone: this.user.numTelephone,
-        actif: this.user.actif
-        // Les champs de mot de passe restent vides
-      });
-    }
   }
 
+  onCancel(): void {
+    if (!this.user) return;
+  
+    // 1) Extraire le code pays
+    const pays = this.paysList.find(p => p.idPays === +this.user!.pays);
+    const codeTel = pays?.codeTel ?? '';
+  
+    // 2) Découper le numéro pour ne garder que la partie locale
+    let localNum = this.user.numTelephone || '';
+    if (codeTel && localNum.startsWith(codeTel)) {
+      localNum = localNum.substring(codeTel.length).trim();
+    }
+  
+    // 3) Réinitialiser le formulaire avec number local
+    this.userForm.reset();
+    this.userForm.patchValue({
+      id:           this.user.id,
+      firstName:    this.user.firstName,
+      lastName:     this.user.lastName,
+      email:        this.user.email,
+      role:         this.user.role,
+      pays:         this.user.pays,
+      societeId:    this.user.societe?.id ?? null,
+      numTelephone: localNum,
+      actif:        this.user.actif
+    });
+  }  
 
   // Méthodes pour le contrat
 
@@ -490,28 +506,28 @@ export class DetailsUtilisateurComponent implements OnInit {
       this.toastr.error("Aucun contrat trouvé pour cet utilisateur.");
       return;
     }
-  
+
     // Vérifier si au moins un champ du contrat a été modifié
     if (!this.contratForm.dirty) {
       this.toastr.warning("Veuillez modifier au moins un champ du contrat.");
       return;
     }
-  
+
     // Vérifier que le formulaire est valide
     if (this.contratForm.invalid) {
       this.toastr.error("Veuillez corriger les erreurs du formulaire de contrat.");
       return;
     }
-    
+
     const originalContrat = this.user.contratUser;
     const contratToUpdate = {
       ...originalContrat,
       ...this.contratForm.value
     };
-  
+
     // Affiche le loader
     this.loaderService.showLoader();
-  
+
     this.contratUserService.updateContrat(contratToUpdate).subscribe({
       next: () => {
         this.toastr.success("Contrat mis à jour avec succès.");
@@ -526,7 +542,7 @@ export class DetailsUtilisateurComponent implements OnInit {
         this.loaderService.hideLoader();
       }
     });
-  }  
+  }
 
 
 

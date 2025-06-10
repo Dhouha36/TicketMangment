@@ -41,7 +41,8 @@ namespace GestionTicketsAPI.Entities
     public ICollection<Ticket> Tickets { get; set; } = new List<Ticket>();
     public int? PhotoId { get; set; }
     public Photo? Photo { get; set; }
-
+    public string PasswordResetToken { get; set; }
+    public DateTime? PasswordResetTokenExpires { get; set; }
     // Dates de suivi
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

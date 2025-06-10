@@ -72,43 +72,48 @@ export class AppComponent implements OnInit {
   }
 
 
-  async ngOnInit(): Promise<void> {
-    // 1) Charger la version à jour de l’utilisateur
+  public async ngOnInit(): Promise<void> {
+    // 1) Charger l’utilisateur à jour
     await this.loadCurrentUserFromApi();
 
-    // 2) Valider le token et forcer logout si invalide
-    setTimeout(() => {
-      this.accountService.validateToken().subscribe({
-        error: () => {
-          this.accountService.logout();
-          this.router.navigate(['/login']);
-        }
-      });
-    }, 0);
-
-    // 3) Service Worker (optionnel)
+    // 2) Validation du token
+    const current = this.accountService.currentUser();
+  if (current?.token) {
+    // On est connecté → validation du token possible
+    this.accountService.validateToken().subscribe({
+      error: () => {
+        this.accountService.logout();
+        this.router.navigate(['/login']);
+      }
+    });
+  }
+    // 3) Enregistrer le Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then(reg =>
-        console.log('SW ready, scope=', reg.scope)
-      );
+      navigator.serviceWorker
+        .register('/sw.js')
+        .then(reg => console.log('Service Worker enregistré, scope:', reg.scope))
+        .catch(err => console.error('Erreur enregistrement SW:', err));
     }
 
-    // 4) Démarrer SignalR pour notifications temps réel
-    const current = this.accountService.currentUser();
+    // 4) Démarrer SignalR et Push
     if (current?.id != null) {
+      // 4a) SignalR temps réel
       this.notificationService.startConnection();
 
-      // 5) Demander permission pour Push API
+      // 4b) Push notifications
       const granted = await this.ensurePermission();
       if (granted) {
-        this.pushSubService.subscribeToPush(current.id.toString());
+        try {
+          await this.pushSubService.subscribeToPush(current.id.toString());
+        } catch (err) {
+          console.error('Erreur lors de l’abonnement Push :', err);
+        }
       } else {
         console.warn('Push notifications non autorisées');
       }
 
-      // 6) Optionnel : souscrire pour toasts ou traitements personnalisés
+      // 4c) Écoute pour toasts in‑app
       this.notificationService.notification$.subscribe(dto => {
-        // ex. afficher un toast
         console.log('Notification reçue en temps réel :', dto);
       });
     }

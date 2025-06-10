@@ -126,61 +126,83 @@ private readonly IClientNotificationService _clientNotifService;
 
     if (isClient)
     {
-        // Le commentateur est client ⇒ on notifie les utilisateurs internes du projet
+      // Le commentateur est client ⇒ on notifie les utilisateurs internes du projet
+      if (ticket.Projet?.ChefProjet != null)
+        recipients.Add((
+            ticket.Projet.ChefProjet.Id,
+            $"{ticket.Projet.ChefProjet.FirstName} {ticket.Projet.ChefProjet.LastName}",
+            ticket.Projet.ChefProjet.Email!,
+            false  // internal user
+        ));
+      if (ticket.Responsible != null)
+        recipients.Add((
+            ticket.Responsible.Id,
+            $"{ticket.Responsible.FirstName} {ticket.Responsible.LastName}",
+            ticket.Responsible.Email!,
+            false
+        ));
+    }
+    else
+    {
+      // Le commentateur est un user interne ⇒ on notifie propriétaire (client) et/ou chef/responsable
+      // Propriétaire (client)
+      if (ticket.Owner != null)
+        recipients.Add((
+            ticket.Owner.Id,
+            $"{ticket.Owner.FirstName} {ticket.Owner.LastName}",
+            ticket.Owner.Email!,
+            true   // client
+        ));
+
+      // Selon le rôle de l’utilisateur interne
+      var currentUser = await _userService.GetUserByIdAsync(userId!.Value)!;
+      var role = currentUser.Role?.ToLowerInvariant().Replace(" ", "") ?? "";
+      if (role == "chefdeprojet")
+      {
+        if (ticket.Responsible != null)
+          recipients.Add((
+              ticket.Responsible.Id,
+              $"{ticket.Responsible.FirstName} {ticket.Responsible.LastName}",
+              ticket.Responsible.Email!,
+              false
+          ));
+      }
+      else if (role == "collaborateur")
+      {
         if (ticket.Projet?.ChefProjet != null)
+          recipients.Add((
+              ticket.Projet.ChefProjet.Id,
+              $"{ticket.Projet.ChefProjet.FirstName} {ticket.Projet.ChefProjet.LastName}",
+              ticket.Projet.ChefProjet.Email!,
+              false
+          ));
+      }
+      else if (role == "superadmin")
+    {
+        // Super Admin notifie à la fois chef de projet et responsable
+        if (ticket.Projet?.ChefProjet != null)
+        {
             recipients.Add((
                 ticket.Projet.ChefProjet.Id,
                 $"{ticket.Projet.ChefProjet.FirstName} {ticket.Projet.ChefProjet.LastName}",
                 ticket.Projet.ChefProjet.Email!,
-                false  // internal user
+                false
             ));
+        }
         if (ticket.Responsible != null)
+        {
             recipients.Add((
                 ticket.Responsible.Id,
                 $"{ticket.Responsible.FirstName} {ticket.Responsible.LastName}",
                 ticket.Responsible.Email!,
                 false
             ));
+        }
     }
-    else
-    {
-        // Le commentateur est un user interne ⇒ on notifie propriétaire (client) et/ou chef/responsable
-        // Propriétaire (client)
-        if (ticket.Owner != null)
-            recipients.Add((
-                ticket.Owner.Id,
-                $"{ticket.Owner.FirstName} {ticket.Owner.LastName}",
-                ticket.Owner.Email!,
-                true   // client
-            ));
-
-        // Selon le rôle de l’utilisateur interne
-        var currentUser = await _userService.GetUserByIdAsync(userId!.Value)!;
-        var role = currentUser.Role?.ToLowerInvariant().Replace(" ", "") ?? "";
-        if (role == "chefdeprojet")
-        {
-            if (ticket.Responsible != null)
-                recipients.Add((
-                    ticket.Responsible.Id,
-                    $"{ticket.Responsible.FirstName} {ticket.Responsible.LastName}",
-                    ticket.Responsible.Email!,
-                    false
-                ));
-        }
-        else if (role == "responsable")
-        {
-            if (ticket.Projet?.ChefProjet != null)
-                recipients.Add((
-                    ticket.Projet.ChefProjet.Id,
-                    $"{ticket.Projet.ChefProjet.FirstName} {ticket.Projet.ChefProjet.LastName}",
-                    ticket.Projet.ChefProjet.Email!,
-                    false
-                ));
-        }
     }
 
     // Toujours notifier les super-admins (internes)
-    var superAdmins = await _userService.GetUsersByRoleAsync("super admin");
+    var superAdmins = await _userService.GetUsersByRoleAsync("Super Admin");
     foreach (var sa in superAdmins)
     {
         recipients.Add((
@@ -229,13 +251,14 @@ private readonly IClientNotificationService _clientNotifService;
             EntityId   = ticket.Id
         };
 
-        if (IsClientRecipient)
-        {
-          BackgroundJob.Enqueue(() => _clientNotifService.NotifyClientAsync(Id, notifDto));
-        }
-        else
-        {
-          BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(Id, notifDto));
+      if (IsClientRecipient)
+      {
+        BackgroundJob.Enqueue(() => _clientNotifService.NotifyClientAsync(Id, notifDto));
+      }
+      else
+      {
+        BackgroundJob.Enqueue(() => _userNotifService.NotifyRealtimeAsync(Id, notifDto));
+        BackgroundJob.Enqueue(() => _userNotifService.SendPushNotification(Id, notifDto));
         }
     }
 

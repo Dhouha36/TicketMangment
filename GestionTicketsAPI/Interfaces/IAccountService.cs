@@ -9,6 +9,9 @@ namespace GestionTicketsAPI.Interfaces;
         Task<UserDto> RegisterAsync(RegisterDto registerDto);
         Task<ClientDto> RegisterClientAsync(RegisterClientDto dto);
         Task<object> LoginAsync(LoginDto dto);
-        Task SaveResetTokenAsync(int userId, string token, DateTime expires);
+        Task SaveResetTokenForUserAsync(int userId, string token, DateTime expires);
+
+        Task SaveResetTokenForClientAsync(int clientId, string token, DateTime expires);
         Task<User> GetUserByResetTokenAsync(string token);
+        Task<Client> GetClientByResetTokenAsync(string token);
     }

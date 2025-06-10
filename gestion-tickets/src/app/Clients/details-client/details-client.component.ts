@@ -146,10 +146,32 @@ export class DetailsClientComponent implements OnInit {
 
   detachProject(projetId: number): void {
     if (!this.client) return;
-    if (confirm('Détacher ce projet ?')) {
-      this.clientService.detachProjectFromClient(this.client.id, projetId)
-        .subscribe(() => this.fetchProjects());
-    }
+  
+    // 1) Ouvrir votre modal de confirmation
+    const modalRef = this.overlayModalService.open(ConfirmModalComponent);
+  
+    // 2) Personnaliser le message
+    modalRef.message = `Voulez-vous vraiment détacher ce projet ?`;
+  
+    // 3) Si l’utilisateur confirme, appeler le service
+    modalRef.confirmed.subscribe(() => {
+      this.clientService.detachProjectFromClient(this.client!.id, projetId)
+        .subscribe({
+          next: () => {
+            this.toastr.success('Projet détaché avec succès');
+            this.fetchProjects();
+          },
+          error: err => {
+            this.toastr.error('Impossible de détacher le projet');
+          }
+        });
+      this.overlayModalService.close();  // fermer le modal
+    });
+  
+    // 4) En cas d’annulation, juste fermer le modal
+    modalRef.cancelled.subscribe(() => {
+      this.overlayModalService.close();
+    });
   }
 
   onTicketSearch(): void {
@@ -177,17 +199,20 @@ export class DetailsClientComponent implements OnInit {
       this.toastr.error('Veuillez corriger les erreurs');
       return;
     }
-    // Récupère le nom du pays sélectionné
-    const selectedPays = this.paysList.find(p => p.idPays === this.clientForm.value.paysId)?.nom ?? '';
-
-    // Construit l'objet à envoyer, avec le champ `pays`
-    const updated: Partial<ClientDto> = {
-      ...this.clientForm.value,
-      id: this.client!.id,
-      pays: selectedPays
-    };
-
-    this.clientService.update(this.client!.id, updated).subscribe({
+  
+    const formData = new FormData();
+    formData.append('Id', String(this.client!.id));
+    formData.append('Email', this.clientForm.get('email')!.value);
+    formData.append('FirstName', this.clientForm.get('firstName')!.value);
+    formData.append('LastName', this.clientForm.get('lastName')!.value);
+    formData.append('NumTelephone', this.clientForm.get('numTelephone')!.value);
+    formData.append('PaysId', String(this.clientForm.get('paysId')!.value));
+    formData.append('SocieteId', String(this.clientForm.get('societeId')!.value));
+    formData.append('Actif', String(this.clientForm.get('actif')!.value));
+    // if you need to pass “Pays” string:
+    formData.append('Pays', this.getPaysName(this.clientForm.get('paysId')!.value));
+  
+    this.clientService.update(this.client!.id, formData).subscribe({
       next: () => {
         this.toastr.success('Client mis à jour');
         this.loadClient(this.client!.id);
@@ -195,6 +220,7 @@ export class DetailsClientComponent implements OnInit {
       error: () => this.toastr.error('Erreur mise à jour')
     });
   }
+  
 
   deleteClient(): void {
     if (!this.client) return;

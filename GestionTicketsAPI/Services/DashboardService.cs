@@ -4,6 +4,7 @@ using System.Linq;
 using GestionTicketsAPI.Data;
 using GestionTicketsAPI.DTOs;
 using GestionTicketsAPI.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace GestionTicketsAPI.Services
 {
@@ -42,6 +43,8 @@ namespace GestionTicketsAPI.Services
         int? personnelId,
         int? projetId
     );
+
+    IEnumerable<TicketStatDto> GetTimeSpentByPeriod(int userId, string role, TicketFilterRequest filter);
   }
 
   public class DashboardService : IDashboardService
@@ -527,5 +530,88 @@ namespace GestionTicketsAPI.Services
         _ => throw new ArgumentException("Granularity must be 'daily', 'weekly', 'monthly' or 'yearly'.")
       };
     }
+
+    public IEnumerable<TicketStatDto> GetTimeSpentByPeriod(int userId, string role, TicketFilterRequest filter)
+{
+    // Filtrage selon le rôle
+    var query = ApplyRoleFilter(_context.Tickets.AsQueryable(), userId, role, null);
+
+    // Filtre par propriétaire, personnel et projet
+    if (filter.OwnerId.HasValue)
+        query = query.Where(t => t.OwnerId == filter.OwnerId.Value);
+    if (filter.PersonnelId.HasValue)
+        query = query.Where(t => t.ResponsibleId == filter.PersonnelId.Value);
+    if (filter.ProjetId.HasValue)
+        query = query.Where(t => t.ProjetId == filter.ProjetId.Value);
+
+    // Filtre par plage de dates
+    if (filter.Start.HasValue)
+        query = query.Where(t => t.CreatedAt >= filter.Start.Value.Date);
+    if (filter.End.HasValue)
+        query = query.Where(t => t.CreatedAt < filter.End.Value.Date.AddDays(1));
+
+    // Agrégation selon la granularité demandée
+    switch (filter.Granularity.ToLowerInvariant())
+    {
+        case "daily":
+        {
+            var dailyRaw = query
+                .GroupBy(t => t.CreatedAt.Date)
+                .Select(g => new { Date = g.Key, Value = g.Sum(t => (double?)t.HoursSpent + t.MinutesSpent/60.0) ?? 0.0 })
+                .ToList();
+
+            return GenerateStats(dailyRaw, g => new TicketStatDto
+            {
+                Key = g.Date.ToString("yyyy-MM-dd"),
+                Value = Math.Round(g.Value, 2)
+            });
+        }
+
+        case "weekly":
+        {
+            var weeklyRaw = query
+                .AsEnumerable()
+                .GroupBy(t => CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(
+                    t.CreatedAt.Date,
+                    CalendarWeekRule.FirstDay,
+                    DayOfWeek.Monday))
+                .Select(g => new
+                {
+                    Year = g.First().CreatedAt.Year,
+                    Week = g.Key,
+                    Value = g.Sum(t => (double?)t.HoursSpent + t.MinutesSpent/60.0) ?? 0.0
+                })
+                .ToList();
+
+            return GenerateStats(weeklyRaw, g => new TicketStatDto
+            {
+                Key = $"S{g.Week} {g.Year}",
+                Value = Math.Round(g.Value, 2)
+            });
+        }
+
+        case "monthly":
+        {
+            var monthlyRaw = query
+                .GroupBy(t => new { t.CreatedAt.Year, t.CreatedAt.Month })
+                .Select(g => new
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
+                    Value = g.Sum(t => (double?)t.HoursSpent + t.MinutesSpent/60.0) ?? 0.0
+                })
+                .ToList();
+
+            return GenerateStats(monthlyRaw, g => new TicketStatDto
+            {
+                Key = $"{g.Year}-{g.Month:D2}",
+                Value = Math.Round(g.Value, 2)
+            });
+        }
+
+        default:
+            throw new ArgumentException("Granularity must be 'daily', 'weekly' or 'monthly'.", nameof(filter.Granularity));
+    }
+}
   }
 }

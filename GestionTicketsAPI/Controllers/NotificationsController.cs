@@ -82,7 +82,7 @@ namespace GestionTicketsAPI.Controllers
     {
       var entities = await _context.Notification
            .Where(n => !n.IsDeleted &&
-                        (n.UserId   == userId ||
+                        (n.UserId == userId ||
                          n.ClientId == userId))
           .OrderByDescending(n => n.DateEnvoi)
           .ToListAsync();
@@ -138,5 +138,7 @@ namespace GestionTicketsAPI.Controllers
         return NotFound($"Notification {id} introuvable.");
       }
     }
+    
+    
   }
 }

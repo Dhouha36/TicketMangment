@@ -1,0 +1,330 @@
+@charset "UTF-8";
+/* Container et mise en page */
+.container {
+  padding: 10px;
+}
+
+h2 {
+  margin: 10px 0 0 50px;
+  font-size: 1.5rem;
+  padding: 20px;
+}
+
+.form-container {
+  max-width: 90%;
+  margin: 20px 0 10px 70px;
+  border-radius: 8px;
+  padding: 30px;
+  background-color: white;
+}
+
+/* Styles de focus sur les champs du formulaire */
+.form-container input:focus,
+.form-container select:focus,
+.form-container textarea:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(250, 151, 69, 0.2);
+  border: 2px solid #fa9745;
+}
+
+.form-container input,
+.form-container select,
+.form-container textarea {
+  border: 2px solid #e5e7eb;
+}
+
+/* Groupes de champs et libellés */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.form-group label .required {
+  color: #dc3545;
+}
+
+/* Champs de saisie */
+.form-control,
+.form-control-file {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  background-color: white;
+}
+
+.form-control:focus,
+.form-control-file:focus {
+  outline: none;
+  border-color: #f57c00;
+}
+
+/* Messages d'erreur */
+.invalid-feedback {
+  display: block;
+  margin-top: 0.25rem;
+  color: #dc3545;
+  font-size: 0.875rem;
+}
+
+/* Disposition en ligne de certains groupes */
+.form-group-inline {
+  display: flex;
+  gap: 1rem;
+}
+
+.form-group-inline .form-group {
+  flex: 1;
+}
+
+/* Boutons */
+.button-group {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-create {
+  background-color: #f4811e;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-add,
+.btn-cancel {
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 0.75rem 2rem;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.btn-create:hover {
+  background-color: #e67716;
+}
+
+.btn-add:hover,
+.btn-cancel:hover {
+  background-color: #f5f5f5;
+}
+
+/* Styles pour les dropdowns personnalisés */
+.custom-select {
+  position: relative;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.select-box {
+  border: 2px solid #e5e7eb;
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.select-box:hover {
+  border-color: #d1d5db;
+}
+
+.selected-item {
+  color: #374151;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow {
+  color: #9ca3af;
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: white;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 5px;
+}
+
+.dropdown-content.show {
+  display: block;
+}
+
+/* Barre de recherche dans le dropdown */
+.search-box {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 1;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 3px rgba(245, 124, 0, 0.1);
+}
+
+.search-box input::-moz-placeholder {
+  color: #9ca3af;
+}
+
+.search-box input::placeholder {
+  color: #9ca3af;
+}
+
+/* Liste des options du dropdown */
+.option-list {
+  padding: 6px 0;
+}
+
+.option-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.option-item:hover {
+  background: #f3f4f6;
+}
+
+/* Message en cas d'aucun résultat */
+.no-results {
+  padding: 24px 16px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.no-results-icon {
+  font-size: 32px;
+  color: #f57c00;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.no-results-text {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Container de l'éditeur - Bordure globale */
+ngx-editor {
+  display: block;
+  border-radius: 4px;
+}
+
+.NgxEditor__MenuBar {
+  border-radius: 4px 4px 0 0;
+  padding: 0.25rem;
+  margin-bottom: 10px;
+}
+
+.NgxEditor__MenuItem {
+  background-color: #ebe9e9 !important;
+  border-radius: 4px;
+  padding: 0.4rem;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+/* Améliorations pour le hover sur les boutons du menu */
+.NgxEditor__MenuItem:hover {
+  background-color: #f5f5f5 !important;
+  border-color: #dadada;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Effet pour les boutons actifs */
+.NgxEditor__MenuItem.NgxEditor__MenuItem--Active {
+  background-color: #e9ecef !important;
+  border-color: #ced4da;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* Effet spécial pour le hover sur les boutons spécifiques */
+.NgxEditor__MenuItem[title=Bold]:hover {
+  font-weight: bold;
+}
+
+.NgxEditor__MenuItem[title=Italic]:hover {
+  font-style: italic;
+}
+
+.NgxEditor__MenuItem[title=Underline]:hover {
+  text-decoration: underline;
+}
+
+.NgxEditor__Seperator {
+  display: none;
+}
+
+.NgxEditor__Content {
+  padding: 0.5rem;
+  min-height: 150px;
+  border-radius: 0 0 4px 4px;
+}
+
+/* Focus state pour le contenu de l'éditeur */
+.NgxEditor__Content:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(250, 151, 69, 0.2);
+  border: 2px solid #fa9745;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 5px;
+  margin-top: 5px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}/*# sourceMappingURL=ajouter-ticket.component.css.map */

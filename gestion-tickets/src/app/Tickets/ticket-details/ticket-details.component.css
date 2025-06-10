@@ -1,0 +1,469 @@
+@charset "UTF-8";
+/* Style général */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+/* ===================================
+   HEADER DU TICKET
+   =================================== */
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px;
+}
+
+.ticket-header h1 {
+  font-size: 24px;
+  margin: 0;
+  font-weight: bold;
+  color: #333;
+}
+
+.ticket-header div:last-child {
+  display: flex;
+  gap: 10px;
+}
+
+.ticket-header button {
+  background-color: #e67e22;
+  color: #fff;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.ticket-header button:hover {
+  background-color: #d0590a;
+}
+
+/* ===================================
+   CONTAINER PRINCIPAL
+   =================================== */
+.ticket-details-container {
+  display: flex;
+  margin: 20px;
+  gap: 20px;
+}
+
+.left-section {
+  flex: 1;
+  background-color: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.right-section {
+  width: 400px;
+  min-width: 300px;
+}
+
+/* ===================================
+   GRILLE DE FORMULAIRE (SECTION GAUCHE)
+   =================================== */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.full-width {
+  grid-column: 1/-1;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.required {
+  color: red;
+  margin-left: 1px;
+}
+
+input[type=text],
+input[type=file],
+textarea,
+select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input[disabled],
+textarea[disabled],
+select[disabled] {
+  background-color: white;
+  color: #666;
+}
+
+input[type=file] {
+  border: 1px dashed #ddd;
+  padding: 15px;
+  text-align: center;
+  color: #666;
+  cursor: pointer;
+}
+
+/* ===================================
+   PANNEAU LATERAL (SECTION DROITE)
+   =================================== */
+.sidebar-card {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar-card h2 {
+  font-size: 18px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-weight: normal;
+}
+
+.sidebar-item {
+  margin-bottom: 20px;
+}
+
+.sidebar-item p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #666;
+}
+
+.sidebar-item p strong {
+  font-weight: normal;
+  color: #333;
+}
+
+select {
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23333' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: calc(100% - 10px) center;
+  padding-right: 30px;
+}
+
+select:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 2px rgba(245, 124, 0, 0.1);
+}
+
+.date-info {
+  font-size: 14px;
+  color: #666;
+  margin-top: 20px;
+}
+
+/* ===================================
+   SECTION COMMENTAIRES
+   =================================== */
+.comments-container {
+  margin: 20px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.comments-container h2 {
+  font-size: 18px;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-weight: bold;
+  color: #333;
+}
+
+.comments-list {
+  margin-bottom: 20px;
+}
+
+.comment {
+  padding: 12px 0;
+  border-top: 1px solid #f0f0f0;
+}
+
+.comment:last-child {
+  border-bottom: none;
+}
+
+/* En-tête du commentaire */
+.comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+/* Partie gauche : icône et nom */
+.left-part {
+  display: flex;
+  align-items: center;
+}
+
+.comment-icon {
+  width: 30px;
+  height: 30px;
+  background-color: #ec9141;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 550;
+  margin-right: 8px;
+  font-size: 0.98rem;
+}
+
+.my-comment-icon {
+  background-color: #bdbdbe; /* Par exemple, bleu pour vos messages */
+}
+
+.comment-info {
+  display: flex;
+  flex-direction: column;
+  margin-left: 10px;
+}
+
+.comment-author {
+  font-weight: bold;
+  color: #333;
+}
+
+.comment-id {
+  font-size: 0.8rem;
+  color: #888;
+  margin-left: 4px;
+}
+
+/* Date à droite */
+.comment-date {
+  color: #999;
+  font-size: 0.85rem;
+}
+
+/* Contenu du commentaire */
+.comment-content {
+  margin: 0;
+  color: #333;
+  font-size: 17px;
+  line-height: 1.4;
+  padding-left: 49px;
+  white-space: pre-wrap;
+}
+
+/* Message quand aucun commentaire n'est trouvé */
+.no-content {
+  text-align: center;
+  padding: 0.5rem 0.5rem;
+  background-color: #ffffff;
+  border-radius: 10px;
+}
+
+.no-content .icon {
+  display: block;
+  font-size: 40px;
+  margin-bottom: 1rem;
+  color: #f97316;
+}
+
+.no-content p {
+  color: #696f7a;
+  font-size: 1.8rem;
+  margin: 0;
+}
+
+/* Champ de saisie pour nouveau commentaire */
+.comment-input-container {
+  display: flex;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.comment-editor {
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  padding: 0.6rem 1rem;
+  outline: none;
+  font-family: inherit;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+  /* pour que le div s’étende en hauteur si nécessaire */
+  min-height: 2.5rem;
+}
+
+.comment-editor:focus {
+  border-color: #e67e22;
+}
+
+.file-links-container {
+  margin: 15px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.file-link-input {
+  display: flex;
+  align-items: center;
+  width: calc(50% - 10px); /* Deux colonnes avec gap de 10px */
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.file-link-input:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.file-link-input input {
+  flex: 1;
+  padding: 12px 15px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px 0 0 8px;
+  background-color: #f9f9f9;
+  font-size: 0.95rem;
+  color: #555;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.file-link-input input:focus {
+  outline: none;
+  border-color: #ec9141;
+  background-color: #fff;
+}
+
+.file-link-input input::-moz-selection {
+  background-color: #ffd8b5;
+}
+
+.file-link-input input::selection {
+  background-color: #ffd8b5;
+}
+
+.file-link-input button {
+  margin-left: 0;
+  background-color: #f0f0f0;
+  border: 1px solid #e0e0e0;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  color: #777;
+  height: 100%;
+  width: 40px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.file-link-input button:hover {
+  background-color: #ff6b6b;
+  color: white;
+}
+
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.attachments img.thumb {
+  width: 80px;
+  height: 80px;
+  -o-object-fit: cover;
+     object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.attachments img.thumb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.attachments a {
+  display: inline-block;
+  padding: 6px 10px;
+  background-color: #edf2f7;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: #2d3748;
+  text-decoration: none;
+  transition: background-color 0.1s;
+}
+
+.attachments a:hover {
+  background-color: #e2e8f0;
+}
+
+/* Bouton d'envoi */
+.send-button {
+  margin-left: 8px;
+  background-color: #ec9141;
+  border: none;
+  border-radius: 9999px;
+  color: #fff;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.send-button i {
+  font-size: 1.2rem;
+  margin-right: 0.25rem;
+}
+
+.send-button:hover {
+  background-color: #e0700e;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 5px;
+  margin-top: 5px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}/*# sourceMappingURL=ticket-details.component.css.map */

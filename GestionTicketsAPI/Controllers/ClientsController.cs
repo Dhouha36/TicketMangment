@@ -128,9 +128,6 @@ namespace GestionTicketsAPI.Controllers
       return Ok(updatedClientDto);
     }
 
-
-
-
     // Récupérer les clients par société
     [HttpGet("societe/{societeId:int}")]
     public async Task<ActionResult<IEnumerable<ClientDto>>> GetClientsBySociete(int societeId)

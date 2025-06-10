@@ -25,6 +25,6 @@ public interface IAccountRepository
         Task<bool> ClientExistsAsync(string email, string firstname, string lastname);
         Task<Client?> GetClientByEmailAsync(string email);
         Task AddClientAsync(Client client);
-
+        Task<Client> GetClientByResetTokenAsync(string token);
 
     }

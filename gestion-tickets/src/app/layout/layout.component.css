@@ -1,0 +1,364 @@
+@charset "UTF-8";
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.content {
+  flex: 1 1 auto;
+  overflow: auto;
+  padding-bottom: 1rem; /* Espace en bas du contenu */
+}
+
+/* Container principal */
+.sidenav-container {
+  height: 100%;
+}
+
+.sidenav-container.modal-open mat-sidenav {
+  background: rgba(0, 0, 0, 0.5);
+  transition: background 0.3s ease;
+}
+
+.sidenav-container.modal-open .menu-item {
+  color: white !important;
+}
+
+.sidenav-container.modal-open .nav-icon {
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Barre latérale */
+mat-sidenav {
+  width: 370px;
+  background: white;
+  border-right: 1px solid #f0f0f0;
+  display: flex;
+  z-index: 1000;
+}
+
+/* Menu de navigation */
+mat-nav-list {
+  padding-top: 20px;
+  padding-left: 25px;
+  padding-right: 25px;
+}
+
+/* Style des liens */
+.menu-item {
+  display: flex;
+  align-items: center;
+  padding: 20px 15px;
+  font-size: 1.2rem;
+  font-weight: 500;
+  text-decoration: none;
+  border-radius: 15px;
+  transition: all 0.3s ease;
+  flex-wrap: wrap; /* Permet le retour à la ligne */
+  white-space: normal; /* Autorise le texte à aller à la ligne */
+  overflow: visible;
+  text-overflow: clip; /* Ajoute "..." si le texte est trop long */
+}
+
+/* Icônes dans la navigation */
+.nav-icon {
+  color: white; /* Couleur de l'icône en blanc */
+  -webkit-text-stroke: 1.5px black; /* Contour noir autour de l'icône */
+  margin-right: 14px;
+  opacity: 0.7;
+  font-size: 28px;
+  width: 30px;
+  height: 25px;
+}
+
+.nav-text {
+  margin-top: 7px;
+  font-size: 16px;
+  font-weight: 550;
+  color: #333;
+}
+
+/* Style pour l'item actif */
+/* Force la couleur de fond sur l’élément actif */
+::ng-deep .mat-mdc-list-item.active-nav-item,
+::ng-deep .mat-mdc-list-item.active-nav-item:hover,
+::ng-deep .mat-mdc-list-item.active-nav-item:focus,
+::ng-deep .mat-mdc-list-item.active-nav-item:active,
+::ng-deep .mat-mdc-list-item.active-nav-item.mdc-list-item--activated {
+  background-color: #fa9745 !important;
+  color: #fff !important;
+}
+
+.active-nav-item {
+  background-color: #fa9745 !important;
+  color: white !important;
+  border-radius: 15px !important;
+  opacity: 1 !important;
+}
+
+.active-nav-item .nav-icon {
+  color: #fa9745 !important;
+  -webkit-text-stroke: 1.5px white;
+  opacity: 1;
+}
+
+.active-nav-item .nav-text {
+  color: white !important;
+  opacity: 1;
+}
+
+/* Contenu principal */
+mat-sidenav-content {
+  background-color: #efefef;
+}
+
+/* Style pour la flèche à droite et titre */
+.section-title {
+  display: flex;
+  justify-content: space-between; /* Aligne les éléments à gauche et à droite */
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+}
+
+.section-title-text {
+  margin-left: 18px;
+  font-size: 17px;
+  font-weight: bold;
+  color: #474646;
+  flex-grow: 1; /* Prend tout l'espace restant */
+}
+
+/* Flèche de la section */
+.section-title .nav-icon {
+  margin-left: auto; /* Pousse l'icône à droite */
+  color: #666;
+  -webkit-text-stroke: 0px white;
+  width: 22px;
+  height: 20px;
+  opacity: 0.5;
+}
+
+/* Séparateur de section */
+.section-divider {
+  border: none;
+  height: 1px;
+  background-color: #eeebeb;
+  margin: 8px 0;
+}
+
+/* Effet hover sur les liens */
+mat-nav-list a:hover:not(.active-nav-item) {
+  background-color: rgba(0, 0, 0, 0.04);
+  border-radius: 15px !important;
+}
+
+/* Style spécifique pour les sous-sections */
+.sub-nav-item {
+  padding-left: 32px !important;
+}
+
+.dashboard-container.modal-open {
+  background-color: #333; /* Exemple : fond assombri lorsque le modal est ouvert */
+  transition: background-color 0.3s ease;
+}
+
+/* Styles spécifiques pour le sidenav de notifications */
+mat-sidenav[position=end] {
+  width: 350px;
+  background-color: #f8f7f2; /* Couleur beige clair comme dans l'image */
+  border-left: 1px solid #e0e0e0;
+  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* En-tête des notifications */
+.notifications-header {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #fff;
+}
+
+.notifications-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  flex-grow: 1;
+}
+
+.notifications-header button {
+  font-size: 12px;
+  color: #666;
+  text-transform: none;
+  min-width: auto;
+  padding: 0 8px;
+}
+
+/* Liste des notifications */
+.notifications-list {
+  padding: 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 64px - 50px); /* Hauteur totale moins header et marge */
+}
+
+/* Style pour chaque notification */
+.notification-item {
+  padding: 12px 15px;
+  border-bottom: 1px solid #eee;
+  position: relative;
+  background-color: #f8f7f2;
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-item:hover {
+  background-color: #f0efe9;
+}
+
+/* Texte de la notification */
+.notification-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-text p {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+/* Bouton Voir */
+.notification-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.notification-actions button {
+  color: #c77c2e; /* Couleur orange comme dans l'image */
+  font-size: 13px;
+  padding: 0;
+  min-width: auto;
+  font-weight: normal;
+  text-transform: none;
+  line-height: 1;
+}
+
+/* Bouton de fermeture (X) */
+.notification-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #999;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  border-radius: 50%;
+}
+
+.notification-close:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Message quand il n'y a pas de notifications */
+.notifications-list p {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+}
+
+/* Titre en haut */
+.notifications-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #eee;
+}
+
+.notifications-title h3 {
+  margin: 0;
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .sidenav-container {
+    display: block; /* Empêche le sidenav de rester figé sur mobile */
+  }
+  .mat-sidenav-content {
+    margin-left: 0; /* Assure que le contenu se réorganise correctement */
+  }
+  .section-title-text {
+    margin-left: 5px;
+  }
+  mat-sidenav {
+    width: 290px;
+  }
+  mat-nav-list {
+    padding-top: 20px;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+  .menu-item {
+    padding: 5px 0px;
+    font-size: 1rem;
+  }
+  /* Icônes dans la navigation */
+  .nav-icon {
+    margin-right: 10px;
+    opacity: 0.7;
+    font-size: 25px;
+    width: 25px;
+    height: 25px;
+  }
+  .nav-text {
+    margin-top: 7px;
+    font-size: 14px;
+    font-weight: 550;
+  }
+}
+@media (max-width: 480px) {
+  .sidenav-container {
+    display: block; /* Empêche le sidenav de rester figé sur mobile */
+  }
+  .mat-sidenav-content {
+    margin-left: 0; /* Assure que le contenu se réorganise correctement */
+  }
+  .section-title-text {
+    margin-left: 5px;
+  }
+  mat-nav-list {
+    padding-top: 20px;
+    padding-left: 7px;
+    padding-right: 7px;
+  }
+  .menu-item {
+    padding: 5px 0px;
+    font-size: 1rem;
+  }
+  /* Icônes dans la navigation */
+  .nav-icon {
+    margin-right: 10px;
+    opacity: 0.7;
+    font-size: 25px;
+    width: 25px;
+    height: 25px;
+  }
+  .nav-text {
+    margin-top: 7px;
+    font-size: 14px;
+    font-weight: 550;
+  }
+}/*# sourceMappingURL=layout.component.css.map */

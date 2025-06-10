@@ -1,0 +1,513 @@
+@charset "UTF-8";
+/* Styles pour la card */
+.card-container {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 1000px;
+  overflow: hidden;
+}
+
+.card-header {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #eee;
+  background-color: #fff;
+}
+
+.card-header h2 {
+  margin: 0;
+  color: #333;
+  font-weight: 500;
+}
+
+.card-body {
+  padding: 0;
+}
+
+/* Form styles (repris et légèrement modifiés) */
+.form-container {
+  padding: 2rem;
+  max-width: 100%;
+  margin: 0 auto;
+  font-weight: 500;
+}
+
+/* Style global pour harmoniser les champs de formulaire */
+.form-container input,
+.form-container select,
+.form-container textarea {
+  border: 1px solid rgb(184, 183, 183);
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Style au focus */
+.form-container input:focus,
+.form-container select:focus,
+.form-container textarea:focus {
+  outline: none;
+  border-color: #fa9745;
+  box-shadow: 0 0 0 3px rgba(250, 151, 69, 0.2);
+}
+
+/* Style pour les champs invalides */
+.form-container input.is-invalid,
+.form-container select.is-invalid {
+  border-color: rgb(232, 2, 2);
+}
+
+.invalid-feedback {
+  color: rgb(232, 2, 2);
+  font-size: 0.8rem;
+  margin-top: 0.25rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 1.9rem;
+}
+
+.form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.required {
+  color: red;
+}
+
+input, select {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+select {
+  background-color: white;
+}
+
+.toggle-row {
+  display: flex;
+  gap: 12.6rem;
+  margin-top: 40px;
+  margin-bottom: 0.1rem;
+  margin-right: 50px;
+}
+
+.toggle-group {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Style pour le toggle switch */
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 32px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.toggle-label:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-label {
+  background-color: #f4811e;
+}
+
+input:checked + .toggle-label:before {
+  transform: translateX(26px);
+}
+
+.password-container {
+  position: relative;
+  width: 100%;
+}
+
+.password-container input {
+  width: 100%;
+  padding-right: 30px;
+}
+
+.password-container i {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #000000;
+}
+
+/* Boutons */
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  justify-content: flex-start;
+}
+
+.btn-create {
+  background-color: #f4811e;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.btn-add, .btn-cancel {
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+  padding: 0.75rem 2rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-create:hover {
+  background-color: #e67716;
+}
+
+.btn-add:hover, .btn-cancel:hover {
+  background-color: #f5f5f5;
+}
+
+.input-group {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.input-group-prepend {
+  display: flex;
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #495057;
+  text-align: center;
+  white-space: nowrap;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 4px 0 0 4px;
+  border-right: none;
+}
+
+.input-group .form-control {
+  position: relative;
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top-color: rgba(0, 0, 0, 0.6);
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 5px;
+  margin-top: 5px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.custom-select {
+  position: relative;
+  width: 100%;
+  margin-bottom: 15px;
+}
+
+.select-box {
+  border: 1px solid #e5e7eb;
+  padding: 7px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: white;
+  transition: all 0.3s ease;
+}
+
+.select-box:hover {
+  border-color: #d1d5db;
+}
+
+.selected-item {
+  color: #374151;
+  font-size: 0.95rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arrow {
+  color: #9ca3af;
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background: white;
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 5px;
+}
+
+.dropdown-content.show {
+  display: block;
+}
+
+/* Barre de recherche dans le dropdown */
+.search-box {
+  position: sticky;
+  top: 0;
+  background: white;
+  padding: 12px;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 1;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  color: #374151;
+  transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #f57c00;
+  box-shadow: 0 0 0 3px rgba(245, 124, 0, 0.1);
+}
+
+.search-box input::-moz-placeholder {
+  color: #9ca3af;
+}
+
+.search-box input::placeholder {
+  color: #9ca3af;
+}
+
+/* Liste des options */
+.option-list {
+  padding: 6px 0;
+}
+
+.option-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.option-item:hover {
+  background: #f3f4f6;
+}
+
+/* ========== Responsive pour les tailles moyennes (768px à 1199px) ========== */
+@media (max-width: 1199px) {
+  .card-container {
+    padding: 0.5rem;
+  }
+  .card {
+    max-width: 95%;
+  }
+  .form-container {
+    padding: 1.5rem;
+  }
+  .form-row {
+    gap: 1.5rem;
+  }
+  .toggle-row {
+    gap: 4rem;
+    margin-right: 0px;
+  }
+  .button-group {
+    gap: 0.75rem;
+  }
+  .btn-create, .btn-add, .btn-cancel {
+    padding: 0.6rem 1.5rem;
+  }
+}
+/* ========== Responsive pour les écrans intermédiaires ========== */
+@media (max-width: 1460px) {
+  .form-container {
+    padding: 1rem;
+  }
+  .toggle-row {
+    gap: 0.9rem;
+    margin-right: 0;
+  }
+  .password-container i {
+    right: 10px;
+  }
+}
+/* ========== Responsive pour les petites tailles (480px à 767px) ========== */
+@media (max-width: 767px) {
+  .card-container {
+    padding: 0.25rem;
+  }
+  .card {
+    max-width: 100%;
+    border-radius: 4px;
+  }
+  .card-header {
+    padding: 1rem;
+  }
+  .form-container {
+    padding: 1rem;
+  }
+  .form-row {
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .toggle-row {
+    flex-direction: column;
+    gap: 0.1rem;
+    margin-right: 0;
+    margin-top: 1rem;
+  }
+  .button-group {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .btn-create, .btn-add, .btn-cancel {
+    padding: 0.5rem 1rem;
+    width: 100%;
+  }
+  .input-group-text {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+  }
+  .input-group-text img {
+    width: 20px;
+  }
+}
+/* ========== Responsive pour les très petites tailles (<480px) ========== */
+@media (max-width: 480px) {
+  .card-header {
+    padding: 0.75rem;
+  }
+  .card-header h2 {
+    font-size: 1.25rem;
+  }
+  .form-container {
+    padding: 0.5rem;
+  }
+  h2 {
+    font-size: 1.5rem;
+  }
+  label {
+    font-size: 0.8rem;
+  }
+  input, select {
+    font-size: 0.9rem;
+    padding: 0.5rem;
+  }
+  .toggle-row {
+    gap: 0.5rem;
+  }
+  .toggle-group {
+    gap: 0.5rem;
+  }
+  .toggle-switch {
+    width: 40px;
+    height: 30px;
+  }
+  .toggle-label:before {
+    height: 14px;
+    width: 14px;
+  }
+  input:checked + .toggle-label:before {
+    transform: translateX(14px);
+  }
+  .password-container i {
+    right: 5px;
+  }
+  .btn-create, .btn-add, .btn-cancel {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.9rem;
+  }
+  .input-group-text {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.8rem;
+  }
+  .input-group-text img {
+    width: 16px;
+    margin-right: 3px;
+  }
+}/*# sourceMappingURL=ajouter-utilisateur.component.css.map */

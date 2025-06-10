@@ -4,9 +4,9 @@ using System.Text;
 using GestionTicketsAPI.DTOs;
 using GestionTicketsAPI.Interfaces;
 using GestionTicketsAPI.Services;
-using Hangfire; // N'oubliez pas d'ajouter la référence à Hangfire
-using Microsoft.AspNetCore.Authorization;
+using Hangfire; 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace GestionTicketsAPI.Controllers;
 
@@ -112,81 +112,112 @@ public class AccountController : BaseApiController
   [HttpPost("forgot-password")]
   public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
   {
-    // Recherche de l’utilisateur par e-mail
+    // Recherche
     var user = await _accountRepository.GetUserByEmailAsync(forgotPasswordDto.Email);
+    var client = await _accountRepository.GetClientByEmailAsync(forgotPasswordDto.Email);
 
-    // Ne pas révéler si l'e-mail existe ou non pour des raisons de sécurité
-    if (user == null)
+    if (user == null && client == null)
     {
       return Ok(new { message = "Si cet e-mail est enregistré, vous recevrez un lien de réinitialisation." });
     }
 
-    // Génération d’un token sécurisé
-    var token = GeneratePasswordResetToken();  // Implémentez une méthode pour générer un token aléatoire sécurisé.
-
-    // Enregistrer le token et sa date d'expiration (exemple : en 1 heure) dans une table dédiée ou dans le modèle User
-    await _accountService.SaveResetTokenAsync(user.Id, token, DateTime.UtcNow.AddHours(1));
-
-    // Construction du lien de réinitialisation (adapter l’URL à votre configuration)
-    var resetLink = $"http://localhost:4200/reset-password?token={Uri.EscapeDataString(token)}";
-
-    // Envoi de l’email en tâche de fond avec Hangfire
-    BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
-        $"{user.FirstName} {user.LastName}",
-        user.Email,
-        "Réinitialisation du mot de passe",
-        $"Cliquez sur le lien pour réinitialiser votre mot de passe : <a href='{resetLink}'>Réinitialiser mon mot de passe</a>"
-    ));
+    // Génère un token et un lien de réinitialisation
+    var token = GeneratePasswordResetToken();
+    var resetLink = $"http://localhost:4200/reset-password?token={token}";
+    if (user != null)
+    {
+      await _accountService.SaveResetTokenForUserAsync(user.Id, token, DateTime.UtcNow.AddHours(1));
+      await SendResetEmailAsync(user.FirstName, user.LastName, user.Email, resetLink);
+    }
+    else if (client != null)
+    {
+      await _accountService.SaveResetTokenForClientAsync(client.Id, token, DateTime.UtcNow.AddHours(1));
+      await SendResetEmailAsync(client.FirstName, client.LastName, client.Email, resetLink);
+    }
 
     return Ok(new { message = "Si cet e-mail est enregistré, vous recevrez un lien de réinitialisation." });
+  }
+  private async Task SendResetEmailAsync(string firstName, string lastName, string email, string resetLink)
+  {
+    var body = $@"
+    <html>
+        <body style='font-family: Arial, sans-serif; color: #333;'>
+            <p>Bonjour {firstName} {lastName},</p>
+            <p>Cliquez sur le lien ci‑dessous pour réinitialiser votre mot de passe :</p>
+            <p>
+                <a href='{resetLink}' target='_blank' style='color: #007BFF; text-decoration: none;'>
+                    Réinitialiser mon mot de passe
+                </a>
+            </p>
+            <p>Si vous n’avez pas demandé ce changement, vous pouvez ignorer ce message.</p>
+            <p>Cordialement,<br />L'équipe Simsoft</p>
+        </body>
+    </html>";
+
+    BackgroundJob.Enqueue(() => _emailService.SendEmailAsync(
+        $"{firstName} {lastName}",
+        email,
+        "Réinitialisation du mot de passe",
+        body
+    ));
   }
 
   [HttpPost("reset-password")]
   public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
   {
-    // Trim and decode the token if needed
     var token = resetPasswordDto.Token?.Trim();
 
-    // Récupérer l’utilisateur à partir du token
+    // Vérifie si le token correspond à un User
     var user = await _accountService.GetUserByResetTokenAsync(token);
-    if (user == null)
+    if (user != null)
     {
-      return BadRequest(new { message = "Token invalide ou expiré." });
+      if (user.PasswordResetTokenExpires < DateTime.UtcNow)
+        return BadRequest(new { message = "Le token a expiré." });
+
+      // Met à jour le mot de passe de l'utilisateur
+      using var hmac = new HMACSHA512();
+      user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(resetPasswordDto.NewPassword));
+      user.PasswordSalt = hmac.Key;
+      user.PasswordResetToken = null;
+      user.PasswordResetTokenExpires = null;
+
+      if (!await _accountRepository.SaveAllAsync())
+        return StatusCode(500, new { message = "Erreur lors de la mise à jour du mot de passe." });
+
+      return Ok(new { message = "Mot de passe mis à jour avec succès." });
     }
 
-    // Vérifier que le token n'est pas expiré
-    if (user.PasswordResetTokenExpires < DateTime.UtcNow)
+    // Vérifie si le token correspond à un Client
+    var client = await _accountService.GetClientByResetTokenAsync(token);
+    if (client != null)
     {
-      return BadRequest(new { message = "Le token a expiré." });
+      if (client.PasswordResetTokenExpires < DateTime.UtcNow)
+        return BadRequest(new { message = "Le token a expiré." });
+
+      // Met à jour le mot de passe du client
+      using var hmac = new HMACSHA512();
+      client.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(resetPasswordDto.NewPassword));
+      client.PasswordSalt = hmac.Key;
+      client.PasswordResetToken = null;
+      client.PasswordResetTokenExpires = null;
+
+      if (!await _accountRepository.SaveAllAsync())
+        return StatusCode(500, new { message = "Erreur lors de la mise à jour du mot de passe." });
+
+      return Ok(new { message = "Mot de passe mis à jour avec succès." });
     }
 
-    // Mettre à jour le mot de passe de l’utilisateur
-    using var hmac = new HMACSHA512();
-    user.PasswordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(resetPasswordDto.NewPassword));
-    user.PasswordSalt = hmac.Key;
-
-    // Invalider le token (par exemple, en le supprimant ou en le marquant comme utilisé)
-    user.PasswordResetToken = null;
-    user.PasswordResetTokenExpires = null;
-
-    // Sauvegarder les modifications dans la base
-    if (!await _accountRepository.SaveAllAsync())
-    {
-      return StatusCode(500, new { message = "Une erreur est survenue lors de la mise à jour du mot de passe." });
-    }
-
-    return Ok(new { message = "Votre mot de passe a été mis à jour avec succès." });
+    return BadRequest(new { message = "Token invalide ou expiré." });
   }
-
-
   private string GeneratePasswordResetToken()
   {
-    byte[] randomBytes = new byte[32];
-    using (var rng = RandomNumberGenerator.Create())
-    {
-      rng.GetBytes(randomBytes);
-    }
-    return Convert.ToBase64String(randomBytes);
+    // 32 octets aléatoires
+    var bytes = new byte[32];
+    using var rng = RandomNumberGenerator.Create();
+    rng.GetBytes(bytes);
+
+    // Base64 URL‑safe -> uniquement [A–Z a–z 0–9 _ -]
+    return WebEncoders.Base64UrlEncode(bytes);
   }
 
 

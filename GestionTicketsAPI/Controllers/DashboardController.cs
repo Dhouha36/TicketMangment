@@ -116,6 +116,29 @@ namespace GestionTicketsAPI.Controllers
 
       return Ok(data);
     }
+
+    [HttpPost("timespent")]
+    public ActionResult<IEnumerable<TicketStatDto>> GetTimeSpent([FromBody] TicketFilterRequest request)
+    {
+        if (request == null)
+            return BadRequest("Requête invalide.");
+
+        // 1️⃣ Récupérer l'ID de l'utilisateur (claim sub ou nameid)
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+            return Unauthorized("Utilisateur non authentifié.");
+
+        // 2️⃣ Récupérer le rôle (claim role)
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        if (string.IsNullOrEmpty(role))
+            return Forbid("Rôle non trouvé.");
+
+        // 3️⃣ Appeler la méthode avec les bons arguments
+        var result = _dashboardService.GetTimeSpentByPeriod(userId, role, request);
+
+        return Ok(result.ToList());
+    }
+
   }
 
 }

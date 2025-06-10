@@ -48,14 +48,16 @@ export class NotificationService {
   public startConnection(): void {
     const { key, id } = this.context;
     const qs = `${key}Id=${id}`;
-    if (this.hubConnection &&
-        (this.hubConnection.state === signalR.HubConnectionState.Connected
-         || this.hubConnection.state === signalR.HubConnectionState.Reconnecting)) {
-      return;
-    }
     if (this.hubConnection) {
+      // Si on n’est pas complètement arrêté, on ne fait rien
+      const st = this.hubConnection.state;
+      if (st !== signalR.HubConnectionState.Disconnected) {
+        console.log(`SignalR déjà en état ${st}, on ne redémarre pas.`);
+        return;
+      }
+      // OK, on était Disconnected : on peut cleanup l’ancienne connexion
       this.hubConnection.off('ReceiveNotification');
-      this.hubConnection.stop().catch(console.error);
+      // on peut éventuellement attendre this.hubConnection.stop()
     }
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${environment.signalRHubUrl}?${qs}`, { withCredentials: true })

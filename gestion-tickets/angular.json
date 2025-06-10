@@ -24,7 +24,7 @@
               "src/favicon.ico",
               "src/assets",
               "src/manifest.webmanifest",
-              "src/sw-custom.js",
+              "src/sw.js",
               {
                 "glob": "custom-service-worker.js",
                 "input": "src/assets",

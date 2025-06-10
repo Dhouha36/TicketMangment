@@ -68,26 +68,31 @@ namespace GestionTicketsAPI.Repositories
     }
 
     public async Task<bool> ClientExistsAsync(string email, string firstname, string lastname)
-        {
-            return await _context.Clients.AnyAsync(c =>
-                c.Email.ToLower() == email.ToLower() ||
-                (c.FirstName.ToLower() == firstname.ToLower() && c.LastName.ToLower() == lastname.ToLower())
-            );
-        }
+    {
+      return await _context.Clients.AnyAsync(c =>
+          c.Email.ToLower() == email.ToLower() ||
+          (c.FirstName.ToLower() == firstname.ToLower() && c.LastName.ToLower() == lastname.ToLower())
+      );
+    }
 
-        public async Task<Client?> GetClientByEmailAsync(string email)
-        {
-            return await _context.Clients
-                .Include(c => c.Societe)
-                .Include(c => c.Photo)
-                .Include(c => c.PaysNavigation)
-                .FirstOrDefaultAsync(c => c.Email.ToLower() == email.ToLower());
-        }
+    public async Task<Client?> GetClientByEmailAsync(string email)
+    {
+      return await _context.Clients
+          .Include(c => c.Societe)
+          .Include(c => c.Photo)
+          .Include(c => c.PaysNavigation)
+          .FirstOrDefaultAsync(c => c.Email.ToLower() == email.ToLower());
+    }
 
-        public async Task AddClientAsync(Client client)
-        {
-            await _context.Clients.AddAsync(client);
-        }
+    public async Task AddClientAsync(Client client)
+    {
+      await _context.Clients.AddAsync(client);
+    }
+    public async Task<Client> GetClientByResetTokenAsync(string token)
+    {
+      return await _context.Clients
+          .FirstOrDefaultAsync(c => c.PasswordResetToken == token);
+    }
 
   }
 }
