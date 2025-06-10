@@ -96,6 +96,33 @@
     <button type="button" class="btn btn-secondary" (click)="onCancel()">Annuler</button>
   </form>
 
+  <div *ngIf="!formVisible" class="details-view">
+    <h2>Détails de la société</h2>
+    <div class="detail-item">
+      <label>Nom </label>
+      <span>{{ societeDetails.nom }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Adresse </label>
+      <span>{{ societeDetails.adresse }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Ville </label>
+      <span>{{ societeDetails.ville }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Code Postal </label>
+      <span>{{ societeDetails.codePostal }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Pays </label>
+      <span>{{ getPaysName(societeDetails.paysId) }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Téléphone </label>
+      <span>{{ societeDetails.telephone }}</span>
+    </div>
+  </div>
   <!-- Navigation par onglets -->
   <nav class="tabs-nav" *ngIf="!formVisible">
     <ul>

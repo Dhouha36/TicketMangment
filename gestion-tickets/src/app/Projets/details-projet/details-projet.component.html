@@ -300,7 +300,7 @@
             <td>{{ client.email }}</td>
             <td>{{ client.numTelephone }}</td>
             <td class="actions">
-              <button class="view-btn" [routerLink]="['/home/clients/details', client.id]" [queryParams]="{ mode: 'view' }">
+              <button class="view-btn" *ngIf="isSuperAdmin()" [routerLink]="['/home/clients/details', client.id]" [queryParams]="{ mode: 'view' }">
                 <span class="material-icons">visibility</span>
               </button>
               <button class="delet-btn" *ngIf="!editMode && (isSuperAdmin() || isChefDeProjet())"

@@ -15,6 +15,5 @@ public class UserDto
     public string PhotoUrl { get; set; }
     public required string Token { get; set; }
     public string? InitialPassword { get; set; }
-    public SocieteDto? Societe { get; set; }
     public ContratUserDto? ContratUser { get; set; }
 }

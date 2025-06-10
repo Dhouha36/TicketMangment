@@ -26,27 +26,30 @@ export class SocieteService {
 
   // Méthode pour récupérer les projets paginés
   getPaginatedSocietes(
-    pageNumber: number, 
-    pageSize: number, 
-    searchTerm?: string, 
-    extraFilters?: any
+    pageNumber: number,
+    pageSize: number,
+    searchTerm: string = '',
+    extraFilters: any = {}
   ): Observable<PaginatedResult<Societe[]>> {
-    const params = {
+    // Construction de l'objet à envoyer
+    const body = {
       pageNumber,
       pageSize,
-      searchTerm: searchTerm ? searchTerm : '',
-      ...extraFilters
+      searchTerm: searchTerm.trim(),  // nettoie les bords
+      ...extraFilters                 // par exemple { pays: 'France' }
     };
   
-    return this.http.post<any>(this.apiUrl + '/paged', params, { observe: 'response' })
-      .pipe(
-        map((response: HttpResponse<Societe[]>) => {
-          const paginationHeader = response.headers.get('Pagination');
-          const paginatedResult: PaginatedResult<Societe[]> = {
+    return this.http.post<Societe[]>(
+        `${this.apiUrl}/paged`, 
+        body, 
+        { observe: 'response' }
+      ).pipe(
+        map(response => {
+          const pagination = response.headers.get('Pagination');
+          return {
             items: response.body || [],
-            pagination: paginationHeader ? JSON.parse(paginationHeader) : {} as Pagination
+            pagination: pagination ? JSON.parse(pagination) : {} as Pagination
           };
-          return paginatedResult;
         })
       );
   }

@@ -752,6 +752,100 @@ h3 {
   background: #f3f4f6;
 }
 
+/* Styles pour la vue détaillée (mode lecture seule) */
+.details-view {
+  width: 90%;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.details-view:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.details-view h2 {
+  color: #2d3748;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f57c00;
+  position: relative;
+}
+
+.details-view h2::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 50px;
+  height: 2px;
+  background-color: #f57c00;
+  border-radius: 2px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.2s ease;
+}
+
+.detail-item:hover {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #4a5568;
+  min-width: 150px;
+  margin-bottom: 0;
+  font-size: 0.95rem;
+  position: relative;
+}
+
+.detail-item label::after {
+  content: ':';
+  margin-left: 2px;
+  color: #f57c00;
+  font-weight: bold;
+}
+
+.detail-item span {
+  color: #2d3748;
+  font-size: 0.95rem;
+  font-weight: 500;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-item span img {
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Style spécial pour les valeurs vides */
+.detail-item span:empty::after,
+.detail-item span[data-empty]::after {
+  content: 'Non renseigné';
+  color: #9ca3af;
+  font-style: italic;
+}
 /* ========== Responsive pour les tailles moyennes (768px à 1199px) ========== */
 @media (max-width: 1199px) {
   .form-container {
@@ -838,6 +932,33 @@ h3 {
   .password-container i {
     right: 10px; /* Ajustement de l'icône pour champs plus petits */
   }
+  .details-view {
+    width: 95%;
+    padding: 1.5rem;
+    margin: 1rem auto;
+  }
+
+  .details-view h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.75rem 0;
+    gap: 0.5rem;
+  }
+
+  .detail-item label {
+    min-width: auto;
+    margin-bottom: 0.25rem;
+  }
+
+  .detail-item span {
+    width: 100%;
+    padding-left: 0;
+  }
 }
 
 @media (max-width: 640px) {
@@ -899,5 +1020,28 @@ h3 {
     padding: 0.4rem 0.8rem;
     font-size: 0.9rem;
     width: 100%;
+  }
+  .details-view {
+    width: 100%;
+    padding: 1rem;
+    margin: 0.5rem auto;
+    border-radius: 8px;
+  }
+
+  .details-view h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .detail-item {
+    padding: 0.5rem 0;
+  }
+
+  .detail-item label {
+    font-size: 0.9rem;
+  }
+
+  .detail-item span {
+    font-size: 0.9rem;
   }
 }

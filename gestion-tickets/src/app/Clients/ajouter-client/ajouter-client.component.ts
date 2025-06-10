@@ -20,6 +20,7 @@ import { PaysModalComponent } from 'src/app/PaysFile/pays-modal/pays-modal.compo
 
 @Component({
   selector: 'app-ajouter-client',
+  standalone: true,
   imports: [CommonModule, ReactiveFormsModule, NgSelectModule, MatSelectModule, FormsModule ],
   templateUrl: './ajouter-client.component.html',
   styleUrl: './ajouter-client.component.css'
@@ -53,10 +54,9 @@ export class AjouterClientComponent implements OnInit {
       email: ['', [Validators.required, Validators.email]],
       pays: ['', Validators.required],
       numTelephone: ['', [Validators.required, Validators.pattern(/^[0-9\s]+$/)]],
-      role: ['Client'],
       societeId: ['', Validators.required],
       actif:[true],
-      projetIds: [[], [Validators.required, Validators.minLength(1)]]
+      projetIds: [{ value: [], disabled: true }, [Validators.required, Validators.minLength(1)]],
     });
   }
 
@@ -132,18 +132,29 @@ export class AjouterClientComponent implements OnInit {
         next: data => {
           this.projetsList = data;
           this.isLoadingProjets = false;
+  
+          const ctrl = this.clientForm.get('projetIds')!;
+          if (data.length > 0) {
+            ctrl.enable();
+          } else {
+            ctrl.disable();
+            ctrl.setValue([]);  // on vide aussi la sélection si besoin
+          }
         },
         error: () => {
           this.toastr.error('Erreur chargement projets');
           this.isLoadingProjets = false;
         }
       });
-  }
+  }  
 
   onSubmit(): void {
     if (this.clientForm.valid) {
       this.isLoading = true;
       const dto: RegisterClientDto = this.clientForm.value;
+      const raw = this.clientForm.value.numTelephone as string;
+      dto.numTelephone = raw.replace(/\s+/g, '');
+      console.log('DTO envoyé au serveur →', dto);
       this.clientService.register(dto).subscribe({
         next: client => {
           this.toastr.success(
@@ -152,9 +163,15 @@ export class AjouterClientComponent implements OnInit {
           this.router.navigate(['/home/clients']);
         },
         error: err => {
-          this.toastr.error(err.error?.message || 'Erreur lors de la création');
+          console.error('Erreur 400, payload reçu :', err.error);
+          // Si erreurs de validation
+          if (err.error?.errors) {
+            err.error.errors.forEach((e: string) => this.toastr.error(e));
+          } else {
+            this.toastr.error(err.error?.message || 'Erreur lors de la création');
+          }
           this.isLoading = false;
-        }
+        }        
       });
     }
   }

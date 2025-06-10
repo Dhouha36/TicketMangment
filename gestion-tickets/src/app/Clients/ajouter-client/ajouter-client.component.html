@@ -48,30 +48,22 @@
                   </div>
                   <span class="arrow">▼</span>
                 </div>
-            
+
                 <div class="dropdown-content" [class.show]="isPaysDropdownOpen">
                   <div class="search-box">
-                    <input
-                      type="text"
-                      placeholder="Rechercher un pays..."
-                      [(ngModel)]="paysSearchTerm"
-                      (ngModelChange)="filterPays()"
-                    />
+                    <input type="text" placeholder="Rechercher un pays..." [(ngModel)]="paysSearchTerm" [ngModelOptions]="{ standalone: true }"
+                      (ngModelChange)="filterPays()" />
                   </div>
                   <div class="option-list">
                     <ng-container *ngIf="filteredPays.length; else noPays">
-                      <div
-                        *ngFor="let p of filteredPays"
-                        class="option-item"
-                        (click)="selectPays(p.idPays)"
-                      >
+                      <div *ngFor="let p of filteredPays" class="option-item" (click)="selectPays(p.idPays)">
                         {{ p.nom }}
                       </div>
                       <div class="option-item autre" (click)="openPaysModal()">
                         Autre…
                       </div>
                     </ng-container>
-            
+
                     <ng-template #noPays>
                       <div class="no-results">
                         Aucun pays trouvé
@@ -84,10 +76,10 @@
                 </div>
               </div>
               <div *ngIf="clientForm.get('pays')?.hasError('required') && clientForm.get('pays')?.touched"
-                   class="invalid-feedback text-start">
+                class="invalid-feedback text-start">
                 Le pays est obligatoire
               </div>
-            </div>            
+            </div>
           </div>
 
           <div class="form-row">
@@ -97,22 +89,13 @@
                 <!-- Préfixe téléphonique affiché automatiquement -->
                 <div class="input-group-prepend">
                   <span class="input-group-text">
-                    <img
-                      *ngIf="selectedCountry?.photoUrl"
-                      [src]="selectedCountry?.photoUrl"
-                      alt="{{ selectedCountry?.nom }}"
-                      style="width:24px; height:auto; margin-right:5px;"
-                    />
+                    <img *ngIf="selectedCountry?.photoUrl" [src]="selectedCountry?.photoUrl"
+                      alt="{{ selectedCountry?.nom }}" style="width:24px; height:auto; margin-right:5px;" />
                     {{ selectedCountry?.codeTel || '+XX' }}
                   </span>
                 </div>
-                <input
-                  id="numTelephone"
-                  type="tel"
-                  formControlName="numTelephone"
-                  class="form-control"
-                  [class.is-invalid]="clientForm.controls['numTelephone'].touched && clientForm.controls['numTelephone'].invalid"
-                />
+                <input id="numTelephone" type="tel" formControlName="numTelephone" class="form-control"
+                  [class.is-invalid]="clientForm.controls['numTelephone'].touched && clientForm.controls['numTelephone'].invalid" />
               </div>
               <div *ngIf="clientForm.controls['numTelephone'].hasError('required')" class="invalid-feedback text-start">
                 Téléphone est obligatoire
@@ -121,14 +104,16 @@
                 Numéro de téléphone invalide
               </div>
             </div>
-            
+
 
             <div class="form-group">
               <label for="societeId">Société <span class="required">*</span></label>
               <select id="societeId" formControlName="societeId" class="form-control"
                 [class.is-invalid]="clientForm.controls['societeId'].invalid && clientForm.controls['societeId'].touched">
-                <option value="" disabled>Sélectionnez une société</option>
-                <option *ngFor="let s of societesList" [value]="s.id">{{s.nom}}</option>
+                <option [ngValue]="null" disabled>Sélectionnez une société</option>
+                <option *ngFor="let s of societesList" [ngValue]="s.id">
+                  {{ s.nom }}
+                </option>
               </select>
               <div *ngIf="clientForm.controls['societeId'].hasError('required')" class="invalid-feedback text-start">
                 Société est obligatoire
@@ -139,30 +124,20 @@
           <div class="form-row">
             <mat-form-field appearance="fill" class="projets-field" [hideRequiredMarker]="true">
               <mat-label>Projets associés <span class="required">*</span></mat-label>
-              <mat-select
-                formControlName="projetIds"
-                multiple
-                [disabled]="projetsList.length === 0"
-                [class.is-invalid]="clientForm.controls['projetIds'].touched && clientForm.controls['projetIds'].invalid"
-              >
+              <mat-select formControlName="projetIds" multiple
+                [class.is-invalid]="clientForm.controls['projetIds'].touched && clientForm.controls['projetIds'].invalid">
                 <mat-option *ngFor="let proj of projetsList" [value]="proj.id">
                   {{ proj.nom }}
                 </mat-option>
               </mat-select>
-              <div
-                *ngIf="clientForm.controls['projetIds'].hasError('required')"
-                class="invalid-feedback text-start"
-              >
+              <div *ngIf="clientForm.controls['projetIds'].hasError('required')" class="invalid-feedback text-start">
                 Au moins un projet est obligatoire
               </div>
-              <div
-                *ngIf="clientForm.controls['projetIds'].hasError('minlength')"
-                class="invalid-feedback text-start"
-              >
+              <div *ngIf="clientForm.controls['projetIds'].hasError('minlength')" class="invalid-feedback text-start">
                 Sélectionnez au moins un projet
               </div>
-            </mat-form-field>                                    
-            
+            </mat-form-field>
+
             <div class="form-group">
               <label for="actif">Actif</label>
               <div class="toggle-switch">

@@ -780,6 +780,77 @@ h3 {
   text-align: center;
   color: #6b7280;
 }
+
+/* Styles pour details-view */
+.details-view {
+  padding: 2rem;
+  width: 90%;
+  margin: 0 auto;
+  margin-top: 20px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.details-view:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.details-view h2 {
+  font-size: 1.8rem;
+  color: #2d3748;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  position: relative;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f57c00;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.2s ease;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-item:hover {
+  background-color: #f8f9fa;
+  border-radius: 6px;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #4a5568;
+  min-width: 120px;
+  margin-bottom: 0;
+  margin-right: 1rem;
+  font-size: 0.95rem;
+}
+
+.detail-item span {
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 400;
+  flex: 1;
+}
+
+/* Style pour les valeurs vides ou nulles */
+.detail-item span:empty::after,
+.detail-item span:not(:empty):empty::after {
+  content: "Non renseigné";
+  color: #9ca3af;
+  font-style: italic;
+}
+
 /* ========== Responsive pour les tailles moyennes (768px à 1199px) ========== */
 @media (max-width: 1199px) {
   .form-container {
@@ -800,7 +871,10 @@ h3 {
     gap: 0.75rem;
   }
 
-  
+  .details-view {
+    padding: 1.5rem;
+    width: 85%;
+  }
 }
 
 @media (max-width: 1460px) {
@@ -866,6 +940,27 @@ h3 {
   .password-container i {
     right: 10px; /* Ajustement de l'icône pour champs plus petits */
   }
+  .details-view {
+    padding: 1rem;
+    width: 90%;
+    margin-top: 15px;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.75rem 0;
+  }
+
+  .detail-item label {
+    min-width: auto;
+    margin-bottom: 0.25rem;
+    margin-right: 0;
+  }
+
+  .detail-item span {
+    margin-left: 0;
+  }
 }
 
 @media (max-width: 640px) {
@@ -927,5 +1022,22 @@ h3 {
     padding: 0.4rem 0.8rem;
     font-size: 0.9rem;
     width: 100%;
+  }
+  .details-view {
+    padding: 0.75rem;
+    width: 95%;
+  }
+
+  .details-view h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .detail-item label {
+    font-size: 0.9rem;
+  }
+
+  .detail-item span {
+    font-size: 0.95rem;
   }
 }

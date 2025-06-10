@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { ClientDto } from '../DTOs/ClientDto';
@@ -15,9 +15,9 @@ import { Projet } from '../_models/Projet';
   providedIn: 'root'
 })
 export class ClientService {
-  private baseUrl = environment.apiUrl+ "clients";
+  private baseUrl = environment.apiUrl + "clients";
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   register(dto: RegisterClientDto): Observable<ClientDto> {
     return this.http.post<ClientDto>(`${this.baseUrl}/register`, dto);
@@ -32,37 +32,40 @@ export class ClientService {
   }
 
   getPaged(params: ClientParams)
-: Observable<PaginatedResult<ClientDto[]>> {
-  return this.http.post<ClientDto[]>(`${this.baseUrl}/paged`, params, { observe: 'response' })
-    .pipe(
+    : Observable<PaginatedResult<ClientDto[]>> {
+    // On envoie le JSON ‘params’ tel quel (inclut pageNumber, pageSize, searchTerm, etc.)
+    return this.http.post<ClientDto[]>(
+      `${this.baseUrl}/paged`,
+      params,
+      { observe: 'response' }
+    ).pipe(
       map(resp => {
         const paginatedResult = new PaginatedResult<ClientDto[]>();
-        // Ici resp.body est déjà un ClientDto[] comprenant `projets: ProjetMiniDto[]`
+        // Corps : liste de ClientDto (y compris projets[])
         const clients = resp.body!;
 
-        // (Optionnel) si vous voulez un champ projetsIds pour le template
-        const enriched: ClientDto[] = clients.map(c => ({
+        // (Optionnel) enrichir chaque client pour l’UI
+        paginatedResult.items = clients.map(c => ({
           ...c,
-          // ajoute une propriété calculée
           projetsIds: c.projets.map(p => p.id)
         }));
 
-        paginatedResult.items = enriched;
+        // Pagination depuis l’en-tête
         const header = resp.headers.get('Pagination');
-        if (header) paginatedResult.pagination = JSON.parse(header);
+        if (header) {
+          paginatedResult.pagination = JSON.parse(header);
+        }
         return paginatedResult;
       })
     );
-}
-
-
+  }
   getById(id: number): Observable<ClientDto> {
     return this.http.get<ClientDto>(`${this.baseUrl}/${id}`);
   }
 
   update(id: number, payload: Partial<ClientDto> | FormData): Observable<ClientDto> {
     return this.http.put<ClientDto>(`${this.baseUrl}/${id}`, payload);
-  }  
+  }
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
@@ -88,7 +91,7 @@ export class ClientService {
       {}
     );
   }
-  
+
   detachProjectFromClient(clientId: number, projectId: number): Observable<void> {
     return this.http.delete<void>(
       `${this.baseUrl}/${clientId}/projects/${projectId}`

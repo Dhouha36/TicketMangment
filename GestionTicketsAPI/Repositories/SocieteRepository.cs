@@ -46,24 +46,32 @@ namespace GestionTicketsAPI.Repositories
     public async Task<PagedList<Societe>> GetSocietesPagedAsync(UserParams userParams)
     {
       var query = _context.Societes
-                  .Include(s => s.Pays)
-                  .AsQueryable();
+                          .Include(s => s.Pays)
+                          .AsQueryable();
 
       // Filtrage par nom de société
-      if (!string.IsNullOrEmpty(userParams.SearchTerm))
+      if (!string.IsNullOrWhiteSpace(userParams.SearchTerm))
       {
-        var lowerSearchTerm = userParams.SearchTerm.ToLower();
-        query = query.Where(s => s.Nom.ToLower().Contains(lowerSearchTerm));
+        var term = userParams.SearchTerm.Trim().ToLower();
+        query = query.Where(s => s.Nom.ToLower().Contains(term));
       }
 
-      // Filtrage par nom de pays (assurez-vous que UserParams contient une propriété "Pays")
-      if (!string.IsNullOrEmpty(userParams.Pays))
+      // Filtrage par nom de pays
+      if (!string.IsNullOrWhiteSpace(userParams.Pays))
       {
-        var lowerPays = userParams.Pays.ToLower();
-        query = query.Where(s => s.Pays != null && s.Pays.Nom.ToLower().Contains(lowerPays));
+        var paysTerm = userParams.Pays.Trim().ToLower();
+        query = query.Where(s =>
+            s.Pays != null
+            && s.Pays.Nom.ToLower().Contains(paysTerm)
+        );
       }
 
-      return await PagedList<Societe>.CreateAsync(query, userParams.PageNumber, userParams.PageSize);
+      // Pagination
+      return await PagedList<Societe>.CreateAsync(
+          query.OrderBy(s => s.Nom),
+          userParams.PageNumber,
+          userParams.PageSize
+      );
     }
 
 

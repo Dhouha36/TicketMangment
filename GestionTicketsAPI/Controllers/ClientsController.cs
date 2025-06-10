@@ -41,6 +41,15 @@ namespace GestionTicketsAPI.Controllers
     [HttpPost("register")]
     public async Task<ActionResult<ClientDto>> RegisterClient([FromBody] RegisterClientDto dto)
     {
+      if (!ModelState.IsValid)
+      {
+        // On transforme ModelState en liste de messages d’erreur
+        var errors = ModelState.Values
+                       .SelectMany(v => v.Errors)
+                       .Select(e => e.ErrorMessage)
+                       .ToArray();
+        return BadRequest(new { errors });
+      }
       try
       {
         var clientDto = await _accountService.RegisterClientAsync(dto);
@@ -48,9 +57,7 @@ namespace GestionTicketsAPI.Controllers
       }
       catch (Exception ex)
       {
-        // Pour plus de finesse, vous pouvez filtrer sur des types d'exception custom
-        // ou sur le message, mais en l'état on renvoie simplement BadRequest.
-        return BadRequest(ex.Message);
+        return BadRequest(new { message = ex.Message });
       }
     }
 

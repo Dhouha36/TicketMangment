@@ -107,20 +107,6 @@
             Role est obligatoire
           </div>
         </div>
-
-        <div class="form-group">
-          <label for="societe">Société</label>
-          <select id="societe" formControlName="societeId" class="form-control">
-            <option [ngValue]="null">Sélectionnez une société</option>
-            <option *ngFor="let s of societesList" [ngValue]="s.id">
-              {{ s.nom }}
-            </option>
-          </select>          
-        </div>                 
-      </div>
-
-      <div class="form-row">
-
         <div class="form-group">
           <label for="numTelephone">Numéro de Téléphone <span class="required">*</span></label>
           <div class="input-group">
@@ -147,7 +133,12 @@
           <div *ngIf="userForm.controls['numTelephone'].hasError('pattern')" class="invalid-feedback text-start">
             Numéro de téléphone invalide (exemple : +216 54 567 589)
           </div>
-        </div> 
+        </div>                 
+      </div>
+
+      <div class="form-row">
+
+        
         
         <div class="form-group toggle-container">
           <div class="toggle-row">
@@ -176,6 +167,43 @@
       </div>      
     </form>
   </div>
+
+  <!-- Bloc lecture seule pour mode === 'view' -->
+  <div *ngIf="mode==='view'" class="details-view">
+    <h2>Détails de l'utilisateur</h2>
+  
+    <div class="detail-item">
+      <label>Nom </label>
+      <span>{{ userDetails?.lastName || 'Aucun' }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Prénom </label>
+      <span>{{ userDetails?.firstName || 'Aucun' }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Email </label>
+      <span>{{ userDetails?.email || 'Aucun' }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Pays </label>
+      <span>{{ getPaysName(+userDetails?.pays!) || 'Aucun' }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Role </label>
+      <span>{{ userDetails?.role || 'Aucun' }}</span>
+    </div>
+    <div class="detail-item">
+      <label>Téléphone </label>
+      <span>
+        <img *ngIf="selectedCountry?.photoUrl"
+             [src]="selectedCountry?.photoUrl"
+             alt="{{ selectedCountry?.nom }}"
+             style="width:24px; margin-right:4px;" />
+        {{ userDetails?.numTelephone || 'N/A' }}
+      </span>
+    </div>
+  </div>
+  
 
   <div *ngIf="mode==='view'">
   <!-- Navigation par onglets -->

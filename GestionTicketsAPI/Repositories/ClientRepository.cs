@@ -32,7 +32,6 @@ namespace GestionTicketsAPI.Repositories
 
     public async Task<PagedList<Client>> GetClientsAsync(ClientParams clientParams)
     {
-      // 1) On part toujours de la table Clients en incluant Societe, PaysNavigation et ProjetClients→Projet
       var query = _context.Clients
           .Include(c => c.Societe)
           .Include(c => c.PaysNavigation)
@@ -40,43 +39,44 @@ namespace GestionTicketsAPI.Repositories
               .ThenInclude(pc => pc.Projet)
           .AsQueryable();
 
-      // 2) Filtre par SearchTerm (nom ou prénom)
-      if (!string.IsNullOrEmpty(clientParams.SearchTerm))
+      // Filtre “contient” insensible à la casse
+      if (!string.IsNullOrWhiteSpace(clientParams.SearchTerm))
       {
-        var term = clientParams.SearchTerm.ToLower();
-        query = query.Where(c =>
-          c.FirstName.ToLower().Contains(term) ||
-          c.LastName.ToLower().Contains(term) ||
-          c.Email.ToLower().Contains(term));
+        // Séparer tous les segments non vides
+        var parts = clientParams.SearchTerm
+                       .Trim()
+                       .ToLower()
+                       .Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        // Pour chaque mot, on ajoute une condition (ici en AND, pour que tous soient trouvés)
+        foreach (var part in parts)
+        {
+          query = query.Where(c =>
+              c.FirstName.ToLower().Contains(part) ||
+              c.LastName.ToLower().Contains(part) ||
+              c.Email.ToLower().Contains(part)
+          );
+        }
       }
 
-      // 3) Filtre par Actif (true/false)
+      // Autres filtres (Actif, SocieteId, ProjetId…)
       if (clientParams.Actif.HasValue)
-      {
         query = query.Where(c => c.Actif == clientParams.Actif.Value);
-      }
 
-      // 4) FILTRE PAR SOCIÉTÉ
       if (clientParams.SocieteId.HasValue)
-      {
         query = query.Where(c => c.SocieteId == clientParams.SocieteId.Value);
-      }
 
-      // 5) FILTRE PAR PROJET (relation many-to-many via ProjetClients)
       if (clientParams.ProjetId.HasValue)
-      {
-        query = query.Where(c =>
-          c.ProjetClients.Any(pc => pc.ProjetId == clientParams.ProjetId.Value));
-      }
+        query = query.Where(c => c.ProjetClients.Any(pc => pc.ProjetId == clientParams.ProjetId.Value));
 
-      // 6) Tri (exemple : ordre descendant sur CreatedAt)
+      // Tri (par date de création décroissante)
       query = query.OrderByDescending(c => c.CreatedAt);
 
-      // 7) Pagination
+      // Pagination
       return await PagedList<Client>.CreateAsync(
-        query,
-        clientParams.PageNumber,
-        clientParams.PageSize
+          query,
+          clientParams.PageNumber,
+          clientParams.PageSize
       );
     }
 

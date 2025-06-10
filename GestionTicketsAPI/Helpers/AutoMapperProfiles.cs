@@ -11,7 +11,6 @@ namespace GestionTicketsAPI.Helpers
     {
       CreateMap<User, UserDto>()
           .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.Name))
-          .ForMember(dest => dest.Societe, opt => opt.MapFrom(src => src.SocieteUsers.Any() ? src.SocieteUsers.First().Societe : null))
           .ForMember(dest => dest.ContratUser, opt => opt.MapFrom(src => src.ContratUser))
           .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.Photo != null ? src.Photo.Url : null));
 

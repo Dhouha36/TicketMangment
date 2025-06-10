@@ -665,6 +665,109 @@ h3 {
 .status.active {
   color: #4caf50;
 }
+
+/* Styles pour la vue détails */
+.details-view {
+  background-color: white;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.details-view:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.12);
+}
+
+.details-view h2 {
+  color: #2d3748;
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f57c00;
+  position: relative;
+}
+
+.details-view h2::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background-color: #ff8c42;
+  border-radius: 1px;
+}
+
+.detail-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f1f3f4;
+  transition: background-color 0.2s ease;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-item:hover {
+  background-color: #fafbfc;
+  border-radius: 8px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
+}
+
+.detail-item label {
+  font-weight: 600;
+  color: #4a5568;
+  min-width: 140px;
+  margin-right: 1.5rem;
+  margin-bottom: 0;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+}
+
+.detail-item label::after {
+  content: ":";
+  margin-left: 0.25rem;
+  color: #718096;
+}
+
+.detail-item span {
+  color: #2d3748;
+  font-size: 1rem;
+  line-height: 1.5;
+  flex: 1;
+  word-break: break-word;
+}
+
+/* Styles spécifiques pour certains types de données */
+.detail-item span:empty::before {
+  content: "Non spécifié";
+  color: #9ca3af;
+  font-style: italic;
+}
+
+/* Style pour les données de contact */
+.detail-item span[data-type="phone"] {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.detail-item span[data-type="email"] {
+  color: #3182ce;
+  text-decoration: none;
+}
+
+.detail-item span[data-type="email"]:hover {
+  text-decoration: underline;
+}
 /* Responsive design */
 @media (max-width: 768px) {
   .list-group-item {
@@ -675,6 +778,31 @@ h3 {
 
   .tab-pane {
     margin-top: 15px;
+  }
+  .details-view {
+    padding: 1.5rem;
+    margin-top: 1rem;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .detail-item label {
+    min-width: auto;
+    margin-right: 0;
+    font-weight: 700;
+  }
+  
+  .detail-item span {
+    padding-left: 0;
+  }
+  
+  .details-view h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
   }
 }
 
@@ -695,6 +823,19 @@ h3 {
 
   .form-actions button {
     width: 100%;
+  }
+  details-view {
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  
+  .details-view h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+  
+  .detail-item {
+    padding: 0.75rem 0;
   }
 }
 

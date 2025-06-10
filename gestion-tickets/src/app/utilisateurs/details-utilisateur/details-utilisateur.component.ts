@@ -197,8 +197,11 @@ export class DetailsUtilisateurComponent implements OnInit {
     });
   }
 
-  getPaysName(id?: number): string {
-    return this.paysList.find(p => p.idPays === id)?.nom || '';
+  getPaysName(idPays?: number | string): string {
+    const idNum = typeof idPays === 'string'
+      ? parseInt(idPays, 10)
+      : idPays;
+    return this.paysList.find(p => p.idPays === idNum)?.nom || '';
   }
 
   togglePaysDropdown(): void {

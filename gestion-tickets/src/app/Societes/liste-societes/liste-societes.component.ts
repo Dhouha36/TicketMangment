@@ -6,8 +6,6 @@ import { FormsModule } from '@angular/forms';
 import { PaginatedResult } from '../../_models/pagination';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
-
-// Importations pour le modal de confirmation
 import { OverlayModalService } from '../../_services/overlay-modal.service';
 import { ConfirmModalComponent } from '../../confirm-modal/confirm-modal.component';
 import { MatButtonModule } from '@angular/material/button';

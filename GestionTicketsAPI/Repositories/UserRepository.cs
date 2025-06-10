@@ -29,10 +29,17 @@ namespace GestionTicketsAPI.Repositories
       // Filtrage par SearchTerm (prénom ou nom)
       if (!string.IsNullOrEmpty(userParams.SearchTerm))
       {
-        var lowerSearchTerm = userParams.SearchTerm.ToLower();
-        query = query.Where(u =>
-            u.FirstName.ToLower().Contains(lowerSearchTerm) ||
-            u.LastName.ToLower().Contains(lowerSearchTerm));
+        var terms = userParams.SearchTerm
+          .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+          .Select(t => t.ToLower())
+          .ToArray();
+
+        foreach (var term in terms)
+        {
+          query = query.Where(u =>
+              u.FirstName.ToLower().Contains(term) ||
+              u.LastName.ToLower().Contains(term));
+        }
       }
 
       // Filtrage par rôle
@@ -107,7 +114,7 @@ namespace GestionTicketsAPI.Repositories
         }
         else
         {
-          query = query.Where(u => u.ContratUser == null );
+          query = query.Where(u => u.ContratUser == null);
         }
       }
 
@@ -131,6 +138,7 @@ namespace GestionTicketsAPI.Repositories
           .Include(u => u.ContratUser)
           .Include(u => u.Role)
           .Include(u => u.Photo)
+          .Include(u => u.PaysNavigation)
           .Include(u => u.SocieteUsers)
               .ThenInclude(su => su.Societe)
           .FirstOrDefaultAsync(u => u.Id == id);
@@ -210,7 +218,7 @@ namespace GestionTicketsAPI.Repositories
               .ThenInclude(p => p.Pays)
           .Include(pm => pm.Projet)
               .ThenInclude(p => p.Societe)
-          .Include(pm => pm.Projet)    
+          .Include(pm => pm.Projet)
               .ThenInclude(p => p.ChefProjet)
           .Where(pm => pm.UserId == userId)
           .Select(pm => pm.Projet);

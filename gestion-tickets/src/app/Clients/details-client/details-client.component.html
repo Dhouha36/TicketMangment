@@ -105,7 +105,7 @@
                 {{ selectedCountry?.codeTel || '+XX' }}
               </span>
             </div>
-            <input id="numTelephone" type="tel" formControlName="numTelephone" class="form-control" readonly />
+            <input id="numTelephone" type="tel" formControlName="numTelephone" class="form-control" />
           </div>
         </div>
       </div>
@@ -134,6 +134,15 @@
     </form>
   </div>
 
+  <div *ngIf="mode==='view'" class="details-view">
+    <h2>Détails du client</h2>
+    <div class="detail-item"><label>Prénom :</label><span>{{ client?.firstName }}</span></div>
+    <div class="detail-item"><label>Nom :</label><span>{{ client?.lastName }}</span></div>
+    <div class="detail-item"><label>Email :</label><span>{{ client?.email }}</span></div>
+    <div class="detail-item"><label>Pays :</label><span>{{ getPaysName(client!.paysId) }}</span></div>
+    <div class="detail-item"><label>Société :</label><span>{{ getSocieteName(client!.societeId) }}</span></div>
+    <div class="detail-item"><label>Téléphone :</label><span>{{ client?.numTelephone }}</span></div>
+  </div>
   <!-- Mode vue avec onglets -->
   <div *ngIf="mode==='view'">
     <nav class="tabs-nav">
